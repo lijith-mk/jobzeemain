@@ -629,15 +629,17 @@ const TakeTest = () => {
 
   // Test interface
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Low Time Warning Banner */}
       {timeRemaining > 0 && timeRemaining <= 30 && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-red-600 text-white px-4 py-3 shadow-lg animate-pulse">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-red-600 via-red-500 to-orange-600 text-white px-4 py-3 shadow-2xl animate-pulse">
           <div className="max-w-7xl mx-auto flex items-center justify-center space-x-3">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="font-bold text-lg">
+            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center animate-bounce">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <span className="font-bold text-lg drop-shadow-lg">
               🚨 {timeRemaining} seconds remaining! Test will auto-submit when time expires!
             </span>
           </div>
@@ -646,17 +648,19 @@ const TakeTest = () => {
 
       {/* Tab Switch Warning Banner */}
       {showTabSwitchWarning && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-500 text-white px-4 py-3 shadow-lg animate-pulse">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 text-white px-4 py-3 shadow-2xl animate-pulse">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span className="font-semibold">{warningMessage}</span>
+              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center animate-bounce">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <span className="font-semibold drop-shadow-lg">{warningMessage}</span>
             </div>
             <button
               onClick={() => setShowTabSwitchWarning(false)}
-              className="text-white hover:text-gray-200"
+              className="text-white hover:text-gray-200 hover:scale-110 transition-transform"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -667,20 +671,43 @@ const TakeTest = () => {
       )}
 
       {/* Header with timer */}
-      <div className="bg-white shadow-sm sticky top-0 z-10 border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">{test.title}</h1>
-              <p className="text-sm text-gray-600">
-                Question {currentQuestionIndex + 1} of {test.questions.length}
-              </p>
-            </div>
-            <div className={`text-right ${timeRemaining < 60 ? 'animate-pulse' : ''}`}>
-              <div className={`text-3xl font-bold ${timeRemaining < 60 ? 'text-red-600' : timeRemaining < 300 ? 'text-orange-600' : 'text-green-600'}`}>
-                {formatTime(timeRemaining)}
+      <div className="bg-white shadow-lg sticky top-0 z-10 border-b-4 border-gradient-to-r from-blue-500 to-purple-600">
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{test.title}</h1>
+                  <div className="flex items-center space-x-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                      Question {currentQuestionIndex + 1}/{test.questions.length}
+                    </span>
+                    <span className="text-xs text-gray-500">•</span>
+                    <span className="text-xs text-gray-600 font-medium">{getAnsweredCount()} Answered</span>
+                  </div>
+                </div>
               </div>
-              <div className="text-sm text-gray-600">Time Remaining</div>
+              <div className={`text-right ${timeRemaining < 60 ? 'animate-pulse' : ''}`}>
+                <div className={`relative inline-flex items-center justify-center`}>
+                  <div className={`absolute inset-0 bg-gradient-to-r ${timeRemaining < 60 ? 'from-red-400 to-pink-400' : timeRemaining < 300 ? 'from-orange-400 to-yellow-400' : 'from-green-400 to-emerald-400'} rounded-2xl blur opacity-30 animate-pulse`}></div>
+                  <div className={`relative px-6 py-3 bg-white rounded-2xl shadow-xl border-2 ${timeRemaining < 60 ? 'border-red-400' : timeRemaining < 300 ? 'border-orange-400' : 'border-green-400'}`}>
+                    <div className={`text-3xl font-bold ${timeRemaining < 60 ? 'text-red-600' : timeRemaining < 300 ? 'text-orange-600' : 'text-green-600'}`}>
+                      {formatTime(timeRemaining)}
+                    </div>
+                    <div className="text-xs text-gray-500 font-medium flex items-center justify-center space-x-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Time Remaining</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -690,42 +717,94 @@ const TakeTest = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main question area */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
-                    Question {currentQuestionIndex + 1}
-                  </span>
-                  <span className="text-sm text-gray-600">
-                    {currentQuestion.marks} {currentQuestion.marks === 1 ? 'Mark' : 'Marks'}
-                  </span>
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+              {/* Question Header with Gradient */}
+              <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">{currentQuestionIndex + 1}</span>
+                    </div>
+                    <span className="px-4 py-1.5 bg-white/20 backdrop-blur-sm text-white text-sm font-semibold rounded-full">
+                      Question {currentQuestionIndex + 1} of {test.questions.length}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2 px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full">
+                    <svg className="w-5 h-5 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    <span className="text-white font-bold text-sm">
+                      {currentQuestion.marks} {currentQuestion.marks === 1 ? 'Mark' : 'Marks'}
+                    </span>
+                  </div>
                 </div>
-                <h2 className="text-lg font-medium text-gray-900 mb-6">
-                  {currentQuestion.questionText}
-                </h2>
+              </div>
 
-                {/* Options based on question type */}
-                <div className="space-y-3">
+              {/* Question Content */}
+              <div className="p-8">
+                <div className="mb-8">
+                  <div className="flex items-start space-x-3 mb-6">
+                    <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mt-1">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-900 leading-relaxed flex-1">
+                      {currentQuestion.questionText}
+                    </h2>
+                  </div>
+
+                  {/* Options based on question type */}
+                  <div className="space-y-4">
                   {currentQuestion.type === 'mcq' && (
                     <>
                       {currentQuestion.options.map((option, index) => (
                         <label
                           key={index}
-                          className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                          className={`group relative flex items-center p-5 border-2 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
                             answers[currentQuestion._id] === option
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                              ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-purple-50 shadow-lg ring-2 ring-blue-200'
+                              : 'border-gray-200 hover:border-blue-300 hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 hover:shadow-md'
                           }`}
                         >
-                          <input
-                            type="radio"
-                            name={`question-${currentQuestion._id}`}
-                            value={option}
-                            checked={answers[currentQuestion._id] === option}
-                            onChange={(e) => handleAnswerChange(currentQuestion._id, e.target.value)}
-                            className="w-4 h-4 text-blue-600"
-                          />
-                          <span className="ml-3 text-gray-900">{option}</span>
+                          {/* Option Letter Badge */}
+                          <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm mr-4 transition-all ${
+                            answers[currentQuestion._id] === option
+                              ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white shadow-lg'
+                              : 'bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600'
+                          }`}>
+                            {String.fromCharCode(65 + index)}
+                          </div>
+                          
+                          {/* Radio Button */}
+                          <div className="flex-shrink-0 mr-4">
+                            <input
+                              type="radio"
+                              name={`question-${currentQuestion._id}`}
+                              value={option}
+                              checked={answers[currentQuestion._id] === option}
+                              onChange={(e) => handleAnswerChange(currentQuestion._id, e.target.value)}
+                              className="w-5 h-5 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          
+                          {/* Option Text */}
+                          <span className={`flex-1 text-base ${
+                            answers[currentQuestion._id] === option
+                              ? 'text-gray-900 font-semibold'
+                              : 'text-gray-700 group-hover:text-gray-900'
+                          }`}>{option}</span>
+                          
+                          {/* Selected Indicator */}
+                          {answers[currentQuestion._id] === option && (
+                            <div className="flex-shrink-0 ml-4">
+                              <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
                         </label>
                       ))}
                     </>
@@ -734,38 +813,78 @@ const TakeTest = () => {
                   {currentQuestion.type === 'true-false' && (
                     <>
                       <label
-                        className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        className={`group relative flex items-center p-5 border-2 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
                           answers[currentQuestion._id] === 'True'
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                            ? 'border-green-500 bg-gradient-to-r from-green-50 to-emerald-50 shadow-lg ring-2 ring-green-200'
+                            : 'border-gray-200 hover:border-green-300 hover:bg-gradient-to-r hover:from-gray-50 hover:to-green-50 hover:shadow-md'
                         }`}
                       >
-                        <input
-                          type="radio"
-                          name={`question-${currentQuestion._id}`}
-                          value="True"
-                          checked={answers[currentQuestion._id] === 'True'}
-                          onChange={(e) => handleAnswerChange(currentQuestion._id, e.target.value)}
-                          className="w-4 h-4 text-blue-600"
-                        />
-                        <span className="ml-3 text-gray-900">True</span>
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm mr-4 transition-all ${
+                          answers[currentQuestion._id] === 'True'
+                            ? 'bg-gradient-to-br from-green-500 to-emerald-500 text-white shadow-lg'
+                            : 'bg-gray-100 text-gray-600 group-hover:bg-green-100 group-hover:text-green-600'
+                        }`}>
+                          ✓
+                        </div>
+                        <div className="flex-shrink-0 mr-4">
+                          <input
+                            type="radio"
+                            name={`question-${currentQuestion._id}`}
+                            value="True"
+                            checked={answers[currentQuestion._id] === 'True'}
+                            onChange={(e) => handleAnswerChange(currentQuestion._id, e.target.value)}
+                            className="w-5 h-5 text-green-600 focus:ring-2 focus:ring-green-500"
+                          />
+                        </div>
+                        <span className={`flex-1 text-base font-semibold ${
+                          answers[currentQuestion._id] === 'True' ? 'text-green-900' : 'text-gray-700 group-hover:text-gray-900'
+                        }`}>True</span>
+                        {answers[currentQuestion._id] === 'True' && (
+                          <div className="flex-shrink-0 ml-4">
+                            <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+                              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
                       </label>
                       <label
-                        className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        className={`group relative flex items-center p-5 border-2 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
                           answers[currentQuestion._id] === 'False'
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                            ? 'border-red-500 bg-gradient-to-r from-red-50 to-pink-50 shadow-lg ring-2 ring-red-200'
+                            : 'border-gray-200 hover:border-red-300 hover:bg-gradient-to-r hover:from-gray-50 hover:to-red-50 hover:shadow-md'
                         }`}
                       >
-                        <input
-                          type="radio"
-                          name={`question-${currentQuestion._id}`}
-                          value="False"
-                          checked={answers[currentQuestion._id] === 'False'}
-                          onChange={(e) => handleAnswerChange(currentQuestion._id, e.target.value)}
-                          className="w-4 h-4 text-blue-600"
-                        />
-                        <span className="ml-3 text-gray-900">False</span>
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm mr-4 transition-all ${
+                          answers[currentQuestion._id] === 'False'
+                            ? 'bg-gradient-to-br from-red-500 to-pink-500 text-white shadow-lg'
+                            : 'bg-gray-100 text-gray-600 group-hover:bg-red-100 group-hover:text-red-600'
+                        }`}>
+                          ✕
+                        </div>
+                        <div className="flex-shrink-0 mr-4">
+                          <input
+                            type="radio"
+                            name={`question-${currentQuestion._id}`}
+                            value="False"
+                            checked={answers[currentQuestion._id] === 'False'}
+                            onChange={(e) => handleAnswerChange(currentQuestion._id, e.target.value)}
+                            className="w-5 h-5 text-red-600 focus:ring-2 focus:ring-red-500"
+                          />
+                        </div>
+                        <span className={`flex-1 text-base font-semibold ${
+                          answers[currentQuestion._id] === 'False' ? 'text-red-900' : 'text-gray-700 group-hover:text-gray-900'
+                        }`}>False</span>
+                        {answers[currentQuestion._id] === 'False' && (
+                          <div className="flex-shrink-0 ml-4">
+                            <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+                              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
                       </label>
                     </>
                   )}
@@ -967,38 +1086,49 @@ const TakeTest = () => {
                   )}
                 </div>
               </div>
-
-              {/* Navigation buttons */}
-              <div className="flex items-center justify-between pt-6 border-t">
+            </div>
+              
+            {/* Navigation buttons */}
+            <div className="flex items-center justify-between pt-8 mt-8 border-t-2 border-gray-100 px-8 pb-8">
                 <button
                   onClick={previousQuestion}
                   disabled={currentQuestionIndex === 0}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`group px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center space-x-2 ${
                     currentQuestionIndex === 0
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 hover:from-gray-300 hover:to-gray-400 hover:shadow-lg hover:scale-105'
                   }`}
                 >
-                  ← Previous
+                  <svg className={`w-5 h-5 ${currentQuestionIndex !== 0 ? 'group-hover:-translate-x-1' : ''} transition-transform duration-200`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span>Previous</span>
                 </button>
 
                 <button
                   onClick={() => setShowSubmitConfirm(true)}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                  className="group relative px-8 py-3 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all duration-200 flex items-center space-x-2 overflow-hidden"
                 >
-                  Submit Test
+                  <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
+                  <svg className="relative z-10 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="relative z-10">Submit Test</span>
                 </button>
 
                 <button
                   onClick={nextQuestion}
                   disabled={currentQuestionIndex === test.questions.length - 1}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`group px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center space-x-2 ${
                     currentQuestionIndex === test.questions.length - 1
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-2xl hover:scale-105'
                   }`}
                 >
-                  Next →
+                  <span>Next</span>
+                  <svg className={`w-5 h-5 ${currentQuestionIndex !== test.questions.length - 1 ? 'group-hover:translate-x-1' : ''} transition-transform duration-200`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -1006,70 +1136,114 @@ const TakeTest = () => {
 
           {/* Question palette sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-4 sticky top-24">
-              <h3 className="font-semibold text-gray-900 mb-4">Question Palette</h3>
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden sticky top-24">
+              {/* Sidebar Header */}
+              <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-5 py-4">
+                <h3 className="font-bold text-white flex items-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  <span>Question Palette</span>
+                </h3>
+              </div>
               
-              <div className="mb-4 text-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-600">Answered:</span>
-                  <span className="font-semibold text-green-600">{getAnsweredCount()}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Not Answered:</span>
-                  <span className="font-semibold text-gray-600">{test.questions.length - getAnsweredCount()}</span>
-                </div>
-              </div>
-
-              {/* Tab Switch Counter */}
-              {tabSwitchCount > 0 && (
-                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="flex items-center justify-between">
+              <div className="p-5">
+                {/* Progress Stats */}
+                <div className="mb-6 space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
                     <div className="flex items-center space-x-2">
-                      <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      <span className="text-xs font-medium text-yellow-800">Tab Switches</span>
+                      <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-sm font-semibold text-green-900">Answered</span>
                     </div>
-                    <span className={`text-lg font-bold ${tabSwitchCount >= 3 ? 'text-red-600' : 'text-yellow-600'}`}>
-                      {tabSwitchCount}
-                    </span>
+                    <span className="text-2xl font-bold text-green-600">{getAnsweredCount()}</span>
                   </div>
-                  {tabSwitchCount >= 3 && (
-                    <p className="text-xs text-red-600 mt-1">Flagged as suspicious</p>
-                  )}
+                  <div className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border border-gray-200">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-slate-400 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <span className="text-sm font-semibold text-gray-700">Remaining</span>
+                    </div>
+                    <span className="text-2xl font-bold text-gray-600">{test.questions.length - getAnsweredCount()}</span>
+                  </div>
                 </div>
-              )}
 
-              <div className="grid grid-cols-4 gap-2">
-                {test.questions.map((question, index) => (
-                  <button
-                    key={question._id}
-                    onClick={() => goToQuestion(index)}
-                    className={`aspect-square rounded-lg font-semibold text-sm transition-all ${
-                      index === currentQuestionIndex
-                        ? 'bg-blue-600 text-white ring-2 ring-blue-400'
-                        : answers[question._id]
-                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
-              </div>
+                {/* Tab Switch Counter */}
+                {tabSwitchCount > 0 && (
+                  <div className={`mb-5 p-4 rounded-xl border-2 ${
+                    tabSwitchCount >= 3 
+                      ? 'bg-gradient-to-r from-red-50 to-pink-50 border-red-300' 
+                      : 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-300'
+                  }`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                          tabSwitchCount >= 3 ? 'bg-red-500' : 'bg-yellow-500'
+                        }`}>
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                        </div>
+                        <span className={`text-xs font-bold uppercase tracking-wide ${
+                          tabSwitchCount >= 3 ? 'text-red-800' : 'text-yellow-800'
+                        }`}>Tab Switches</span>
+                      </div>
+                      <span className={`text-2xl font-bold ${
+                        tabSwitchCount >= 3 ? 'text-red-600 animate-pulse' : 'text-yellow-600'
+                      }`}>
+                        {tabSwitchCount}
+                      </span>
+                    </div>
+                    {tabSwitchCount >= 3 && (
+                      <div className="flex items-center space-x-1 text-xs text-red-700 font-semibold bg-red-100 rounded-lg px-2 py-1">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
+                        </svg>
+                        <span>Flagged as Suspicious</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-              <div className="mt-4 pt-4 border-t">
-                <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
-                  <div className="w-4 h-4 bg-green-100 rounded"></div>
-                  <span>Answered</span>
+                {/* Question Grid */}
+                <div className="grid grid-cols-4 gap-2 mb-5">
+                  {test.questions.map((question, index) => (
+                    <button
+                      key={question._id}
+                      onClick={() => goToQuestion(index)}
+                      className={`aspect-square rounded-xl font-bold text-sm transition-all duration-200 transform hover:scale-110 ${
+                        index === currentQuestionIndex
+                          ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white ring-4 ring-blue-300 shadow-xl scale-105'
+                          : answers[question._id]
+                          ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white hover:shadow-lg'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gradient-to-br hover:from-gray-200 hover:to-gray-300 hover:shadow-md'
+                      }`}
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
-                  <div className="w-4 h-4 bg-gray-100 rounded"></div>
-                  <span>Not Answered</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-gray-600">
-                  <div className="w-4 h-4 bg-blue-600 rounded"></div>
-                  <span>Current</span>
+
+                {/* Legend */}
+                <div className="pt-4 border-t-2 border-gray-100 space-y-3">
+                  <div className="flex items-center gap-3 text-xs">
+                    <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg shadow-sm"></div>
+                    <span className="text-gray-700 font-medium">Answered</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs">
+                    <div className="w-8 h-8 bg-gray-100 rounded-lg border-2 border-gray-200"></div>
+                    <span className="text-gray-700 font-medium">Not Answered</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg shadow-lg"></div>
+                    <span className="text-gray-700 font-medium">Current Question</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1079,27 +1253,97 @@ const TakeTest = () => {
 
       {/* Submit confirmation modal */}
       {showSubmitConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Submit Test?</h3>
-            <p className="text-gray-600 mb-6">
-              You have answered {getAnsweredCount()} out of {test.questions.length} questions.
-              {getAnsweredCount() < test.questions.length && ' Are you sure you want to submit?'}
-            </p>
-            <div className="flex gap-4">
-              <button
-                onClick={() => setShowSubmitConfirm(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
-              >
-                Review Answers
-              </button>
-              <button
-                onClick={() => submitTest(false)}
-                disabled={submitting}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400"
-              >
-                {submitting ? 'Submitting...' : 'Submit'}
-              </button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all animate-scale-in">
+            {/* Modal Header with Gradient */}
+            <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-6 py-5">
+              <div className="flex items-center justify-center">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center animate-pulse">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-white text-center mt-4 drop-shadow-lg">Submit Test?</h3>
+            </div>
+            
+            {/* Modal Content */}
+            <div className="p-6">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-6 border border-blue-200">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold text-gray-700">Progress Summary</span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span className="text-sm text-gray-600">Answered</span>
+                    </div>
+                    <span className="text-lg font-bold text-green-600">{getAnsweredCount()}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                      <span className="text-sm text-gray-600">Not Answered</span>
+                    </div>
+                    <span className="text-lg font-bold text-gray-600">{test.questions.length - getAnsweredCount()}</span>
+                  </div>
+                  <div className="pt-2 border-t border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-700">Total Questions</span>
+                      <span className="text-lg font-bold text-blue-600">{test.questions.length}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {getAnsweredCount() < test.questions.length && (
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-r-lg">
+                  <div className="flex items-start space-x-3">
+                    <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <p className="text-sm text-yellow-800">
+                      You have <strong>{test.questions.length - getAnsweredCount()} unanswered question(s)</strong>. Are you sure you want to submit?
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => setShowSubmitConfirm(false)}
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 flex items-center justify-center space-x-2 group"
+                >
+                  <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  <span>Review Answers</span>
+                </button>
+                <button
+                  onClick={() => submitTest(false)}
+                  disabled={submitting}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2 group relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
+                  {submitting ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span className="relative z-10">Submitting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="relative z-10 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="relative z-10">Submit Now</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
