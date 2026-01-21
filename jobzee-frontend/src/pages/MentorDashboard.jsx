@@ -1947,107 +1947,123 @@ const MentorDashboard = () => {
             </div>
           ) : (
             <>
-              {/* Welcome Section */}
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-8 mb-8 flex items-center justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    Welcome,{" "}
-                    <span className="text-blue-600">
-                      {mentor.name?.split(" ")[0] || "Mentor"}
-                    </span>
-                  </h1>
-                  <p className="text-gray-600">
-                    Manage all the things from single Dashboard. See latest info
-                    sessions, recent conversations and update your
-                    recommendations.
-                  </p>
-                </div>
-                <div className="flex-shrink-0">
-                  <svg className="w-40 h-40" viewBox="0 0 200 200" fill="none">
-                    <circle cx="100" cy="80" r="30" fill="#FFB8B8" />
-                    <rect
-                      x="85"
-                      y="110"
-                      width="30"
-                      height="50"
-                      rx="5"
-                      fill="#FF6B6B"
-                    />
-                    <rect
-                      x="70"
-                      y="120"
-                      width="15"
-                      height="40"
-                      rx="5"
-                      fill="#FFB8B8"
-                    />
-                    <rect
-                      x="115"
-                      y="120"
-                      width="15"
-                      height="40"
-                      rx="5"
-                      fill="#FFB8B8"
-                    />
-                    <circle cx="90" cy="75" r="3" fill="#000" />
-                    <circle cx="110" cy="75" r="3" fill="#000" />
-                    <path
-                      d="M 90 85 Q 100 90 110 85"
-                      stroke="#000"
-                      strokeWidth="2"
-                      fill="none"
-                    />
-                    <rect
-                      x="75"
-                      y="160"
-                      width="20"
-                      height="30"
-                      rx="5"
-                      fill="#4A90E2"
-                    />
-                    <rect
-                      x="105"
-                      y="160"
-                      width="20"
-                      height="30"
-                      rx="5"
-                      fill="#4A90E2"
-                    />
-                    <rect
-                      x="60"
-                      y="40"
-                      width="80"
-                      height="40"
-                      rx="20"
-                      fill="#2C3E50"
-                    />
-                    <path
-                      d="M 120 100 L 140 110 L 140 140"
-                      stroke="#FFB8B8"
-                      strokeWidth="8"
-                      strokeLinecap="round"
-                    />
-                  </svg>
+              {/* Hero Welcome Section with Modern Gradient */}
+              <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden mb-8 border border-gray-100">
+                {/* Animated Background Pattern */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 opacity-90"></div>
+                <div className="absolute inset-0 opacity-20" style={{
+                  backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 80%, white 1px, transparent 1px)',
+                  backgroundSize: '40px 40px'
+                }}></div>
+                
+                <div className="relative p-10 flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full mb-4">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-white text-sm font-semibold">Online & Ready</span>
+                    </div>
+                    <h1 className="text-5xl font-bold text-white mb-3 drop-shadow-lg">
+                      Welcome back,{" "}
+                      <span className="text-yellow-300">
+                        {mentor.name?.split(" ")[0] || "Mentor"}! 👋
+                      </span>
+                    </h1>
+                    <p className="text-blue-100 text-lg leading-relaxed max-w-2xl mb-6">
+                      Your mentorship journey continues. Manage sessions, connect with students, and inspire the next generation of professionals.
+                    </p>
+                    <div className="flex items-center space-x-4">
+                      <button
+                        onClick={() => setActiveSection("sessions")}
+                        className="group px-6 py-3 bg-white text-blue-600 rounded-xl font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-200 flex items-center space-x-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        <span>Create Session</span>
+                      </button>
+                      <button
+                        onClick={() => navigate("/mentor/messages")}
+                        className="px-6 py-3 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 flex items-center space-x-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                        <span>Messages</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Modern Illustration */}
+                  <div className="flex-shrink-0 ml-8">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl"></div>
+                      <svg className="relative w-56 h-56" viewBox="0 0 200 200" fill="none">
+                        {/* Mentor figure */}
+                        <circle cx="100" cy="80" r="32" fill="#FFF" opacity="0.9"/>
+                        <rect x="82" y="112" width="36" height="55" rx="6" fill="#FFE082" opacity="0.9"/>
+                        {/* Arms */}
+                        <rect x="65" y="122" width="17" height="42" rx="6" fill="#FFE082" opacity="0.9"/>
+                        <rect x="118" y="122" width="17" height="42" rx="6" fill="#FFE082" opacity="0.9"/>
+                        {/* Eyes */}
+                        <circle cx="92" cy="78" r="4" fill="#1E40AF"/>
+                        <circle cx="108" cy="78" r="4" fill="#1E40AF"/>
+                        {/* Smile */}
+                        <path d="M 88 88 Q 100 94 112 88" stroke="#1E40AF" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                        {/* Legs */}
+                        <rect x="75" y="165" width="22" height="32" rx="6" fill="#60A5FA" opacity="0.9"/>
+                        <rect x="103" y="165" width="22" height="32" rx="6" fill="#60A5FA" opacity="0.9"/>
+                        {/* Graduation cap */}
+                        <rect x="55" y="45" width="90" height="8" rx="4" fill="#FBBF24" opacity="0.9"/>
+                        <rect x="75" y="35" width="50" height="15" rx="3" fill="#FBBF24" opacity="0.9"/>
+                        {/* Books */}
+                        <g opacity="0.8">
+                          <rect x="20" y="150" width="15" height="45" rx="2" fill="#EF4444" transform="rotate(-10 27.5 172.5)"/>
+                          <rect x="40" y="155" width="15" height="40" rx="2" fill="#3B82F6"/>
+                          <rect x="155" y="155" width="15" height="38" rx="2" fill="#10B981" transform="rotate(8 162.5 174)"/>
+                        </g>
+                        {/* Floating elements */}
+                        <circle cx="35" cy="60" r="6" fill="#FBBF24" opacity="0.6">
+                          <animate attributeName="cy" values="60;55;60" dur="2s" repeatCount="indefinite"/>
+                        </circle>
+                        <circle cx="165" cy="75" r="5" fill="#3B82F6" opacity="0.6">
+                          <animate attributeName="cy" values="75;70;75" dur="2.5s" repeatCount="indefinite"/>
+                        </circle>
+                        <circle cx="50" cy="100" r="4" fill="#EF4444" opacity="0.6">
+                          <animate attributeName="cy" values="100;95;100" dur="3s" repeatCount="indefinite"/>
+                        </circle>
+                      </svg>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Content Grid */}
               <div className="grid grid-cols-2 gap-8 mb-8">
-                {/* Ongoing Info Sessions */}
+                {/* Upcoming Sessions with Modern Card Design */}
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">
-                    Upcoming Sessions
-                  </h3>
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                      Upcoming Sessions
+                    </h3>
+                    <button 
+                      onClick={() => navigate("/mentor/sessions")}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-semibold flex items-center space-x-1 hover:underline">
+                      <span>View All</span>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
                   <div className="space-y-4">
                     {bookedSessions.length === 0 ? (
-                      <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="bg-white rounded-2xl p-10 shadow-lg border border-gray-100 text-center">
+                        <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                         </div>
-                        <p className="text-gray-600 text-sm">No upcoming sessions</p>
-                        <p className="text-gray-400 text-xs mt-1">Sessions booked by students will appear here</p>
+                        <p className="text-gray-700 font-semibold mb-2">No upcoming sessions</p>
+                        <p className="text-gray-500 text-sm">Sessions booked by students will appear here</p>
                       </div>
                     ) : (
                       bookedSessions.slice(0, 3).map((session) => {
@@ -2058,31 +2074,64 @@ const MentorDashboard = () => {
                         return (
                           <div
                             key={session._id}
-                            className="bg-white rounded-xl p-5 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                            className="group relative bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300"
                           >
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center space-x-2">
-                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                <span className="text-sm font-semibold text-green-600">
-                                  {hoursUntil > 0 ? `${hoursUntil}h until session` : 'Starting soon'}
-                                </span>
+                            {/* Gradient Border Effect */}
+                            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur"></div>
+                            
+                            <div className="relative">
+                              <div className="flex items-start justify-between mb-4">
+                                <div className="flex items-center space-x-2">
+                                  <div className="relative">
+                                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                                    <div className="absolute inset-0 w-3 h-3 bg-green-400 rounded-full animate-ping"></div>
+                                  </div>
+                                  <span className="px-3 py-1 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 rounded-full text-xs font-bold border border-green-200">
+                                    {hoursUntil > 0 ? `${hoursUntil}h until session` : 'Starting soon'}
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={() => navigate('/mentor/sessions')}
+                                  className="px-4 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-xs font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 hover:shadow-lg"
+                                >
+                                  View
+                                </button>
                               </div>
-                              <button
-                                onClick={() => navigate('/mentor/sessions')}
-                                className="px-3 py-1 bg-gray-900 text-white rounded-lg text-xs font-medium hover:bg-gray-800 transition-colors"
-                              >
-                                View
-                              </button>
+                              
+                              <div className="flex items-start space-x-3 mb-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                  <span className="text-white font-bold text-sm">
+                                    {session.userId?.name?.charAt(0).toUpperCase() || 'U'}
+                                  </span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs text-gray-500 mb-1">Student</p>
+                                  <h4 className="font-bold text-gray-900 truncate">
+                                    {session.userId?.name || 'Unknown'}
+                                  </h4>
+                                </div>
+                              </div>
+                              
+                              <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-3 mb-3">
+                                <h4 className="font-semibold text-gray-900 text-sm mb-1">
+                                  {session.sessionTypeId?.title || 'Mentorship Session'}
+                                </h4>
+                                <div className="flex items-center space-x-4 text-xs text-gray-600">
+                                  <div className="flex items-center space-x-1">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <span>{sessionDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>{session.scheduledTime}</span>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
-                            <p className="text-xs text-gray-500 mb-1">
-                              Student: {session.userId?.name || 'Unknown'}
-                            </p>
-                            <h4 className="font-semibold text-gray-900 mb-2 text-sm">
-                              {session.sessionTypeId?.title || 'Mentorship Session'}
-                            </h4>
-                            <p className="text-xs text-gray-500">
-                              {sessionDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {session.scheduledTime}
-                            </p>
                           </div>
                         );
                       })
@@ -2090,105 +2139,187 @@ const MentorDashboard = () => {
                   </div>
                 </div>
 
-                {/* Quick Stats */}
+                {/* Quick Stats with Gradient Cards */}
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-5">
                     Quick Stats
                   </h3>
-                  <div className="space-y-3">
-                    <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-                      <div className="flex items-center justify-between">
+                  <div className="space-y-4">
+                    {/* Total Sessions Card */}
+                    <div className="group relative bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+                      <div className="relative flex items-center justify-between">
                         <div>
-                          <p className="text-xs text-gray-500 mb-1">Total Sessions</p>
-                          <p className="text-2xl font-bold text-gray-900">{bookedSessions.length}</p>
+                          <p className="text-blue-100 text-sm font-semibold mb-2">Total Sessions</p>
+                          <p className="text-5xl font-bold text-white mb-1">{bookedSessions.length}</p>
+                          <p className="text-blue-200 text-xs">Booked sessions</p>
                         </div>
-                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-                      <div className="flex items-center justify-between">
+                    {/* Session Types Card */}
+                    <div className="group relative bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+                      <div className="relative flex items-center justify-between">
                         <div>
-                          <p className="text-xs text-gray-500 mb-1">Session Types</p>
-                          <p className="text-2xl font-bold text-gray-900">{mySessions.length}</p>
+                          <p className="text-purple-100 text-sm font-semibold mb-2">Session Templates</p>
+                          <p className="text-5xl font-bold text-white mb-1">{mySessions.length}</p>
+                          <p className="text-purple-200 text-xs">Active templates</p>
                         </div>
-                        <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                          <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                           </svg>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-5 shadow-sm text-white">
-                      <p className="text-xs text-gray-300 mb-2">Quick Actions</p>
-                      <button
-                        onClick={() => setActiveSection('sessions')}
-                        className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors mb-2"
-                      >
-                        Manage Sessions
-                      </button>
-                      <button
-                        onClick={() => navigate('/mentor/sessions')}
-                        className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
-                      >
-                        View All Bookings
-                      </button>
+                    {/* Quick Actions Card */}
+                    <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300">
+                      <p className="text-gray-300 text-sm font-semibold mb-4 flex items-center space-x-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span>Quick Actions</span>
+                      </p>
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => setActiveSection('sessions')}
+                          className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-xl text-white text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 flex items-center justify-center space-x-2"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                          <span>Manage Sessions</span>
+                        </button>
+                        <button
+                          onClick={() => navigate('/mentor/sessions')}
+                          className="w-full py-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-xl text-white text-sm font-semibold transition-all duration-200 flex items-center justify-center space-x-2"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          <span>View All Bookings</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Your Recommendations */}
+              {/* Your Recommendations - Enhanced Modern Design */}
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                     Your Recommendations
                   </h3>
-                  <button className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
-                    See all
+                  <button className="group px-5 py-2.5 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl text-sm font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center space-x-2">
+                    <span>See all</span>
+                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </button>
                 </div>
                 <div className="grid grid-cols-3 gap-6">
-                  <div className="bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl p-8 text-center hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
-                      <svg
-                        className="w-8 h-8 text-pink-600"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
-                      </svg>
+                  {/* Books Card */}
+                  <div className="group relative bg-gradient-to-br from-pink-400 via-pink-500 to-rose-500 rounded-3xl p-10 text-center hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden hover:scale-105">
+                    {/* Animated Background Circles */}
+                    <div className="absolute top-0 right-0 w-40 h-40 bg-white/20 rounded-full -mr-20 -mt-20 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16 group-hover:scale-150 transition-transform duration-500"></div>
+                    
+                    <div className="relative">
+                      <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                        <svg
+                          className="w-10 h-10 text-pink-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+                        </svg>
+                      </div>
+                      <h4 className="text-2xl font-bold text-white mb-2">Books</h4>
+                      <p className="text-pink-100 text-sm">Discover curated reading material</p>
+                      
+                      {/* Hover Arrow */}
+                      <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="inline-flex items-center space-x-2 text-white text-sm font-semibold">
+                          <span>Explore</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
-                    <h4 className="text-xl font-bold text-gray-900">Books</h4>
                   </div>
-                  <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl p-8 text-center hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
-                      <svg
-                        className="w-8 h-8 text-blue-600"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-                      </svg>
+
+                  {/* Videos Card */}
+                  <div className="group relative bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 rounded-3xl p-10 text-center hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden hover:scale-105">
+                    {/* Animated Background Circles */}
+                    <div className="absolute top-0 right-0 w-40 h-40 bg-white/20 rounded-full -mr-20 -mt-20 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16 group-hover:scale-150 transition-transform duration-500"></div>
+                    
+                    <div className="relative">
+                      <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                        <svg
+                          className="w-10 h-10 text-blue-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                        </svg>
+                      </div>
+                      <h4 className="text-2xl font-bold text-white mb-2">Videos</h4>
+                      <p className="text-blue-100 text-sm">Watch expert tutorials</p>
+                      
+                      {/* Hover Arrow */}
+                      <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="inline-flex items-center space-x-2 text-white text-sm font-semibold">
+                          <span>Explore</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
-                    <h4 className="text-xl font-bold text-gray-900">Videos</h4>
                   </div>
-                  <div className="bg-gradient-to-br from-green-100 to-green-200 rounded-2xl p-8 text-center hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
-                      <svg
-                        className="w-8 h-8 text-green-600"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
-                      </svg>
+
+                  {/* Courses Card */}
+                  <div className="group relative bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 rounded-3xl p-10 text-center hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden hover:scale-105">
+                    {/* Animated Background Circles */}
+                    <div className="absolute top-0 right-0 w-40 h-40 bg-white/20 rounded-full -mr-20 -mt-20 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16 group-hover:scale-150 transition-transform duration-500"></div>
+                    
+                    <div className="relative">
+                      <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                        <svg
+                          className="w-10 h-10 text-green-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                        </svg>
+                      </div>
+                      <h4 className="text-2xl font-bold text-white mb-2">Courses</h4>
+                      <p className="text-green-100 text-sm">Enroll in learning paths</p>
+                      
+                      {/* Hover Arrow */}
+                      <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="inline-flex items-center space-x-2 text-white text-sm font-semibold">
+                          <span>Explore</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
-                    <h4 className="text-xl font-bold text-gray-900">Courses</h4>
                   </div>
                 </div>
               </div>
