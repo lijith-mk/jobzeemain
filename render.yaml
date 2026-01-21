@@ -1,0 +1,69 @@
+services:
+  # Backend API Service
+  - type: web
+    name: jobzee-backend
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: jobzee-backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: jobzee-frontend
+          property: url
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: FROM_EMAIL
+        sync: false
+      - key: FROM_NAME
+        value: "Jobzee Platform"
+      - key: APP_NAME
+        value: JobZee
+
+  # Frontend Static Site
+  - type: web
+    name: jobzee-frontend
+    runtime: static
+    region: oregon
+    plan: free
+    rootDir: jobzee-frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: build
+    envVars:
+      - key: REACT_APP_API_URL
+        fromService:
+          type: web
+          name: jobzee-backend
+          property: url
+      - key: REACT_APP_GOOGLE_CLIENT_ID
+        sync: false
+      - key: REACT_APP_MAPBOX_TOKEN
+        sync: false
+      - key: NODE_ENV
+        value: production

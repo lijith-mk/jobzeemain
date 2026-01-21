@@ -1,0 +1,343 @@
+/* Payment Page Styles */
+.payment-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 40px 20px;
+}
+
+.payment-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.payment-header {
+    text-align: center;
+    margin-bottom: 40px;
+    color: white;
+}
+
+.payment-header h1 {
+    font-size: 36px;
+    margin: 0 0 10px 0;
+    font-weight: 700;
+}
+
+.payment-subtitle {
+    font-size: 18px;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.payment-content {
+    display: grid;
+    gap: 24px;
+}
+
+/* Session Summary Card */
+.session-summary-card {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.session-summary-card h3 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 20px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    color: #666;
+    font-size: 15px;
+}
+
+.summary-row strong {
+    color: #333;
+    font-weight: 600;
+}
+
+.summary-divider {
+    height: 1px;
+    background: #e0e0e0;
+    margin: 16px 0;
+}
+
+.total-row {
+    padding-top: 16px;
+    font-size: 16px;
+}
+
+.total-row strong {
+    font-size: 18px;
+}
+
+.amount-large {
+    color: #667eea !important;
+    font-size: 28px !important;
+    font-weight: 700 !important;
+}
+
+/* Payment Card */
+.payment-card {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.payment-mode-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    color: #333;
+}
+
+.badge-icon {
+    font-size: 20px;
+}
+
+.payment-info {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.info-text {
+    margin: 8px 0;
+    color: #856404;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.info-text strong {
+    font-weight: 600;
+}
+
+.payment-order-info {
+    background: #f5f7fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.order-detail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.order-detail span {
+    color: #666;
+    font-size: 14px;
+}
+
+.order-detail code {
+    background: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    color: #667eea;
+    border: 1px solid #e0e0e0;
+}
+
+.order-detail strong {
+    color: #333;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* Simulate Payment Button */
+.btn-simulate-payment {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.btn-simulate-payment:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(17, 153, 142, 0.4);
+}
+
+.btn-simulate-payment:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.payment-icon {
+    font-size: 24px;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Razorpay Payment Button */
+.btn-razorpay-payment {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #3395ff 0%, #3d5afe 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.btn-razorpay-payment:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(51, 149, 255, 0.4);
+}
+
+.btn-razorpay-payment:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Payment Methods Info */
+.payment-methods-info {
+    background: #f5f7fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.methods-title {
+    margin: 0 0 12px 0;
+    color: #666;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.methods-icons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.methods-icons span {
+    background: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #333;
+    border: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.payment-footer {
+    text-align: center;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.footer-note {
+    margin: 0;
+    color: #999;
+    font-size: 13px;
+}
+
+/* Security Note */
+.payment-security-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: white;
+    font-size: 14px;
+    margin-top: 24px;
+    opacity: 0.9;
+}
+
+.security-icon {
+    font-size: 20px;
+}
+
+/* Loading & Error States */
+.loading-spinner,
+.error-message {
+    text-align: center;
+    padding: 60px;
+    color: white;
+    font-size: 18px;
+}
+
+.error-message {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .payment-header h1 {
+        font-size: 28px;
+    }
+
+    .payment-subtitle {
+        font-size: 16px;
+    }
+
+    .session-summary-card,
+    .payment-card {
+        padding: 20px;
+    }
+
+    .amount-large {
+        font-size: 24px !important;
+    }
+
+    .btn-simulate-payment,
+    .btn-razorpay-payment {
+        font-size: 16px;
+        padding: 16px;
+    }
+
+    .methods-icons {
+        grid-template-columns: 1fr;
+    }
+}
