@@ -25,9 +25,23 @@ const UserProfile = () => {
     bio: '',
     profilePicture: '',
     title: '',
+    professionalHeadline: '',
+    // Personal Info
+    dateOfBirth: '',
+    gender: '',
+    nationality: '',
+    // Career Info
     experience: '',
+    currentCompany: '',
+    currentSalary: {
+      amount: '',
+      currency: 'INR'
+    },
+    // Education
     education: '',
+    educationDetails: [],
     skills: [],
+    skillsWithProficiency: [],
     languages: [],
     portfolio: '',
     github: '',
@@ -47,6 +61,16 @@ const UserProfile = () => {
   });
 
   const [newSkill, setNewSkill] = useState('');
+  const [newSkillProficiency, setNewSkillProficiency] = useState('intermediate');
+  const [newSkillIsPrimary, setNewSkillIsPrimary] = useState(false);
+  const [newEducation, setNewEducation] = useState({
+    degree: '',
+    specialization: '',
+    institution: '',
+    yearOfPassing: '',
+    cgpa: '',
+    percentage: ''
+  });
   const [newLanguage, setNewLanguage] = useState('');
   const [newAchievement, setNewAchievement] = useState('');
   const [newCertification, setNewCertification] = useState('');
@@ -227,11 +251,25 @@ const UserProfile = () => {
           country: data.user.country || '',
           location: data.user.location || '',
           bio: data.user.bio || '',
-          profilePicture: data.user.profilePhoto || '', // Fixed mapping
+          profilePicture: data.user.profilePhoto || '',
           title: data.user.title || '',
+          professionalHeadline: data.user.professionalHeadline || '',
+          // Personal Info
+          dateOfBirth: data.user.dateOfBirth ? new Date(data.user.dateOfBirth).toISOString().split('T')[0] : '',
+          gender: data.user.gender || '',
+          nationality: data.user.nationality || '',
+          // Career Info
           experience: data.user.experience || '',
+          currentCompany: data.user.currentCompany || '',
+          currentSalary: {
+            amount: data.user.currentSalary?.amount || '',
+            currency: data.user.currentSalary?.currency || 'INR'
+          },
+          // Education
           education: data.user.education || '',
+          educationDetails: data.user.educationDetails || [],
           skills: data.user.skills || [],
+          skillsWithProficiency: data.user.skillsWithProficiency || [],
           languages: data.user.languages || [],
           portfolio: data.user.portfolio || '',
           github: data.user.socialMedia?.github || '',
@@ -520,6 +558,62 @@ const UserProfile = () => {
       }
     }));
   };
+
+  // Education helpers
+  const addEducation = () => {
+    if (newEducation.degree && newEducation.institution) {
+      setFormData(prev => ({
+        ...prev,
+        educationDetails: [...prev.educationDetails, { ...newEducation }]
+      }));
+      setNewEducation({
+        degree: '',
+        specialization: '',
+        institution: '',
+        yearOfPassing: '',
+        cgpa: '',
+        percentage: ''
+      });
+    } else {
+      toast.error('Please provide at least degree and institution');
+    }
+  };
+
+  const removeEducation = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      educationDetails: prev.educationDetails.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Skill with proficiency helpers
+  const addSkillWithProficiency = () => {
+    if (newSkill.trim()) {
+      const isDuplicate = formData.skillsWithProficiency.some(s => s.skill.toLowerCase() === newSkill.trim().toLowerCase());
+      if (!isDuplicate) {
+        setFormData(prev => ({
+          ...prev,
+          skillsWithProficiency: [...prev.skillsWithProficiency, {
+            skill: newSkill.trim(),
+            proficiency: newSkillProficiency,
+            isPrimary: newSkillIsPrimary
+          }]
+        }));
+        setNewSkill('');
+        setNewSkillProficiency('intermediate');
+        setNewSkillIsPrimary(false);
+      } else {
+        toast.error('Skill already added');
+      }
+    }
+  };
+
+  const removeSkillWithProficiency = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      skillsWithProficiency: prev.skillsWithProficiency.filter((_, i) => i !== index)
+    }));
+  };
   
   // Enhanced validation handlers
   const validatePhoneField = (phone, onFocus = false) => {
@@ -545,6 +639,129 @@ const UserProfile = () => {
   
   const handlePhoneBlur = () => {
     validatePhoneField(formData.phone);
+  };
+
+  // Validation for new fields
+  const validateDateOfBirth = (dob) => {
+    const errors = [];
+    if (!dob) return errors;
+    
+    const birthDate = new Date(dob);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    
+    if (birthDate > today) {
+      errors.push('Date of birth cannot be in the future');
+    } else if (age < 16) {
+      errors.push('You must be at least 16 years old');
+    } else if (age > 100) {
+      errors.push('Please enter a valid date of birth');
+    }
+    
+    setValidationErrors(prev => ({ ...prev, dateOfBirth: errors }));
+    return errors;
+  };
+
+  const validateCurrentSalary = (amount) => {
+    const errors = [];
+    if (!amount) return errors;
+    
+    const salary = Number(amount);
+    if (isNaN(salary)) {
+      errors.push('Please enter a valid number');
+    } else if (salary < 0) {
+      errors.push('Salary cannot be negative');
+    } else if (salary > 100000000) {
+      errors.push('Please enter a reasonable salary amount');
+    }
+    
+    setValidationErrors(prev => ({ ...prev, currentSalary: errors }));
+    return errors;
+  };
+
+  const validateProfessionalHeadline = (headline) => {
+    const errors = [];
+    if (headline && headline.length > 150) {
+      errors.push('Professional headline should not exceed 150 characters');
+    }
+    setValidationErrors(prev => ({ ...prev, professionalHeadline: errors }));
+    return errors;
+  };
+
+  const validateNationality = (nationality) => {
+    const errors = [];
+    if (nationality && nationality.length < 2) {
+      errors.push('Please enter a valid nationality');
+    }
+    if (nationality && nationality.length > 50) {
+      errors.push('Nationality should not exceed 50 characters');
+    }
+    setValidationErrors(prev => ({ ...prev, nationality: errors }));
+    return errors;
+  };
+
+  const validateCompanyName = (company) => {
+    const errors = [];
+    if (company && company.length < 2) {
+      errors.push('Company name should be at least 2 characters');
+    }
+    if (company && company.length > 100) {
+      errors.push('Company name should not exceed 100 characters');
+    }
+    setValidationErrors(prev => ({ ...prev, currentCompany: errors }));
+    return errors;
+  };
+
+  const validateEducationField = (field, value) => {
+    if (field === 'yearOfPassing') {
+      const year = Number(value);
+      const currentYear = new Date().getFullYear();
+      if (year && (year < 1950 || year > currentYear + 5)) {
+        toast.error('Please enter a valid year between 1950 and ' + (currentYear + 5));
+        return false;
+      }
+    }
+    if (field === 'cgpa') {
+      const cgpa = parseFloat(value);
+      if (value && (cgpa < 0 || cgpa > 10)) {
+        toast.error('CGPA should be between 0 and 10');
+        return false;
+      }
+    }
+    if (field === 'percentage') {
+      const percentage = Number(value);
+      if (value && (percentage < 0 || percentage > 100)) {
+        toast.error('Percentage should be between 0 and 100');
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleFieldBlur = (fieldName) => {
+    setFieldTouched(prev => ({ ...prev, [fieldName]: true }));
+    
+    switch(fieldName) {
+      case 'dateOfBirth':
+        validateDateOfBirth(formData.dateOfBirth);
+        break;
+      case 'currentSalary':
+        validateCurrentSalary(formData.currentSalary?.amount);
+        break;
+      case 'professionalHeadline':
+        validateProfessionalHeadline(formData.professionalHeadline);
+        break;
+      case 'nationality':
+        validateNationality(formData.nationality);
+        break;
+      case 'currentCompany':
+        validateCompanyName(formData.currentCompany);
+        break;
+    }
+  };
+
+  const handleFieldFocus = (fieldName) => {
+    setFieldTouched(prev => ({ ...prev, [fieldName]: true }));
   };
 
   if (loading) {
@@ -989,6 +1206,182 @@ const UserProfile = () => {
                     <p className="text-gray-900 bg-gray-50 rounded-xl px-4 py-3 ring-1 ring-black/5">{formData.experience || 'Not provided'}</p>
                   )}
                 </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Professional Headline</label>
+                  {isEditing ? (
+                    <div>
+                      <input
+                        type="text"
+                        value={formData.professionalHeadline}
+                        onChange={(e) => handleInputChange('professionalHeadline', e.target.value)}
+                        onFocus={() => handleFieldFocus('professionalHeadline')}
+                        onBlur={() => handleFieldBlur('professionalHeadline')}
+                        className={`w-full border rounded-xl px-4 py-3 text-gray-800 focus:outline-none transition-all duration-200 bg-white/70 ${
+                          validationErrors.professionalHeadline && validationErrors.professionalHeadline.length > 0 && fieldTouched.professionalHeadline
+                            ? 'border-red-400 focus:border-transparent focus:ring-4 focus:ring-red-200'
+                            : 'border-gray-200 focus:border-transparent focus:ring-4 focus:ring-indigo-200'
+                        }`}
+                        placeholder="e.g., MERN Stack Developer | Open to Work"
+                        maxLength="150"
+                      />
+                      {validationErrors.professionalHeadline && validationErrors.professionalHeadline.length > 0 && fieldTouched.professionalHeadline && (
+                        <p className="text-red-500 text-xs mt-1">{validationErrors.professionalHeadline[0]}</p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">{formData.professionalHeadline.length}/150 characters</p>
+                    </div>
+                  ) : (
+                    <p className="text-gray-900 bg-gray-50 rounded-xl px-4 py-3 ring-1 ring-black/5">{formData.professionalHeadline || 'Not provided'}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
+                  {isEditing ? (
+                    <div>
+                      <input
+                        type="date"
+                        value={formData.dateOfBirth}
+                        onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                        onFocus={() => handleFieldFocus('dateOfBirth')}
+                        onBlur={() => handleFieldBlur('dateOfBirth')}
+                        max={new Date().toISOString().split('T')[0]}
+                        className={`w-full border rounded-xl px-4 py-3 text-gray-800 focus:outline-none transition-all duration-200 bg-white/70 ${
+                          validationErrors.dateOfBirth && validationErrors.dateOfBirth.length > 0 && fieldTouched.dateOfBirth
+                            ? 'border-red-400 focus:border-transparent focus:ring-4 focus:ring-red-200'
+                            : 'border-gray-200 focus:border-transparent focus:ring-4 focus:ring-indigo-200'
+                        }`}
+                      />
+                      {validationErrors.dateOfBirth && validationErrors.dateOfBirth.length > 0 && fieldTouched.dateOfBirth && (
+                        <p className="text-red-500 text-xs mt-1">{validationErrors.dateOfBirth[0]}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-gray-900 bg-gray-50 rounded-xl px-4 py-3 ring-1 ring-black/5">{formData.dateOfBirth ? new Date(formData.dateOfBirth).toLocaleDateString() : 'Not provided'}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
+                  {isEditing ? (
+                    <select
+                      value={formData.gender}
+                      onChange={(e) => handleInputChange('gender', e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-800 focus:outline-none focus:border-transparent focus:ring-4 focus:ring-indigo-200 transition-all duration-200 bg-white/70"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                      <option value="prefer-not-to-say">Prefer not to say</option>
+                    </select>
+                  ) : (
+                    <p className="text-gray-900 bg-gray-50 rounded-xl px-4 py-3 ring-1 ring-black/5">{formData.gender ? formData.gender.charAt(0).toUpperCase() + formData.gender.slice(1).replace(/-/g, ' ') : 'Not provided'}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Nationality</label>
+                  {isEditing ? (
+                    <div>
+                      <input
+                        type="text"
+                        value={formData.nationality}
+                        onChange={(e) => handleInputChange('nationality', e.target.value)}
+                        onFocus={() => handleFieldFocus('nationality')}
+                        onBlur={() => handleFieldBlur('nationality')}
+                        className={`w-full border rounded-xl px-4 py-3 text-gray-800 focus:outline-none transition-all duration-200 bg-white/70 ${
+                          validationErrors.nationality && validationErrors.nationality.length > 0 && fieldTouched.nationality
+                            ? 'border-red-400 focus:border-transparent focus:ring-4 focus:ring-red-200'
+                            : 'border-gray-200 focus:border-transparent focus:ring-4 focus:ring-indigo-200'
+                        }`}
+                        placeholder="e.g., Indian"
+                        maxLength="50"
+                      />
+                      {validationErrors.nationality && validationErrors.nationality.length > 0 && fieldTouched.nationality && (
+                        <p className="text-red-500 text-xs mt-1">{validationErrors.nationality[0]}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-gray-900 bg-gray-50 rounded-xl px-4 py-3 ring-1 ring-black/5">{formData.nationality || 'Not provided'}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Current Company</label>
+                  {isEditing ? (
+                    <div>
+                      <input
+                        type="text"
+                        value={formData.currentCompany}
+                        onChange={(e) => handleInputChange('currentCompany', e.target.value)}
+                        onFocus={() => handleFieldFocus('currentCompany')}
+                        onBlur={() => handleFieldBlur('currentCompany')}
+                        className={`w-full border rounded-xl px-4 py-3 text-gray-800 focus:outline-none transition-all duration-200 bg-white/70 ${
+                          validationErrors.currentCompany && validationErrors.currentCompany.length > 0 && fieldTouched.currentCompany
+                            ? 'border-red-400 focus:border-transparent focus:ring-4 focus:ring-red-200'
+                            : 'border-gray-200 focus:border-transparent focus:ring-4 focus:ring-indigo-200'
+                        }`}
+                        placeholder="e.g., Google, Microsoft"
+                        maxLength="100"
+                      />
+                      {validationErrors.currentCompany && validationErrors.currentCompany.length > 0 && fieldTouched.currentCompany && (
+                        <p className="text-red-500 text-xs mt-1">{validationErrors.currentCompany[0]}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-gray-900 bg-gray-50 rounded-xl px-4 py-3 ring-1 ring-black/5">{formData.currentCompany || 'Not provided'}</p>
+                  )}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Current Salary</label>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="col-span-2">
+                      {isEditing ? (
+                        <div>
+                          <input
+                            type="number"
+                            value={formData.currentSalary?.amount}
+                            onChange={(e) => handleInputChange('currentSalary', { ...formData.currentSalary, amount: e.target.value })}
+                            onFocus={() => handleFieldFocus('currentSalary')}
+                            onBlur={() => handleFieldBlur('currentSalary')}
+                            className={`w-full border rounded-xl px-4 py-3 text-gray-800 focus:outline-none transition-all duration-200 bg-white/70 ${
+                              validationErrors.currentSalary && validationErrors.currentSalary.length > 0 && fieldTouched.currentSalary
+                                ? 'border-red-400 focus:border-transparent focus:ring-4 focus:ring-red-200'
+                                : 'border-gray-200 focus:border-transparent focus:ring-4 focus:ring-indigo-200'
+                            }`}
+                            placeholder="e.g., 500000"
+                            min="0"
+                          />
+                          {validationErrors.currentSalary && validationErrors.currentSalary.length > 0 && fieldTouched.currentSalary && (
+                            <p className="text-red-500 text-xs mt-1">{validationErrors.currentSalary[0]}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-gray-900 bg-gray-50 rounded-xl px-4 py-3 ring-1 ring-black/5">
+                          {formData.currentSalary?.amount ? `${formData.currentSalary.amount}` : 'Not provided'}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      {isEditing ? (
+                        <select
+                          value={formData.currentSalary?.currency || 'INR'}
+                          onChange={(e) => handleInputChange('currentSalary', { ...formData.currentSalary, currency: e.target.value })}
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-800 focus:outline-none focus:border-transparent focus:ring-4 focus:ring-indigo-200 transition-all duration-200 bg-white/70"
+                        >
+                          <option value="INR">INR</option>
+                          <option value="USD">USD</option>
+                          <option value="EUR">EUR</option>
+                          <option value="GBP">GBP</option>
+                        </select>
+                      ) : (
+                        <p className="text-gray-900 bg-gray-50 rounded-xl px-4 py-3 ring-1 ring-black/5">{formData.currentSalary?.currency || 'INR'}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1023,6 +1416,132 @@ const UserProfile = () => {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Education Details */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden ring-1 ring-black/5">
+            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-8 py-6">
+              <h3 className="text-xl font-extrabold text-white flex items-center tracking-wide">
+                <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                </svg>
+                Education Details
+              </h3>
+            </div>
+            
+            <div className="p-8">
+              {isEditing && (
+                <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <h4 className="text-sm font-bold text-gray-800 mb-3">Add Education</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      value={newEducation.degree}
+                      onChange={(e) => setNewEducation({...newEducation, degree: e.target.value})}
+                      placeholder="Degree (e.g., B.Tech, MBA)"
+                      className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      type="text"
+                      value={newEducation.specialization}
+                      onChange={(e) => setNewEducation({...newEducation, specialization: e.target.value})}
+                      placeholder="Specialization (e.g., Computer Science)"
+                      className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      type="text"
+                      value={newEducation.institution}
+                      onChange={(e) => setNewEducation({...newEducation, institution: e.target.value})}
+                      placeholder="Institution Name"
+                      className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      type="number"
+                      value={newEducation.yearOfPassing}
+                      onChange={(e) => {
+                        if (validateEducationField('yearOfPassing', e.target.value)) {
+                          setNewEducation({...newEducation, yearOfPassing: e.target.value});
+                        }
+                      }}
+                      placeholder="Year of Passing"
+                      className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      min="1950"
+                      max={new Date().getFullYear() + 5}
+                    />
+                    <input
+                      type="text"
+                      value={newEducation.cgpa}
+                      onChange={(e) => {
+                        if (validateEducationField('cgpa', e.target.value)) {
+                          setNewEducation({...newEducation, cgpa: e.target.value});
+                        }
+                      }}
+                      placeholder="CGPA (e.g., 8.5)"
+                      className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      step="0.01"
+                      min="0"
+                      max="10"
+                    />
+                    <input
+                      type="number"
+                      value={newEducation.percentage}
+                      onChange={(e) => {
+                        if (validateEducationField('percentage', e.target.value)) {
+                          setNewEducation({...newEducation, percentage: e.target.value});
+                        }
+                      }}
+                      placeholder="Percentage (e.g., 85)"
+                      className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      min="0"
+                      max="100"
+                    />
+                  </div>
+                  <button
+                    onClick={addEducation}
+                    className="mt-3 w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-medium"
+                  >
+                    Add Education
+                  </button>
+                </div>
+              )}
+              
+              <div className="space-y-4">
+                {formData.educationDetails && formData.educationDetails.length > 0 ? (
+                  formData.educationDetails.map((edu, index) => (
+                    <div key={index} className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <h4 className="text-lg font-bold text-gray-900">{edu.degree}</h4>
+                          {edu.specialization && (
+                            <p className="text-sm text-gray-700 font-medium">{edu.specialization}</p>
+                          )}
+                        </div>
+                        {isEditing && (
+                          <button
+                            onClick={() => removeEducation(index)}
+                            className="text-red-500 hover:text-red-700 transition-colors"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 mb-1">{edu.institution}</p>
+                      <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                        {edu.yearOfPassing && <span>📅 {edu.yearOfPassing}</span>}
+                        {edu.cgpa && <span>📊 CGPA: {edu.cgpa}</span>}
+                        {edu.percentage && <span>📈 {edu.percentage}%</span>}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm italic text-center py-4">No education details added</p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1143,6 +1662,97 @@ const UserProfile = () => {
                     <p className="text-gray-500 text-sm italic text-center py-4">No languages added</p>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Skills with Proficiency */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden ring-1 ring-black/5">
+            <div className="bg-gradient-to-r from-teal-600 to-emerald-600 px-8 py-6">
+              <h3 className="text-xl font-extrabold text-white flex items-center tracking-wide">
+                <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+                Skills with Proficiency
+              </h3>
+            </div>
+            
+            <div className="p-8">
+              {isEditing && (
+                <div className="mb-6 p-4 bg-teal-50 rounded-xl border border-teal-200">
+                  <h4 className="text-sm font-bold text-gray-800 mb-3">Add Skill with Proficiency</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input
+                      type="text"
+                      value={newSkill}
+                      onChange={(e) => setNewSkill(e.target.value)}
+                      placeholder="Skill name"
+                      className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    />
+                    <select
+                      value={newSkillProficiency}
+                      onChange={(e) => setNewSkillProficiency(e.target.value)}
+                      className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    >
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="expert">Expert</option>
+                    </select>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newSkillIsPrimary}
+                        onChange={(e) => setNewSkillIsPrimary(e.target.checked)}
+                        className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                      />
+                      <span className="text-sm text-gray-700">Primary Skill</span>
+                    </label>
+                  </div>
+                  <button
+                    onClick={addSkillWithProficiency}
+                    className="mt-3 w-full bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-all duration-200 text-sm font-medium"
+                  >
+                    Add Skill
+                  </button>
+                </div>
+              )}
+              
+              <div className="space-y-3">
+                {formData.skillsWithProficiency && formData.skillsWithProficiency.length > 0 ? (
+                  formData.skillsWithProficiency.map((skillObj, index) => (
+                    <div key={index} className="flex items-center justify-between bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl p-4 border border-teal-200">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="text-base font-bold text-gray-900">{skillObj.skill}</h4>
+                          {skillObj.isPrimary && (
+                            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">Primary</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            skillObj.proficiency === 'expert' ? 'bg-green-100 text-green-800' :
+                            skillObj.proficiency === 'intermediate' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {skillObj.proficiency.charAt(0).toUpperCase() + skillObj.proficiency.slice(1)}
+                          </span>
+                        </div>
+                      </div>
+                      {isEditing && (
+                        <button
+                          onClick={() => removeSkillWithProficiency(index)}
+                          className="text-red-500 hover:text-red-700 transition-colors"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm italic text-center py-4">No skills with proficiency added</p>
+                )}
               </div>
             </div>
           </div>

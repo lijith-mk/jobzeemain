@@ -255,10 +255,6 @@ const MentorProfileDetails = () => {
                                     <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Session Info</h3>
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center">
-                                            <span className="text-gray-600">Price</span>
-                                            <span className="font-bold text-green-600">{mentor.price}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
                                             <span className="text-gray-600">Response Time</span>
                                             <span className="font-medium text-gray-900">Within 24h</span>
                                         </div>

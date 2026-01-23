@@ -17,7 +17,7 @@ const EmployerPostJob = () => {
     experienceLevel: 'entry',
     salaryMin: '',
     salaryMax: '',
-    currency: 'USD',
+    currency: 'INR',
     requirements: '',
     benefits: '',
     skills: '',
@@ -284,7 +284,7 @@ const EmployerPostJob = () => {
       salary: {
         min: form.salaryMin ? Number(form.salaryMin) : undefined,
         max: form.salaryMax ? Number(form.salaryMax) : undefined,
-        currency: form.currency || 'USD'
+        currency: form.currency || 'INR'
       },
       requirements: toArray(form.requirements),
       benefits: toArray(form.benefits),
@@ -525,7 +525,7 @@ const EmployerPostJob = () => {
                     ? 'border-red-500 focus:ring-red-500' 
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
-                placeholder="USD"
+                placeholder="INR"
                 maxLength="3"
               />
               {formErrors.currency && touchedFields.currency && (

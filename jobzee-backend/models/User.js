@@ -16,7 +16,12 @@ const userSchema = new mongoose.Schema({
   // Basic profile fields
   bio: { type: String },
   title: { type: String }, // Professional title
+  professionalHeadline: { type: String }, // e.g., "MERN Stack Developer | Open to Work"
   website: { type: String },
+  // Personal Info
+  dateOfBirth: { type: Date },
+  gender: { type: String, enum: ['male', 'female', 'other', 'prefer-not-to-say'] },
+  nationality: { type: String },
   socialMedia: {
     github: { type: String },
     linkedIn: { type: String },
@@ -47,9 +52,30 @@ const userSchema = new mongoose.Schema({
   remotePreference: { type: String, enum: ['remote', 'hybrid', 'onsite', 'any', 'not-specified'], default: null },
   location: { type: String },
   skills: [{ type: String }],
+  // Skills with Proficiency
+  skillsWithProficiency: [{
+    skill: { type: String },
+    proficiency: { type: String, enum: ['beginner', 'intermediate', 'expert'] },
+    isPrimary: { type: Boolean, default: false }
+  }],
   education: { type: String },
+  // Structured Education
+  educationDetails: [{
+    degree: { type: String },
+    specialization: { type: String },
+    institution: { type: String },
+    yearOfPassing: { type: Number },
+    cgpa: { type: String },
+    percentage: { type: Number }
+  }],
   yearsOfExperience: { type: Number },
   currentRole: { type: String },
+  currentCompany: { type: String },
+  // Salary Info
+  currentSalary: {
+    amount: { type: Number },
+    currency: { type: String, default: 'INR' }
+  },
   preferredJobTypes: [{ type: String, enum: ['full-time', 'part-time', 'contract', 'internship'] }],
   workAuthorization: { type: String, enum: ['citizen', 'permanent-resident', 'work-visa', 'student-visa', 'other'] },
   willingToRelocate: { type: Boolean, default: false },

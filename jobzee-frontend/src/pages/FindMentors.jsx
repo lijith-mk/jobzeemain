@@ -342,12 +342,6 @@ const FindMentors = () => {
                                                 </svg>
                                                 <span className="font-bold text-gray-900">{mentor.rating}</span>
                                             </div>
-                                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded font-medium border ${(mentor.price === "Free" || mentor.price?.toLowerCase().includes("free"))
-                                                ? "bg-green-50 text-green-700 border-green-100"
-                                                : "bg-purple-50 text-purple-700 border-purple-100"
-                                                }`}>
-                                                {(mentor.price === "Free" || mentor.price?.toLowerCase().includes("free")) ? "Free" : mentor.price}
-                                            </span>
                                         </div>
                                     </div>
                                 </Link>
@@ -427,12 +421,6 @@ const FindMentors = () => {
                                             <div className="w-4 h-4 rounded-full bg-green-500 border border-white"></div>
                                         </div>
                                     </div>
-                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold border ${(mentor.price === "Free" || mentor.price?.toLowerCase().includes("free"))
-                                        ? "bg-green-50 text-green-700 border-green-100"
-                                        : "bg-purple-50 text-purple-700 border-purple-100"
-                                        }`}>
-                                        {(mentor.price === "Free" || mentor.price?.toLowerCase().includes("free")) ? "Free" : mentor.price}
-                                    </span>
                                 </div>
 
                                 {/* Content */}

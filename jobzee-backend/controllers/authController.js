@@ -327,6 +327,27 @@ exports.updateProfile = async (req, res) => {
     delete updateData.createdAt;
     delete updateData.updatedAt;
     
+    // Clean up empty strings for optional enum fields (convert to null)
+    const enumFields = ['gender', 'experienceLevel', 'remotePreference', 'workAuthorization', 'noticePeriod'];
+    enumFields.forEach(field => {
+      if (updateData[field] === '' || updateData[field] === null) {
+        updateData[field] = undefined; // Set to undefined so Mongoose doesn't save it
+      }
+    });
+    
+    // Clean up empty strings for optional fields
+    const optionalFields = ['professionalHeadline', 'dateOfBirth', 'nationality', 'currentCompany'];
+    optionalFields.forEach(field => {
+      if (updateData[field] === '') {
+        updateData[field] = undefined;
+      }
+    });
+    
+    // Clean up currentSalary if amount is empty
+    if (updateData.currentSalary && !updateData.currentSalary.amount) {
+      updateData.currentSalary = undefined;
+    }
+    
     // Validate expected salary if provided
     if (updateData.expectedSalary) {
       if (updateData.expectedSalary.min && isNaN(Number(updateData.expectedSalary.min))) {
