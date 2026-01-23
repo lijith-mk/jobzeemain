@@ -129,6 +129,8 @@ const Navbar = () => {
   const isMySessionsPage = /^\/my-sessions(\/|$)/.test(location.pathname);
   // Check if we are on Practice Arena page
   const isPracticeArenaPage = /^\/tests(\/|$)/.test(location.pathname);
+  // Check if we are on Learning Hub page
+  const isLearningHubPage = /^\/(learning-hub|course)(\/|$)/.test(location.pathname);
 
 
   return (
@@ -153,7 +155,41 @@ const Navbar = () => {
           <div className="hidden md:block">
             {!isMentorPage && (
               <div className="ml-10 flex items-baseline space-x-8">
-                {isPracticeArenaPage ? (
+                {isLearningHubPage ? (
+                  <>
+                    {/* Learning Hub Context - Only user-related links */}
+                    <Link
+                      to="/learning-hub"
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                        isActive('/learning-hub') || location.pathname.startsWith('/course')
+                          ? 'text-blue-600 bg-blue-50'
+                          : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                      }`}
+                    >
+                      Learning Hub
+                    </Link>
+                    <Link
+                      to="/dashboard"
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                        isActive('/dashboard')
+                          ? 'text-blue-600 bg-blue-50'
+                          : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                      }`}
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      to="/tests"
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                        isActive('/tests')
+                          ? 'text-blue-600 bg-blue-50'
+                          : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                      }`}
+                    >
+                      Practice Arena
+                    </Link>
+                  </>
+                ) : isPracticeArenaPage ? (
                   <>
                     {/* Practice Arena Context - Only user-related links */}
                     <Link
