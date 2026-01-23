@@ -86,6 +86,8 @@ import TakeTest from "./pages/TakeTest";
 import TestResult from "./pages/TestResult";
 import TestHistory from "./pages/TestHistory";
 import EmployerTests from "./pages/EmployerTests";
+import LearningHub from "./pages/LearningHub";
+import CourseDetail from "./pages/CourseDetail";
 
 function App() {
   // Initialize session manager and handle auto-logout
@@ -152,6 +154,9 @@ function App() {
             <Route path="/tests/:testId/result" element={<TestResult />} />
             <Route path="/tests/result/:resultId" element={<TestResult />} />
             <Route path="/tests/history" element={<TestHistory />} />
+            {/* Learning Hub Route */}
+            <Route path="/learning-hub" element={<LearningHub />} />
+            <Route path="/course/:courseId" element={<CourseDetail />} />
             {/* Internships listing page - public access */}
             <Route path="/internships" element={<Internships />} />
             <Route path="/internships/:id" element={<InternshipDetails />} />

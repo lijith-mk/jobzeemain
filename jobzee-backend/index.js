@@ -99,6 +99,7 @@ const calendarNoteRoutes = require("./routes/calendarNoteRoutes");
 const testRoutes = require("./routes/testRoutes");
 const employerTestRoutes = require("./routes/employerTestRoutes");
 const employerQuestionBankRoutes = require("./routes/employerQuestionBankRoutes");
+const learningRoutes = require("./routes/learningRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/employers", employerRoutes);
@@ -138,6 +139,7 @@ app.use("/api/calendar-notes", calendarNoteRoutes);
 app.use("/api/tests", testRoutes);
 app.use("/api/employer-tests", employerTestRoutes);
 app.use("/api/employer-questions", employerQuestionBankRoutes);
+app.use("/api/learning", learningRoutes);
 
 // Debug endpoint to test frontend connectivity
 app.get("/api/debug", (req, res) => {
