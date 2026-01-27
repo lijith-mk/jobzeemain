@@ -13,14 +13,13 @@ const courseProgressSchema = new mongoose.Schema({
   },
   progressPercentage: { type: Number, default: 0 },
   completedLessons: [{
-    moduleIndex: { type: Number, required: true },
-    lessonIndex: { type: Number, required: true },
-    completedAt: { type: Date, default: Date.now }
+    lessonId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson', required: true },
+    completedAt: { type: Date, default: Date.now },
+    timeSpent: { type: Number, default: 0 } // Time spent on this lesson in minutes
   }],
   timeSpent: { type: Number, default: 0 }, // Total time spent in minutes
   lastAccessedAt: { type: Date, default: Date.now },
-  currentModule: { type: Number, default: 0 },
-  currentLesson: { type: Number, default: 0 },
+  currentLessonId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' },
   quizScores: [{
     lessonId: { type: String },
     score: { type: Number },
@@ -29,8 +28,7 @@ const courseProgressSchema = new mongoose.Schema({
   }],
   notes: [{ type: String }],
   bookmarks: [{
-    moduleIndex: { type: Number },
-    lessonIndex: { type: Number },
+    lessonId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' },
     note: { type: String },
     createdAt: { type: Date, default: Date.now }
   }],

@@ -254,7 +254,7 @@ const LearningHub = () => {
             ) : (
               <div className="courses-grid">
                 {courses.map((course) => (
-                  <div key={course._id} className="course-card">
+                  <div key={course._id} className="course-card" onClick={() => navigate(`/course/${course._id}`)} style={{ cursor: 'pointer' }}>
                     <div className="course-thumbnail">
                       {course.thumbnail ? (
                         <img src={course.thumbnail} alt={course.title} />
@@ -280,7 +280,7 @@ const LearningHub = () => {
                       </div>
                       <button 
                         className="enroll-btn"
-                        onClick={() => handleEnrollCourse(course._id)}
+                        onClick={(e) => { e.stopPropagation(); handleEnrollCourse(course._id); }}
                       >
                         Enroll Now
                       </button>

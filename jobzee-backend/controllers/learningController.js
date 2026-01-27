@@ -1,4 +1,5 @@
 const Course = require('../models/Course');
+const Lesson = require('../models/Lesson');
 const CourseProgress = require('../models/CourseProgress');
 const LearningPath = require('../models/LearningPath');
 const LearningPathProgress = require('../models/LearningPathProgress');
@@ -39,23 +40,41 @@ exports.getCourses = async (req, res) => {
 exports.getCourseById = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
+      .populate('createdBy', 'name')
       .populate('relatedMentors', 'name photo role company rating')
       .populate('relatedTests', 'title description duration');
     
-    if (!course) {
+    if (!course || !course.isActive) {
       return res.status(404).json({ message: 'Course not found' });
     }
     
+    // Get lessons for this course
+    const lessons = await Lesson.find({ 
+      courseId: req.params.id,
+      isActive: true 
+    }).sort({ lessonOrder: 1 }).select('-textContent'); // Exclude full content in list
+    
     // If user is logged in, get their progress
     let progress = null;
+    let completedLessonIds = [];
     if (req.user) {
       progress = await CourseProgress.findOne({
         userId: req.user.id,
         courseId: req.params.id
       });
+      
+      if (progress) {
+        completedLessonIds = progress.completedLessons.map(l => l.lessonId?.toString());
+      }
     }
     
-    res.json({ course, progress });
+    // Add completion status to lessons
+    const lessonsWithProgress = lessons.map(lesson => ({
+      ...lesson.toObject(),
+      isCompleted: completedLessonIds.includes(lesson._id.toString())
+    }));
+    
+    res.json({ course, lessons: lessonsWithProgress, progress });
   } catch (error) {
     console.error('Get course error:', error);
     res.status(500).json({ message: 'Error fetching course', error: error.message });
@@ -103,7 +122,7 @@ exports.enrollCourse = async (req, res) => {
 exports.updateProgress = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { courseId, moduleIndex, lessonIndex, timeSpent } = req.body;
+    const { courseId, lessonId, timeSpent } = req.body;
     
     let progress = await CourseProgress.findOne({ userId, courseId });
     
@@ -113,11 +132,23 @@ exports.updateProgress = async (req, res) => {
     
     // Check if lesson already completed
     const alreadyCompleted = progress.completedLessons.some(
-      l => l.moduleIndex === moduleIndex && l.lessonIndex === lessonIndex
+      l => l.lessonId?.toString() === lessonId
     );
     
     if (!alreadyCompleted) {
-      progress.completedLessons.push({ moduleIndex, lessonIndex });
+      progress.completedLessons.push({ 
+        lessonId, 
+        completedAt: new Date(),
+        timeSpent: timeSpent || 0
+      });
+    } else if (timeSpent) {
+      // Update time spent for already completed lesson
+      const lessonProgress = progress.completedLessons.find(
+        l => l.lessonId?.toString() === lessonId
+      );
+      if (lessonProgress) {
+        lessonProgress.timeSpent = (lessonProgress.timeSpent || 0) + timeSpent;
+      }
     }
     
     // Update status
@@ -132,9 +163,10 @@ exports.updateProgress = async (req, res) => {
     }
     
     // Calculate progress percentage
-    const course = await Course.findById(courseId);
-    const totalLessons = course.modules.reduce((sum, module) => sum + module.lessons.length, 0);
-    progress.progressPercentage = Math.round((progress.completedLessons.length / totalLessons) * 100);
+    const totalLessons = await Lesson.countDocuments({ courseId, isActive: true });
+    progress.progressPercentage = totalLessons > 0 
+      ? Math.round((progress.completedLessons.length / totalLessons) * 100) 
+      : 0;
     
     // Check if completed
     if (progress.progressPercentage === 100 && progress.status !== 'completed') {
@@ -142,8 +174,7 @@ exports.updateProgress = async (req, res) => {
       progress.completedAt = new Date();
     }
     
-    progress.currentModule = moduleIndex;
-    progress.currentLesson = lessonIndex;
+    progress.currentLessonId = lessonId;
     progress.lastAccessedAt = new Date();
     
     await progress.save();
@@ -300,5 +331,42 @@ exports.rateCourse = async (req, res) => {
   } catch (error) {
     console.error('Rate course error:', error);
     res.status(500).json({ message: 'Error submitting rating', error: error.message });
+  }
+};
+
+// Get individual lesson details
+exports.getLessonById = async (req, res) => {
+  try {
+    const lesson = await Lesson.findById(req.params.id)
+      .populate('courseId', 'title')
+      .populate('createdBy', 'name');
+    
+    if (!lesson || !lesson.isActive) {
+      return res.status(404).json({ message: 'Lesson not found' });
+    }
+    
+    // Check if user has access (enrolled in course)
+    if (req.user) {
+      const progress = await CourseProgress.findOne({
+        userId: req.user.id,
+        courseId: lesson.courseId
+      });
+      
+      if (!progress) {
+        return res.status(403).json({ message: 'Not enrolled in this course' });
+      }
+      
+      // Check if lesson is completed
+      const isCompleted = progress.completedLessons.some(
+        l => l.lessonId?.toString() === lesson._id.toString()
+      );
+      
+      res.json({ lesson, isCompleted });
+    } else {
+      res.json({ lesson, isCompleted: false });
+    }
+  } catch (error) {
+    console.error('Get lesson error:', error);
+    res.status(500).json({ message: 'Error fetching lesson', error: error.message });
   }
 };

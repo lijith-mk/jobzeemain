@@ -89,7 +89,7 @@ import TestResult from "./pages/TestResult";
 import TestHistory from "./pages/TestHistory";
 import EmployerTests from "./pages/EmployerTests";
 import LearningHub from "./pages/LearningHub";
-import CourseDetail from "./pages/CourseDetail";
+import CourseView from "./pages/CourseView";
 
 function App() {
   // Initialize session manager and handle auto-logout
@@ -158,7 +158,7 @@ function App() {
             <Route path="/tests/history" element={<TestHistory />} />
             {/* Learning Hub Route */}
             <Route path="/learning-hub" element={<LearningHub />} />
-            <Route path="/course/:courseId" element={<CourseDetail />} />
+            <Route path="/course/:courseId" element={<CourseView />} />
             {/* Internships listing page - public access */}
             <Route path="/internships" element={<Internships />} />
             <Route path="/internships/:id" element={<InternshipDetails />} />

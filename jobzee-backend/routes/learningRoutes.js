@@ -6,6 +6,7 @@ const learningController = require('../controllers/learningController');
 // Course routes
 router.get('/courses', learningController.getCourses);
 router.get('/courses/:id', learningController.getCourseById);
+router.get('/lessons/:id', learningController.getLessonById);
 router.post('/courses/enroll', auth, learningController.enrollCourse);
 router.put('/courses/progress', auth, learningController.updateProgress);
 router.get('/my-courses', auth, learningController.getMyCourses);
