@@ -12,7 +12,6 @@ const CourseView = () => {
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEnrolled, setIsEnrolled] = useState(false);
-  const [selectedLesson, setSelectedLesson] = useState(null);
 
   useEffect(() => {
     fetchCourseData();
@@ -69,24 +68,8 @@ const CourseView = () => {
       toast.warning('Please enroll in the course first');
       return;
     }
-    setSelectedLesson(lesson);
-  };
-
-  const markLessonComplete = async (lessonId) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.put(
-        `${process.env.REACT_APP_API_URL}/api/learning/courses/progress`,
-        { courseId, lessonId, timeSpent: selectedLesson?.duration || 0 },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      toast.success('Lesson marked as complete!');
-      fetchCourseData();
-    } catch (error) {
-      console.error('Error updating progress:', error);
-      toast.error('Failed to update progress');
-    }
+    // Navigate to lesson viewer page
+    navigate(`/lesson/${lesson._id}`);
   };
 
   const getLevelBadgeClass = (level) => {
@@ -302,46 +285,6 @@ const CourseView = () => {
           </div>
         )}
       </div>
-
-      {/* Lesson Modal */}
-      {selectedLesson && (
-        <div className="lesson-modal-overlay" onClick={() => setSelectedLesson(null)}>
-          <div className="lesson-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="lesson-modal-header">
-              <h2>{selectedLesson.title}</h2>
-              <button onClick={() => setSelectedLesson(null)} className="close-modal">×</button>
-            </div>
-            
-            <div className="lesson-modal-content">
-              {selectedLesson.videoUrl && (
-                <div className="lesson-video">
-                  <iframe
-                    src={selectedLesson.videoUrl}
-                    title={selectedLesson.title}
-                    frameBorder="0"
-                    allowFullScreen
-                  ></iframe>
-                </div>
-              )}
-              
-              {selectedLesson.textContent && (
-                <div className="lesson-text">
-                  <div dangerouslySetInnerHTML={{ __html: selectedLesson.textContent }} />
-                </div>
-              )}
-              
-              {!selectedLesson.isCompleted && (
-                <button 
-                  onClick={() => markLessonComplete(selectedLesson._id)}
-                  className="btn-complete-lesson"
-                >
-                  Mark as Complete
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
