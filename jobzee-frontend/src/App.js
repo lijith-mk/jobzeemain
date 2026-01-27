@@ -31,6 +31,7 @@ import EmployerProfile from "./components/EmployerProfile";
 import AdminLogin from "./components/AdminLogin";
 import AdminDashboard from "./components/AdminDashboard";
 import AdminCreateCourse from "./components/AdminCreateCourse";
+import AdminCourseView from "./components/AdminCourseView";
 import EmployerPostJob from "./components/EmployerPostJob";
 import EmployerPostInternship from "./components/EmployerPostInternship";
 import EmployerInternships from "./pages/EmployerInternships";
@@ -267,6 +268,7 @@ function App() {
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/create-course" element={<AdminCreateCourse />} />
+            <Route path="/admin/courses/:courseId" element={<AdminCourseView />} />
 
             <Route path="*" element={<PageNotFound />} />
           </Routes>

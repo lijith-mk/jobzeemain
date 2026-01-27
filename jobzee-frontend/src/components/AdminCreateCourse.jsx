@@ -73,7 +73,7 @@ const AdminCreateCourse = () => {
     setLoading(true);
     
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
       
       // Prepare data
       const courseData = {

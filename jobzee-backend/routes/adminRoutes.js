@@ -3177,4 +3177,137 @@ router.delete('/courses/:id', adminAuth, async (req, res) => {
   }
 });
 
+// ====================================
+// LESSON MANAGEMENT ROUTES
+// ====================================
+
+// Get all lessons for a course
+router.get('/courses/:courseId/lessons', adminAuth, async (req, res) => {
+  try {
+    const lessons = await Lesson.find({ courseId: req.params.courseId })
+      .sort({ lessonOrder: 1 })
+      .populate('createdBy', 'name email');
+    
+    res.json({ success: true, lessons });
+  } catch (error) {
+    console.error('Get lessons error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching lessons', error: error.message });
+  }
+});
+
+// Create new lesson
+router.post('/courses/:courseId/lessons', adminAuth, async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+    
+    const lessonData = {
+      ...req.body,
+      courseId: req.params.courseId,
+      createdBy: req.admin._id
+    };
+    
+    const lesson = new Lesson(lessonData);
+    await lesson.save();
+    
+    res.status(201).json({ 
+      success: true, 
+      message: 'Lesson created successfully', 
+      lesson 
+    });
+  } catch (error) {
+    console.error('Create lesson error:', error);
+    res.status(500).json({ success: false, message: 'Error creating lesson', error: error.message });
+  }
+});
+
+// Update lesson
+router.put('/lessons/:id', adminAuth, async (req, res) => {
+  try {
+    const lesson = await Lesson.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true, runValidators: true }
+    );
+    
+    if (!lesson) {
+      return res.status(404).json({ success: false, message: 'Lesson not found' });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Lesson updated successfully', 
+      lesson 
+    });
+  } catch (error) {
+    console.error('Update lesson error:', error);
+    res.status(500).json({ success: false, message: 'Error updating lesson', error: error.message });
+  }
+});
+
+// Toggle lesson status
+router.patch('/lessons/:id/status', adminAuth, async (req, res) => {
+  try {
+    const lesson = await Lesson.findById(req.params.id);
+    
+    if (!lesson) {
+      return res.status(404).json({ success: false, message: 'Lesson not found' });
+    }
+    
+    lesson.isActive = !lesson.isActive;
+    await lesson.save();
+    
+    res.json({ 
+      success: true, 
+      message: `Lesson ${lesson.isActive ? 'activated' : 'deactivated'} successfully`, 
+      lesson 
+    });
+  } catch (error) {
+    console.error('Toggle lesson status error:', error);
+    res.status(500).json({ success: false, message: 'Error toggling lesson status', error: error.message });
+  }
+});
+
+// Delete lesson
+router.delete('/lessons/:id', adminAuth, async (req, res) => {
+  try {
+    const lesson = await Lesson.findByIdAndDelete(req.params.id);
+    
+    if (!lesson) {
+      return res.status(404).json({ success: false, message: 'Lesson not found' });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Lesson deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Delete lesson error:', error);
+    res.status(500).json({ success: false, message: 'Error deleting lesson', error: error.message });
+  }
+});
+
+// Reorder lessons
+router.patch('/courses/:courseId/lessons/reorder', adminAuth, async (req, res) => {
+  try {
+    const { lessons } = req.body; // Array of { _id, lessonOrder }
+    
+    const updatePromises = lessons.map(({ _id, lessonOrder }) =>
+      Lesson.findByIdAndUpdate(_id, { lessonOrder })
+    );
+    
+    await Promise.all(updatePromises);
+    
+    res.json({ 
+      success: true, 
+      message: 'Lessons reordered successfully' 
+    });
+  } catch (error) {
+    console.error('Reorder lessons error:', error);
+    res.status(500).json({ success: false, message: 'Error reordering lessons', error: error.message });
+  }
+});
+
 module.exports = router;
