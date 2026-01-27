@@ -4,17 +4,32 @@ const courseSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   thumbnail: { type: String },
-  category: { 
+  
+  // Skill category classification
+  skillCategory: { 
     type: String, 
-    enum: ['programming', 'data-science', 'design', 'business', 'marketing', 'soft-skills', 'other'],
+    enum: ['technical', 'business', 'creative', 'communication', 'leadership', 'other'],
     required: true 
   },
+  
+  // General category
+  category: { 
+    type: String, 
+    enum: ['web-development', 'data-science', 'mobile-development', 'cloud-computing', 'cybersecurity', 'design', 'business', 'marketing', 'soft-skills', 'other'],
+    required: true 
+  },
+  
+  // Target job roles this course prepares for
+  targetJobRoles: [{ type: String }], // e.g., ['Full Stack Developer', 'Data Analyst', 'UI/UX Designer']
+  
+  // Difficulty level
   level: { 
     type: String, 
     enum: ['beginner', 'intermediate', 'advanced'],
     required: true 
   },
-  skills: [{ type: String }], // Skills covered in this course
+  
+  skills: [{ type: String }], // Specific skills covered in this course
   duration: { type: Number }, // Duration in hours
   modules: [{
     title: { type: String, required: true },
@@ -44,16 +59,22 @@ const courseSchema = new mongoose.Schema({
   enrollmentCount: { type: Number, default: 0 },
   averageRating: { type: Number, default: 0 },
   totalReviews: { type: Number, default: 0 },
+  
   // Integration fields
   relatedMentors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'MentorApplication' }],
   relatedTests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'EmployerTest' }],
   certificateTemplate: { type: String }, // URL to certificate template
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  
+  // Creator reference
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true });
 
 // Index for search and filtering
 courseSchema.index({ title: 'text', description: 'text', tags: 'text' });
 courseSchema.index({ category: 1, level: 1 });
+courseSchema.index({ skillCategory: 1 });
 courseSchema.index({ skills: 1 });
+courseSchema.index({ targetJobRoles: 1 });
+courseSchema.index({ isActive: 1 });
 
 module.exports = mongoose.model('Course', courseSchema);

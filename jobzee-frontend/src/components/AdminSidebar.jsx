@@ -18,6 +18,7 @@ const AdminSidebar = ({
     { id: "session-templates", name: "Session Templates", icon: "📋" },
     { id: "jobs", name: "Jobs", icon: "💼" },
     { id: "internships", name: "Internships", icon: "🎓" },
+    { id: "courses", name: "Courses", icon: "📚" },
     { id: "events", name: "Events", icon: "🎉" },
     { id: "tests", name: "Tests", icon: "📝" },
     { id: "payments", name: "Payments", icon: "💰" },

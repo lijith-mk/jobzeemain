@@ -30,6 +30,7 @@ import EmployerDashboard from "./pages/EmployerDashboard";
 import EmployerProfile from "./components/EmployerProfile";
 import AdminLogin from "./components/AdminLogin";
 import AdminDashboard from "./components/AdminDashboard";
+import AdminCreateCourse from "./components/AdminCreateCourse";
 import EmployerPostJob from "./components/EmployerPostJob";
 import EmployerPostInternship from "./components/EmployerPostInternship";
 import EmployerInternships from "./pages/EmployerInternships";
@@ -265,6 +266,7 @@ function App() {
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/create-course" element={<AdminCreateCourse />} />
 
             <Route path="*" element={<PageNotFound />} />
           </Routes>

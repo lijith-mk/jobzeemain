@@ -248,6 +248,16 @@ const AdminDashboard = () => {
     requirementsCSV: "",
     skillsCSV: "",
   });
+
+  // Course management state
+  const [courses, setCourses] = useState([]);
+  const [coursePage, setCoursePage] = useState(1);
+  const [courseTotalPages, setCourseTotalPages] = useState(1);
+  const [courseSearch, setCourseSearch] = useState("");
+  const [courseCategory, setCourseCategory] = useState("");
+  const [courseLevel, setCourseLevel] = useState("");
+  const [courseStatus, setCourseStatus] = useState("");
+  const [showCreateCourse, setShowCreateCourse] = useState(false);
   const [createInternshipFormErrors, setCreateInternshipFormErrors] = useState(
     {},
   );
@@ -463,6 +473,73 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error("Fetch tests error:", error);
+      toast.error("Network error");
+    }
+  };
+
+  // Course Management Functions
+  const fetchCourses = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const params = new URLSearchParams();
+      if (courseCategory) params.append('category', courseCategory);
+      if (courseLevel) params.append('level', courseLevel);
+      if (courseStatus) params.append('isActive', courseStatus);
+      if (coursePage) params.append('page', coursePage);
+      
+      const res = await fetch(`${API_BASE_URL}/api/admin/courses?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCourses(data.courses || []);
+        setCourseTotalPages(data.totalPages || 1);
+      } else {
+        toast.error("Failed to fetch courses");
+      }
+    } catch (error) {
+      console.error("Fetch courses error:", error);
+      toast.error("Network error");
+    }
+  };
+
+  const toggleCourseStatus = async (courseId) => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE_URL}/api/admin/courses/${courseId}/status`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        toast.success("Course status updated");
+        fetchCourses();
+      } else {
+        toast.error("Failed to update course status");
+      }
+    } catch (error) {
+      console.error("Toggle course status error:", error);
+      toast.error("Network error");
+    }
+  };
+
+  const deleteCourse = async (courseId) => {
+    if (!window.confirm('Are you sure you want to delete this course? This will also delete all associated lessons.')) {
+      return;
+    }
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE_URL}/api/admin/courses/${courseId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        toast.success("Course deleted successfully");
+        fetchCourses();
+      } else {
+        toast.error("Failed to delete course");
+      }
+    } catch (error) {
+      console.error("Delete course error:", error);
       toast.error("Network error");
     }
   };
@@ -1032,7 +1109,16 @@ const AdminDashboard = () => {
     if (activeTab === "tests") {
       fetchTests();
     }
+    if (activeTab === "courses") {
+      fetchCourses();
+    }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "courses") {
+      fetchCourses();
+    }
+  }, [coursePage, courseCategory, courseLevel, courseStatus]);
 
   const fetchDashboardData = async () => {
     try {
@@ -9322,6 +9408,136 @@ const AdminDashboard = () => {
                 <div className="mt-6 flex justify-end space-x-2">
                   <button onClick={() => { setShowCreateTemplate(false); setShowEditTemplate(false); }} className="px-4 py-2 border rounded hover:bg-gray-50">Cancel</button>
                   <button onClick={showCreateTemplate ? createSessionTemplate : updateSessionTemplate} className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">{showCreateTemplate ? "Create" : "Update"}</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Courses Management */}
+          {activeTab === "courses" && (
+            <div className="bg-white rounded-lg shadow-sm">
+              <div className="p-6 border-b">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Courses Management</h3>
+                  <div className="space-x-2">
+                    <button onClick={fetchCourses} className="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800">
+                      Refresh
+                    </button>
+                    <button onClick={() => setShowCreateCourse(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                      + Create Course
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-4 mb-4">
+                  <input
+                    type="text"
+                    placeholder="Search courses..."
+                    value={courseSearch}
+                    onChange={(e) => setCourseSearch(e.target.value)}
+                    className="flex-1 px-4 py-2 border rounded-lg"
+                  />
+                  <select value={courseCategory} onChange={(e) => setCourseCategory(e.target.value)} className="px-4 py-2 border rounded-lg">
+                    <option value="">All Categories</option>
+                    <option value="web-development">Web Development</option>
+                    <option value="data-science">Data Science</option>
+                    <option value="mobile-development">Mobile Development</option>
+                    <option value="cloud-computing">Cloud Computing</option>
+                    <option value="cybersecurity">Cybersecurity</option>
+                    <option value="design">Design</option>
+                    <option value="business">Business</option>
+                    <option value="marketing">Marketing</option>
+                    <option value="soft-skills">Soft Skills</option>
+                  </select>
+                  <select value={courseLevel} onChange={(e) => setCourseLevel(e.target.value)} className="px-4 py-2 border rounded-lg">
+                    <option value="">All Levels</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                  </select>
+                  <select value={courseStatus} onChange={(e) => setCourseStatus(e.target.value)} className="px-4 py-2 border rounded-lg">
+                    <option value="">All Status</option>
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                  </select>
+                  <button onClick={fetchCourses} className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                    Filter
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Level</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Enrollments</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {courses.map((course) => (
+                      <tr key={course._id}>
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-gray-900">{course.title}</div>
+                          <div className="text-sm text-gray-500">{course.targetJobRoles?.slice(0, 2).join(', ')}</div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">{course.category}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 text-xs rounded-full ${course.level === 'beginner' ? 'bg-green-100 text-green-800' : course.level === 'intermediate' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                            {course.level}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">{course.enrollmentCount || 0}</td>
+                        <td className="px-6 py-4 text-sm text-gray-700">⭐ {course.averageRating?.toFixed(1) || 'N/A'}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 text-xs rounded-full ${course.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                            {course.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm space-x-2">
+                          <button onClick={() => navigate(`/admin/courses/${course._id}`)} className="text-blue-600 hover:text-blue-800">View</button>
+                          <button onClick={() => toggleCourseStatus(course._id)} className="text-yellow-600 hover:text-yellow-800">
+                            {course.isActive ? 'Deactivate' : 'Activate'}
+                          </button>
+                          <button onClick={() => deleteCourse(course._id)} className="text-red-600 hover:text-red-800">Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {courseTotalPages > 1 && (
+                <div className="p-4 border-t flex justify-between items-center">
+                  <div className="text-sm text-gray-700">Page {coursePage} of {courseTotalPages}</div>
+                  <div className="flex space-x-2">
+                    <button disabled={coursePage === 1} onClick={() => { setCoursePage(coursePage - 1); }} className="px-3 py-1 border rounded disabled:opacity-50">Previous</button>
+                    <button disabled={coursePage === courseTotalPages} onClick={() => { setCoursePage(coursePage + 1); }} className="px-3 py-1 border rounded disabled:opacity-50">Next</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {showCreateCourse && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+              <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full m-4 max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b">
+                  <h3 className="text-lg font-semibold">Create Course will redirect to form</h3>
+                  <p className="text-sm text-gray-600 mt-2">This will open the detailed course creation form where you can add all course information.</p>
+                </div>
+                <div className="p-6">
+                  <button onClick={() => { setShowCreateCourse(false); navigate('/admin/create-course'); }} className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700">
+                    Go to Course Creation Form
+                  </button>
+                </div>
+                <div className="p-6 border-t flex justify-end">
+                  <button onClick={() => setShowCreateCourse(false)} className="px-4 py-2 border rounded hover:bg-gray-50">Cancel</button>
                 </div>
               </div>
             </div>

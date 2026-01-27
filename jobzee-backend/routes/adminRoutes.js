@@ -22,6 +22,8 @@ const Question = require('../models/Question');
 const TestAttempt = require('../models/TestAttempt');
 const Answer = require('../models/Answer');
 const planController = require('../controllers/planController');
+const Course = require('../models/Course');
+const Lesson = require('../models/Lesson');
 
 // Initialize admin account - SECURITY: Restrict this in production
 router.post('/init', adminLimiter, async (req, res) => {
@@ -3023,5 +3025,156 @@ router.post('/plans/:planId/duplicate', adminAuth, checkPermission('planManageme
 
 // Bulk update plan status
 router.patch('/plans/bulk-status', adminAuth, checkPermission('planManagement'), planController.bulkUpdatePlanStatus);
+
+// ====================================
+// COURSE MANAGEMENT ROUTES
+// ====================================
+
+// Get all courses (with filters)
+router.get('/courses', adminAuth, async (req, res) => {
+  try {
+    const { skillCategory, category, level, isActive, page = 1, limit = 20 } = req.query;
+    
+    const query = {};
+    if (skillCategory) query.skillCategory = skillCategory;
+    if (category) query.category = category;
+    if (level) query.level = level;
+    if (isActive !== undefined) query.isActive = isActive === 'true';
+    
+    const courses = await Course.find(query)
+      .populate('createdBy', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+    
+    const count = await Course.countDocuments(query);
+    
+    res.json({
+      success: true,
+      courses,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      total: count
+    });
+  } catch (error) {
+    console.error('Get courses error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching courses', error: error.message });
+  }
+});
+
+// Get single course by ID
+router.get('/courses/:id', adminAuth, async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id)
+      .populate('createdBy', 'name email')
+      .populate('relatedMentors', 'name photo role')
+      .populate('relatedTests', 'title');
+    
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+    
+    // Get lessons for this course
+    const lessons = await Lesson.find({ courseId: req.params.id })
+      .sort({ lessonOrder: 1 })
+      .populate('createdBy', 'name email');
+    
+    res.json({ success: true, course, lessons });
+  } catch (error) {
+    console.error('Get course error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching course', error: error.message });
+  }
+});
+
+// Create new course
+router.post('/courses', adminAuth, async (req, res) => {
+  try {
+    const courseData = {
+      ...req.body,
+      createdBy: req.admin._id
+    };
+    
+    const course = new Course(courseData);
+    await course.save();
+    
+    res.status(201).json({ 
+      success: true, 
+      message: 'Course created successfully', 
+      course 
+    });
+  } catch (error) {
+    console.error('Create course error:', error);
+    res.status(500).json({ success: false, message: 'Error creating course', error: error.message });
+  }
+});
+
+// Update course
+router.put('/courses/:id', adminAuth, async (req, res) => {
+  try {
+    const course = await Course.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true, runValidators: true }
+    );
+    
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Course updated successfully', 
+      course 
+    });
+  } catch (error) {
+    console.error('Update course error:', error);
+    res.status(500).json({ success: false, message: 'Error updating course', error: error.message });
+  }
+});
+
+// Toggle course status
+router.patch('/courses/:id/status', adminAuth, async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+    
+    course.isActive = !course.isActive;
+    await course.save();
+    
+    res.json({ 
+      success: true, 
+      message: `Course ${course.isActive ? 'activated' : 'deactivated'} successfully`, 
+      course 
+    });
+  } catch (error) {
+    console.error('Toggle course status error:', error);
+    res.status(500).json({ success: false, message: 'Error toggling course status', error: error.message });
+  }
+});
+
+// Delete course
+router.delete('/courses/:id', adminAuth, async (req, res) => {
+  try {
+    const course = await Course.findByIdAndDelete(req.params.id);
+    
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+    
+    // Also delete associated lessons
+    await Lesson.deleteMany({ courseId: req.params.id });
+    
+    res.json({ 
+      success: true, 
+      message: 'Course and associated lessons deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Delete course error:', error);
+    res.status(500).json({ success: false, message: 'Error deleting course', error: error.message });
+  }
+});
 
 module.exports = router;
