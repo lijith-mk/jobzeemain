@@ -100,6 +100,7 @@ const testRoutes = require("./routes/testRoutes");
 const employerTestRoutes = require("./routes/employerTestRoutes");
 const employerQuestionBankRoutes = require("./routes/employerQuestionBankRoutes");
 const learningRoutes = require("./routes/learningRoutes");
+const learningPathRoutes = require("./routes/learningPathRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/employers", employerRoutes);
@@ -140,6 +141,7 @@ app.use("/api/tests", testRoutes);
 app.use("/api/employer-tests", employerTestRoutes);
 app.use("/api/employer-questions", employerQuestionBankRoutes);
 app.use("/api/learning", learningRoutes);
+app.use("/api/learning-paths", learningPathRoutes);
 
 // Debug endpoint to test frontend connectivity
 app.get("/api/debug", (req, res) => {

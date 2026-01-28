@@ -63,6 +63,7 @@ const courseSchema = new mongoose.Schema({
   // Integration fields
   relatedMentors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'MentorApplication' }],
   relatedTests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Test' }],
+  relatedLearningPaths: [{ type: mongoose.Schema.Types.ObjectId, ref: 'LearningPath' }], // Quick reference to paths this course belongs to
   certificateTemplate: { type: String }, // URL to certificate template
   
   // Creator reference

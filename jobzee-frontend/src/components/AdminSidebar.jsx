@@ -19,6 +19,7 @@ const AdminSidebar = ({
     { id: "jobs", name: "Jobs", icon: "💼" },
     { id: "internships", name: "Internships", icon: "🎓" },
     { id: "courses", name: "Courses", icon: "📚" },
+    { id: "learning-paths", name: "Learning Paths", icon: "🎯" },
     { id: "events", name: "Events", icon: "🎉" },
     { id: "tests", name: "Tests", icon: "📝" },
     { id: "payments", name: "Payments", icon: "💰" },

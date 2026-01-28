@@ -25,7 +25,11 @@ router.post('/courses/rate', auth, learningController.rateCourse);
 
 // Learning path routes
 router.get('/learning-paths', learningController.getLearningPaths);
+router.get('/learning-paths/by-job-role', auth, learningController.getLearningPathsByJobRole);
 router.post('/learning-paths/enroll', auth, learningController.enrollLearningPath);
+router.get('/learning-paths/:pathId/progress', auth, learningController.getMyLearningPathProgress);
+router.get('/learning-paths/:pathId/course/:courseId/access', auth, learningController.checkCourseAccess);
+router.post('/learning-paths/unlock-next', auth, learningController.unlockNextCourse);
 
 // Recommendations
 router.get('/recommended', auth, learningController.getRecommendedCourses);

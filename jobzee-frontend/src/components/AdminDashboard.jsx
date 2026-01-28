@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import AdminSidebar from "./AdminSidebar";
 import AdminEventsModeration from "./AdminEventsModeration";
 import TestPerformanceMonitor from "./TestPerformanceMonitor";
+import AdminLearningPaths from "./AdminLearningPaths";
 
 import API_BASE_URL from "../config/api";
 const AdminDashboard = () => {
@@ -9542,6 +9543,9 @@ const AdminDashboard = () => {
               </div>
             </div>
           )}
+
+          {/* Learning Paths Management */}
+          {activeTab === "learning-paths" && <AdminLearningPaths />}
 
           {/* Jobs Management */}
           {activeTab === "jobs" && (

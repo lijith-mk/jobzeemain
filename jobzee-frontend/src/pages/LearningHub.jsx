@@ -10,8 +10,10 @@ const LearningHub = () => {
   const [courses, setCourses] = useState([]);
   const [myCourses, setMyCourses] = useState([]);
   const [learningPaths, setLearningPaths] = useState([]);
+  const [myLearningPaths, setMyLearningPaths] = useState([]);
   const [recommendedCourses, setRecommendedCourses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedPathProgress, setSelectedPathProgress] = useState(null);
   
   // Filters
   const [filters, setFilters] = useState({
@@ -26,6 +28,7 @@ const LearningHub = () => {
       fetchRecommendedCourses();
     } else if (activeTab === 'my-learning') {
       fetchMyCourses();
+      fetchMyLearningPaths();
     } else if (activeTab === 'paths') {
       fetchLearningPaths();
     }
@@ -68,13 +71,52 @@ const LearningHub = () => {
   const fetchLearningPaths = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/learning/learning-paths`);
+      const token = localStorage.getItem('token');
+      // Fetch paths based on user's job role
+      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/learning/learning-paths/by-job-role`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setLearningPaths(data.paths);
     } catch (error) {
       console.error('Error fetching learning paths:', error);
-      toast.error('Failed to load learning paths');
+      // Fallback to all paths if job role fetch fails
+      try {
+        const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/learning/learning-paths`);
+        setLearningPaths(data.paths);
+      } catch (err) {
+        toast.error('Failed to load learning paths');
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMyLearningPaths = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      // Get all paths user is enrolled in
+      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/learning/learning-paths/by-job-role`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Filter only enrolled paths
+      const enrolled = data.paths.filter(p => p.isEnrolled);
+      setMyLearningPaths(enrolled);
+    } catch (error) {
+      console.error('Error fetching my learning paths:', error);
+    }
+  };
+
+  const viewPathProgress = async (pathId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/learning/learning-paths/${pathId}/progress`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setSelectedPathProgress(data);
+    } catch (error) {
+      console.error('Error fetching path progress:', error);
+      toast.error('Failed to load learning path progress');
     }
   };
 
@@ -108,11 +150,13 @@ const LearningHub = () => {
   const handleEnrollPath = async (pathId) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/learning/learning-paths/enroll`, 
+      const { data } = await axios.post(`${process.env.REACT_APP_API_URL}/api/learning/learning-paths/enroll`, 
         { pathId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Successfully enrolled in learning path!');
+      toast.success(`Successfully enrolled! Your first course is unlocked.`);
+      // Show the path progress
+      await viewPathProgress(pathId);
       setActiveTab('my-learning');
     } catch (error) {
       console.error('Error enrolling:', error);
@@ -348,6 +392,181 @@ const LearningHub = () => {
               ))}
             </div>
           )}
+
+          {/* My Learning Paths Section */}
+          {myLearningPaths.length > 0 && (
+            <div className="my-paths-section" style={{ marginTop: '40px' }}>
+              <h2>My Learning Paths</h2>
+              <div className="paths-grid">
+                {myLearningPaths.map((path) => (
+                  <div key={path._id} className="path-card">
+                    <div className="path-header">
+                      <h3>{path.title}</h3>
+                      <span className="level-badge" style={{ backgroundColor: getLevelBadgeColor(path.level) }}>
+                        {path.level}
+                      </span>
+                    </div>
+                    <p className="path-description">{path.description}</p>
+                    <div className="path-meta">
+                      <span>🎯 {path.targetRole}</span>
+                      <span>📚 {path.courses.length} courses</span>
+                    </div>
+                    <button 
+                      className="view-progress-btn"
+                      onClick={() => viewPathProgress(path._id)}
+                      style={{ 
+                        background: '#3b82f6', 
+                        color: 'white', 
+                        padding: '10px 20px', 
+                        border: 'none', 
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        width: '100%'
+                      }}
+                    >
+                      View Progress
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Path Progress Modal */}
+          {selectedPathProgress && (
+            <div 
+              className="modal-overlay" 
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0,0,0,0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000
+              }}
+              onClick={() => setSelectedPathProgress(null)}
+            >
+              <div 
+                className="modal-content"
+                style={{
+                  background: 'white',
+                  borderRadius: '12px',
+                  padding: '30px',
+                  maxWidth: '800px',
+                  maxHeight: '80vh',
+                  overflow: 'auto',
+                  width: '90%'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2>{selectedPathProgress.progress.pathId.title}</h2>
+                  <button 
+                    onClick={() => setSelectedPathProgress(null)}
+                    style={{ 
+                      background: 'none', 
+                      border: 'none', 
+                      fontSize: '24px', 
+                      cursor: 'pointer' 
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <div className="progress-bar" style={{ height: '8px', background: '#e5e7eb', borderRadius: '4px' }}>
+                    <div 
+                      className="progress-fill" 
+                      style={{ 
+                        width: `${selectedPathProgress.progress.progressPercentage}%`,
+                        height: '100%',
+                        background: '#3b82f6',
+                        borderRadius: '4px'
+                      }}
+                    ></div>
+                  </div>
+                  <p style={{ marginTop: '8px', color: '#6b7280' }}>
+                    {selectedPathProgress.completedCount} of {selectedPathProgress.totalCourses} courses completed
+                  </p>
+                </div>
+
+                <h3>Course Sequence</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+                  {selectedPathProgress.courses.map((course, index) => (
+                    <div 
+                      key={course._id}
+                      style={{
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        padding: '15px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '15px',
+                        opacity: course.status === 'locked' ? 0.6 : 1,
+                        background: course.status === 'completed' ? '#f0fdf4' : 
+                                   course.status === 'unlocked' ? '#eff6ff' : '#f9fafb'
+                      }}
+                    >
+                      <div style={{ fontSize: '24px' }}>
+                        {course.status === 'completed' ? '✅' : 
+                         course.status === 'unlocked' ? '🔓' : '🔒'}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ 
+                            background: '#e5e7eb', 
+                            padding: '2px 8px', 
+                            borderRadius: '4px', 
+                            fontSize: '12px',
+                            fontWeight: '600'
+                          }}>
+                            {index + 1}
+                          </span>
+                          <h4 style={{ margin: 0 }}>{course.courseId.title}</h4>
+                        </div>
+                        <p style={{ margin: '5px 0', color: '#6b7280', fontSize: '14px' }}>
+                          {course.courseId.duration} hours • {course.courseId.level}
+                          {course.isRequired && <span style={{ marginLeft: '10px', color: '#ef4444' }}>* Required</span>}
+                        </p>
+                        <p style={{ margin: 0, fontSize: '12px', fontWeight: '600', textTransform: 'uppercase' }}>
+                          {course.status === 'completed' ? (
+                            <span style={{ color: '#10b981' }}>Completed</span>
+                          ) : course.status === 'unlocked' ? (
+                            <span style={{ color: '#3b82f6' }}>Available Now</span>
+                          ) : (
+                            <span style={{ color: '#6b7280' }}>Locked - Complete previous courses first</span>
+                          )}
+                        </p>
+                      </div>
+                      {course.status !== 'locked' && (
+                        <button 
+                          onClick={() => {
+                            setSelectedPathProgress(null);
+                            navigate(`/course/${course.courseId._id}`);
+                          }}
+                          style={{
+                            background: course.status === 'completed' ? '#10b981' : '#3b82f6',
+                            color: 'white',
+                            padding: '8px 16px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {course.status === 'completed' ? 'Review' : 'Start'}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -386,9 +605,10 @@ const LearningHub = () => {
                   </div>
                   <button 
                     className="enroll-btn"
-                    onClick={() => handleEnrollPath(path._id)}
+                    onClick={() => path.isEnrolled ? viewPathProgress(path._id) : handleEnrollPath(path._id)}
+                    style={path.isEnrolled ? { background: '#10b981' } : {}}
                   >
-                    Start Learning Path
+                    {path.isEnrolled ? 'View Progress' : 'Start Learning Path'}
                   </button>
                 </div>
               ))}

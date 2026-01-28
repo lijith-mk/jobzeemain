@@ -57,6 +57,9 @@ exports.getCourseById = async (req, res) => {
     // If user is logged in, get their progress
     let progress = null;
     let completedLessonIds = [];
+    let isLocked = false;
+    let pathInfo = null;
+
     if (req.user) {
       progress = await CourseProgress.findOne({
         userId: req.user.id,
@@ -66,6 +69,30 @@ exports.getCourseById = async (req, res) => {
       if (progress) {
         completedLessonIds = progress.completedLessons.map(l => l.lessonId?.toString());
       }
+
+      // Check if course is part of a learning path and if it's locked
+      const LearningPathCourse = require('../models/LearningPathCourse');
+      const pathCourse = await LearningPathCourse.findOne({
+        courseId: req.params.id,
+        isActive: true
+      }).populate('learningPathId', 'title');
+
+      if (pathCourse) {
+        const pathProgress = await LearningPathProgress.findOne({
+          userId: req.user.id,
+          pathId: pathCourse.learningPathId
+        });
+
+        if (pathProgress) {
+          isLocked = !pathProgress.isCourseUnlocked(req.params.id);
+          pathInfo = {
+            pathId: pathCourse.learningPathId._id,
+            pathTitle: pathCourse.learningPathId.title,
+            order: pathCourse.order,
+            isRequired: pathCourse.isRequired
+          };
+        }
+      }
     }
     
     // Add completion status to lessons
@@ -74,7 +101,13 @@ exports.getCourseById = async (req, res) => {
       isCompleted: completedLessonIds.includes(lesson._id.toString())
     }));
     
-    res.json({ course, lessons: lessonsWithProgress, progress });
+    res.json({ 
+      course, 
+      lessons: lessonsWithProgress, 
+      progress,
+      isLocked,
+      pathInfo
+    });
   } catch (error) {
     console.error('Get course error:', error);
     res.status(500).json({ message: 'Error fetching course', error: error.message });
@@ -172,6 +205,69 @@ exports.updateProgress = async (req, res) => {
     if (progress.progressPercentage === 100 && progress.status !== 'completed') {
       progress.status = 'completed';
       progress.completedAt = new Date();
+
+      // Check if this course is part of any learning path and unlock next course
+      const LearningPathCourse = require('../models/LearningPathCourse');
+      const pathCourse = await LearningPathCourse.findOne({
+        courseId,
+        isActive: true
+      });
+
+      if (pathCourse) {
+        // Update learning path progress
+        const pathProgress = await LearningPathProgress.findOne({
+          userId,
+          pathId: pathCourse.learningPathId
+        });
+
+        if (pathProgress) {
+          // Mark course as completed in path progress
+          const alreadyCompletedInPath = pathProgress.completedCourses.some(
+            cc => cc.courseId.toString() === courseId
+          );
+
+          if (!alreadyCompletedInPath) {
+            pathProgress.completedCourses.push({
+              courseId,
+              completedAt: new Date()
+            });
+          }
+
+          // Get next course in sequence
+          const nextCourse = await LearningPathCourse.findOne({
+            learningPathId: pathCourse.learningPathId,
+            order: pathCourse.order + 1,
+            isActive: true
+          });
+
+          // Unlock next course if exists
+          if (nextCourse) {
+            await pathProgress.unlockNextCourse(nextCourse.courseId);
+            pathProgress.currentCourseIndex = nextCourse.order - 1;
+          }
+
+          // Update path progress percentage
+          const totalPathCourses = await LearningPathCourse.countDocuments({
+            learningPathId: pathCourse.learningPathId,
+            isActive: true
+          });
+          
+          pathProgress.progressPercentage = totalPathCourses > 0
+            ? Math.round((pathProgress.completedCourses.length / totalPathCourses) * 100)
+            : 0;
+
+          // Check if path is completed
+          if (pathProgress.progressPercentage === 100) {
+            pathProgress.status = 'completed';
+            pathProgress.completedAt = new Date();
+          } else if (pathProgress.status === 'enrolled') {
+            pathProgress.status = 'in-progress';
+            pathProgress.startedAt = new Date();
+          }
+
+          await pathProgress.save();
+        }
+      }
     }
     
     progress.currentLessonId = lessonId;
@@ -250,17 +346,33 @@ exports.enrollLearningPath = async (req, res) => {
     if (existingProgress) {
       return res.status(400).json({ message: 'Already enrolled in this learning path' });
     }
-    
+
+    // Get the first course in the learning path
+    const LearningPathCourse = require('../models/LearningPathCourse');
+    const firstCourse = await LearningPathCourse.findOne({
+      learningPathId: pathId,
+      isActive: true
+    }).sort({ order: 1 });
+
+    // Create progress with first course unlocked
     const progress = new LearningPathProgress({
       userId,
       pathId,
-      status: 'enrolled'
+      status: 'enrolled',
+      unlockedCourses: firstCourse ? [{
+        courseId: firstCourse.courseId,
+        unlockedAt: new Date()
+      }] : []
     });
     
     await progress.save();
     await LearningPath.findByIdAndUpdate(pathId, { $inc: { enrollmentCount: 1 } });
     
-    res.json({ message: 'Successfully enrolled in learning path', progress });
+    res.json({ 
+      message: 'Successfully enrolled in learning path', 
+      progress,
+      unlockedCourseId: firstCourse?.courseId
+    });
   } catch (error) {
     console.error('Enroll path error:', error);
     res.status(500).json({ message: 'Error enrolling in learning path', error: error.message });
@@ -368,5 +480,205 @@ exports.getLessonById = async (req, res) => {
   } catch (error) {
     console.error('Get lesson error:', error);
     res.status(500).json({ message: 'Error fetching lesson', error: error.message });
+  }
+};
+
+// Get learning paths by job role (with user's selected job role)
+exports.getLearningPathsByJobRole = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const User = require('../models/User');
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Use job role from query param or user's selected role
+    const targetJobRole = req.query.jobRole || user.desiredJobRole || user.currentJobRole;
+    
+    if (!targetJobRole) {
+      return res.status(400).json({ 
+        message: 'No job role specified. Please provide a job role or update your profile.' 
+      });
+    }
+
+    const paths = await LearningPath.find({
+      isActive: true,
+      targetJobRole: new RegExp(targetJobRole, 'i')
+    }).populate('courses.courseId', 'title thumbnail duration level');
+
+    // Check which paths user is already enrolled in
+    const enrolledPaths = await LearningPathProgress.find({ 
+      userId,
+      pathId: { $in: paths.map(p => p._id) }
+    });
+
+    const enrolledPathIds = enrolledPaths.map(ep => ep.pathId.toString());
+    
+    const pathsWithEnrollment = paths.map(path => ({
+      ...path.toObject(),
+      isEnrolled: enrolledPathIds.includes(path._id.toString())
+    }));
+
+    res.json({ 
+      paths: pathsWithEnrollment,
+      jobRole: targetJobRole,
+      total: pathsWithEnrollment.length
+    });
+  } catch (error) {
+    console.error('Get learning paths by job role error:', error);
+    res.status(500).json({ message: 'Error fetching learning paths', error: error.message });
+  }
+};
+
+// Check if a course is unlocked in a learning path
+exports.checkCourseAccess = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { pathId, courseId } = req.params;
+
+    const progress = await LearningPathProgress.findOne({ userId, pathId });
+    
+    if (!progress) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Not enrolled in this learning path',
+        isUnlocked: false
+      });
+    }
+
+    const isUnlocked = progress.isCourseUnlocked(courseId);
+
+    res.json({
+      success: true,
+      isUnlocked,
+      unlockedCourses: progress.unlockedCourses.map(uc => uc.courseId),
+      currentCourseIndex: progress.currentCourseIndex
+    });
+  } catch (error) {
+    console.error('Check course access error:', error);
+    res.status(500).json({ message: 'Error checking course access', error: error.message });
+  }
+};
+
+// Unlock next course when current course is completed
+exports.unlockNextCourse = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { pathId, courseId } = req.body;
+
+    const LearningPathCourse = require('../models/LearningPathCourse');
+
+    // Get user's progress
+    const progress = await LearningPathProgress.findOne({ userId, pathId });
+    if (!progress) {
+      return res.status(404).json({ message: 'Not enrolled in this learning path' });
+    }
+
+    // Check if course is completed
+    const isCourseCompleted = progress.completedCourses.some(
+      cc => cc.courseId.toString() === courseId
+    );
+
+    if (!isCourseCompleted) {
+      return res.status(400).json({ 
+        message: 'Course must be completed before unlocking the next one' 
+      });
+    }
+
+    // Get current course mapping
+    const currentCourse = await LearningPathCourse.findOne({
+      learningPathId: pathId,
+      courseId,
+      isActive: true
+    });
+
+    if (!currentCourse) {
+      return res.status(404).json({ message: 'Course not found in learning path' });
+    }
+
+    // Get next course
+    const nextCourse = await LearningPathCourse.findOne({
+      learningPathId: pathId,
+      order: currentCourse.order + 1,
+      isActive: true
+    });
+
+    if (!nextCourse) {
+      return res.json({ 
+        message: 'No more courses to unlock. Learning path completed!',
+        hasNextCourse: false
+      });
+    }
+
+    // Unlock next course
+    await progress.unlockNextCourse(nextCourse.courseId);
+    progress.currentCourseIndex = nextCourse.order - 1;
+    await progress.save();
+
+    res.json({
+      success: true,
+      message: 'Next course unlocked successfully',
+      nextCourseId: nextCourse.courseId,
+      hasNextCourse: true
+    });
+  } catch (error) {
+    console.error('Unlock next course error:', error);
+    res.status(500).json({ message: 'Error unlocking next course', error: error.message });
+  }
+};
+
+// Get user's learning path progress with locked/unlocked courses
+exports.getMyLearningPathProgress = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { pathId } = req.params;
+
+    const LearningPathCourse = require('../models/LearningPathCourse');
+
+    const progress = await LearningPathProgress.findOne({ userId, pathId })
+      .populate('pathId', 'title description targetJobRole')
+      .populate('unlockedCourses.courseId', 'title thumbnail duration level')
+      .populate('completedCourses.courseId', 'title thumbnail duration level');
+
+    if (!progress) {
+      return res.status(404).json({ message: 'Not enrolled in this learning path' });
+    }
+
+    // Get all courses in the path
+    const allCourses = await LearningPathCourse.find({
+      learningPathId: pathId,
+      isActive: true
+    })
+      .sort({ order: 1 })
+      .populate('courseId', 'title thumbnail duration level');
+
+    // Mark each course as locked/unlocked/completed
+    const coursesWithStatus = allCourses.map(pathCourse => {
+      const courseId = pathCourse.courseId._id.toString();
+      const isUnlocked = progress.isCourseUnlocked(courseId);
+      const isCompleted = progress.completedCourses.some(
+        cc => cc.courseId.toString() === courseId
+      );
+
+      return {
+        ...pathCourse.toObject(),
+        isUnlocked,
+        isCompleted,
+        status: isCompleted ? 'completed' : isUnlocked ? 'unlocked' : 'locked'
+      };
+    });
+
+    res.json({
+      progress: progress.toObject(),
+      courses: coursesWithStatus,
+      totalCourses: allCourses.length,
+      completedCount: progress.completedCourses.length,
+      unlockedCount: progress.unlockedCourses.length
+    });
+  } catch (error) {
+    console.error('Get learning path progress error:', error);
+    res.status(500).json({ message: 'Error fetching progress', error: error.message });
   }
 };
