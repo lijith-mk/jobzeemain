@@ -15,6 +15,8 @@ const LessonViewer = () => {
   const [videoProgress, setVideoProgress] = useState(0);
   const [timeSpent, setTimeSpent] = useState(0);
   const [startTime, setStartTime] = useState(Date.now());
+  const [hasQuiz, setHasQuiz] = useState(false);
+  const [quizAttemptInfo, setQuizAttemptInfo] = useState(null);
 
   useEffect(() => {
     fetchLessonData();
@@ -52,6 +54,7 @@ const LessonViewer = () => {
       
       setLesson(data.lesson);
       setIsCompleted(data.isCompleted);
+      setHasQuiz(data.lesson.hasQuiz || false);
 
       // Fetch all lessons for navigation
       const courseResponse = await axios.get(
@@ -61,6 +64,19 @@ const LessonViewer = () => {
       
       setCourse(courseResponse.data.course);
       setAllLessons(courseResponse.data.lessons || []);
+
+      // Check if quiz exists for this lesson
+      if (data.lesson.hasQuiz) {
+        try {
+          const quizResponse = await axios.get(
+            `${process.env.REACT_APP_API_URL}/api/micro-quiz/lesson/${lessonId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setQuizAttemptInfo(quizResponse.data.attemptInfo);
+        } catch (quizError) {
+          console.error('Error fetching quiz info:', quizError);
+        }
+      }
     } catch (error) {
       console.error('Error fetching lesson:', error);
       if (error.response?.status === 403) {
@@ -77,26 +93,35 @@ const LessonViewer = () => {
   const updateProgress = async (markComplete = false) => {
     try {
       const token = localStorage.getItem('token');
-      const minutesSpent = Math.floor((Date.now() - startTime) / 60000);
+      const minutesSpent = Math.max(Math.floor((Date.now() - startTime) / 60000), 1);
       
-      await axios.put(
+      const response = await axios.put(
         `${process.env.REACT_APP_API_URL}/api/learning/courses/progress`,
         {
           courseId: lesson.courseId._id || lesson.courseId,
           lessonId: lesson._id,
-          timeSpent: minutesSpent
+          timeSpent: minutesSpent,
+          forceComplete: markComplete // Send forceComplete flag when user explicitly marks complete
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (markComplete) {
-        setIsCompleted(true);
-        toast.success('Lesson marked as complete!');
+        if (response.data.completionBlocked) {
+          toast.warning(response.data.blockReason || 'Cannot mark lesson as complete yet');
+        } else {
+          setIsCompleted(true);
+          toast.success('✅ Lesson marked as complete! You can now take the quiz.');
+          // Refresh lesson data to update quiz access
+          setTimeout(() => {
+            fetchLessonData();
+          }, 500);
+        }
       }
     } catch (error) {
       console.error('Error updating progress:', error);
       if (markComplete) {
-        toast.error('Failed to mark lesson as complete');
+        toast.error(error.response?.data?.message || 'Failed to mark lesson as complete');
       }
     }
   };
@@ -277,6 +302,64 @@ const LessonViewer = () => {
 
         {/* Action Buttons */}
         <div className="lesson-actions">
+          {/* Quiz Section */}
+          {hasQuiz && (
+            <div className="quiz-section">
+              <div className="quiz-card">
+                <div className="quiz-header">
+                  <h3>📝 Test Your Knowledge</h3>
+                  {quizAttemptInfo?.alreadyTaken ? (
+                    <span className="quiz-badge completed">
+                      {quizAttemptInfo.passed ? '✓ Passed' : 'Attempted'}
+                    </span>
+                  ) : (
+                    <span className="quiz-badge">Quiz Available</span>
+                  )}
+                </div>
+                <p className="quiz-description">
+                  Take a quick quiz to test your understanding of this lesson
+                </p>
+                
+                {quizAttemptInfo && (
+                  <div className="quiz-stats">
+                    <div className="quiz-stat">
+                      <span className="stat-label">Attempts:</span>
+                      <span className="stat-value">{quizAttemptInfo.attemptCount} / {quizAttemptInfo.maxAttempts === 0 ? '∞' : quizAttemptInfo.maxAttempts}</span>
+                    </div>
+                    {quizAttemptInfo.bestScore !== null && quizAttemptInfo.bestScore !== undefined && (
+                      <div className="quiz-stat">
+                        <span className="stat-label">Best Score:</span>
+                        <span className={`stat-value ${quizAttemptInfo.passed ? 'passed' : ''}`}>
+                          {quizAttemptInfo.bestScore}%
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {!isCompleted ? (
+                  <div className="quiz-locked">
+                    <p>🔒 Complete the lesson first to unlock the quiz</p>
+                  </div>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => navigate(`/lesson/${lessonId}/quiz`)}
+                      className="btn-take-quiz"
+                      disabled={quizAttemptInfo && !quizAttemptInfo.canAttempt}
+                    >
+                      {quizAttemptInfo && quizAttemptInfo.attemptCount > 0 ? '🔄 Retake Quiz' : '▶️ Start Quiz'}
+                    </button>
+                    
+                    {quizAttemptInfo && !quizAttemptInfo.canAttempt && (
+                      <p className="quiz-warning">⚠️ Maximum attempts reached</p>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {!isCompleted && (
             <button onClick={handleMarkComplete} className="btn-complete">
               ✓ Mark as Complete

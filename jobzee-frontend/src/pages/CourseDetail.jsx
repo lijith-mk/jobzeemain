@@ -16,6 +16,8 @@ const CourseDetail = () => {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState('');
+  const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
+  const [completedLesson, setCompletedLesson] = useState(null);
 
   useEffect(() => {
     fetchCourseDetails();
@@ -72,7 +74,7 @@ const CourseDetail = () => {
   const handleLessonComplete = async (moduleIndex, lessonIndex) => {
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.put(
+      const { data} = await axios.put(
         `${process.env.REACT_APP_API_URL}/api/learning/courses/progress`,
         { courseId, moduleIndex, lessonIndex, timeSpent: 5 },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -82,11 +84,16 @@ const CourseDetail = () => {
       setActiveModule(moduleIndex);
       setActiveLesson(lessonIndex);
       
+      // Show completion animation
+      setCompletedLesson(`${moduleIndex}-${lessonIndex}`);
+      setShowCompletionAnimation(true);
+      setTimeout(() => setShowCompletionAnimation(false), 2000);
+      
       if (data.progress.status === 'completed') {
         toast.success('🎉 Congratulations! Course completed!');
         setShowRatingModal(true);
       } else {
-        toast.success('Lesson completed!');
+        toast.success('✅ Lesson completed!');
       }
     } catch (error) {
       console.error('Error updating progress:', error);
@@ -179,19 +186,41 @@ const CourseDetail = () => {
             </div>
 
             {enrolled && progress && (
-              <div className="progress-section">
-                <div className="progress-info">
-                  <span style={{ color: getStatusColor(progress.status) }}>
-                    Status: {progress.status === 'in-progress' ? 'In Progress' : 
-                            progress.status === 'completed' ? 'Completed' : 'Enrolled'}
-                  </span>
-                  <span>{progress.progressPercentage}% Complete</span>
-                </div>
-                <div className="progress-bar">
-                  <div 
-                    className="progress-fill" 
-                    style={{ width: `${progress.progressPercentage}%` }}
-                  ></div>
+              <div className="progress-section-enhanced">
+                <div className="progress-header">
+                  <div className="circular-progress">
+                    <svg viewBox="0 0 36 36" className="circular-chart">
+                      <path className="circle-bg"
+                        d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.831
+                          a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                      <path className="circle"
+                        strokeDasharray={`${progress.progressPercentage}, 100`}
+                        d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.831
+                          a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                      <text x="18" y="20.35" className="percentage">{progress.progressPercentage}%</text>
+                    </svg>
+                  </div>
+                  <div className="progress-stats">
+                    <div className="stat-box">
+                      <span className="stat-value">{progress.completedLessons?.length || 0}</span>
+                      <span className="stat-label">Lessons Completed</span>
+                    </div>
+                    <div className="stat-box">
+                      <span className="stat-value">{progress.timeSpent || 0}</span>
+                      <span className="stat-label">Minutes Spent</span>
+                    </div>
+                    <div className="stat-box">
+                      <span className="stat-value" style={{ color: getStatusColor(progress.status) }}>
+                        {progress.status === 'in-progress' ? 'Learning' : 
+                         progress.status === 'completed' ? 'Completed' : 'Started'}
+                      </span>
+                      <span className="stat-label">Status</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -373,6 +402,19 @@ const CourseDetail = () => {
                 Submit Rating
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Completion Animation */}
+      {showCompletionAnimation && (
+        <div className="completion-animation-overlay">
+          <div className="completion-animation">
+            <div className="checkmark-circle">
+              <div className="checkmark"></div>
+            </div>
+            <h2>Lesson Completed!</h2>
+            <p>Great job! Keep learning 🚀</p>
           </div>
         </div>
       )}

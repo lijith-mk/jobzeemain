@@ -56,11 +56,18 @@ const lessonSchema = new mongoose.Schema({
     type: { type: String, enum: ['pdf', 'link', 'video', 'article', 'code'] }
   }],
   
-  // Quiz/Assessment (optional)
+  // Micro Quiz (Post-Lesson Assessment)
   hasQuiz: { 
     type: Boolean, 
     default: false 
   },
+  microQuizId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'MicroQuiz',
+    default: null
+  },
+  
+  // Legacy quiz format (deprecated - use MicroQuiz model instead)
   quizQuestions: [{
     question: { type: String },
     options: [{ type: String }],

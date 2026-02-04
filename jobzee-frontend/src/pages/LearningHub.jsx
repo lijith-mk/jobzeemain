@@ -12,6 +12,7 @@ const LearningHub = () => {
   const [learningPaths, setLearningPaths] = useState([]);
   const [myLearningPaths, setMyLearningPaths] = useState([]);
   const [recommendedCourses, setRecommendedCourses] = useState([]);
+  const [recommendedPaths, setRecommendedPaths] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedPathProgress, setSelectedPathProgress] = useState(null);
   
@@ -31,6 +32,7 @@ const LearningHub = () => {
       fetchMyLearningPaths();
     } else if (activeTab === 'paths') {
       fetchLearningPaths();
+      fetchRecommendedPaths();
     }
   }, [activeTab, filters]);
 
@@ -42,7 +44,10 @@ const LearningHub = () => {
       if (filters.level) params.append('level', filters.level);
       if (filters.search) params.append('search', filters.search);
       
-      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/learning/courses?${params}`);
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      
+      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/learning/courses?${params}`, { headers });
       setCourses(data.courses);
     } catch (error) {
       console.error('Error fetching courses:', error);
@@ -132,9 +137,29 @@ const LearningHub = () => {
     }
   };
 
-  const handleEnrollCourse = async (courseId) => {
+  const fetchRecommendedPaths = async () => {
     try {
       const token = localStorage.getItem('token');
+      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/learning/learning-paths/recommendations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRecommendedPaths(data.recommendations || []);
+    } catch (error) {
+      console.error('Error fetching recommended paths:', error);
+    }
+  };
+
+  const handleEnrollCourse = async (courseId, isPaid) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // If course is paid, initiate payment flow
+      if (isPaid) {
+        await handleCoursePayment(courseId);
+        return;
+      }
+      
+      // Free course - direct enrollment
       await axios.post(`${process.env.REACT_APP_API_URL}/api/learning/courses/enroll`, 
         { courseId },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -144,6 +169,78 @@ const LearningHub = () => {
     } catch (error) {
       console.error('Error enrolling:', error);
       toast.error(error.response?.data?.message || 'Failed to enroll in course');
+    }
+  };
+
+  const handleCoursePayment = async (courseId) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Create payment order
+      const { data } = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/learning/courses/create-payment-order`,
+        { courseId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Load Razorpay script if not already loaded
+      if (!window.Razorpay) {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        document.body.appendChild(script);
+        await new Promise((resolve) => { script.onload = resolve; });
+      }
+
+      // Configure Razorpay options
+      const options = {
+        key: data.razorpayKey,
+        amount: data.amount * 100,
+        currency: data.currency,
+        name: 'Jobzee Learning',
+        description: data.courseName,
+        order_id: data.orderId,
+        handler: async (response) => {
+          try {
+            // Verify payment
+            const verifyResponse = await axios.post(
+              `${process.env.REACT_APP_API_URL}/api/learning/courses/verify-payment`,
+              {
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+                courseId
+              },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            const { invoice } = verifyResponse.data;
+            toast.success(`Payment successful! Invoice ${invoice?.invoiceNumber} generated.`);
+            navigate(`/course/${courseId}`);
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            toast.error('Payment verification failed. Please contact support.');
+          }
+        },
+        prefill: {
+          name: localStorage.getItem('userName') || '',
+          email: localStorage.getItem('userEmail') || ''
+        },
+        theme: {
+          color: '#4f46e5'
+        },
+        modal: {
+          ondismiss: () => {
+            toast.info('Payment cancelled');
+          }
+        }
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error(error.response?.data?.message || 'Failed to initiate payment');
     }
   };
 
@@ -184,6 +281,67 @@ const LearningHub = () => {
 
   return (
     <div className="learning-hub-container">
+      {/* Learning Stats Dashboard - Only show in My Learning tab */}
+      {activeTab === 'my-learning' && (myCourses.length > 0 || myLearningPaths.length > 0) && (
+        <div className="learning-stats-dashboard">
+          <h2>Your Learning Journey</h2>
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-icon">📚</div>
+              <div className="stat-content">
+                <span className="stat-number">{myCourses.length}</span>
+                <span className="stat-label">Courses Enrolled</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">✅</div>
+              <div className="stat-content">
+                <span className="stat-number">
+                  {myCourses.filter(c => c.status === 'completed').length}
+                </span>
+                <span className="stat-label">Courses Completed</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">🎯</div>
+              <div className="stat-content">
+                <span className="stat-number">{myLearningPaths.length}</span>
+                <span className="stat-label">Learning Paths</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">⏱️</div>
+              <div className="stat-content">
+                <span className="stat-number">
+                  {myCourses.reduce((total, course) => total + (course.timeSpent || 0), 0)}
+                </span>
+                <span className="stat-label">Minutes Learned</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">📈</div>
+              <div className="stat-content">
+                <span className="stat-number">
+                  {myCourses.length > 0 
+                    ? Math.round(myCourses.reduce((sum, c) => sum + c.progressPercentage, 0) / myCourses.length)
+                    : 0}%
+                </span>
+                <span className="stat-label">Average Progress</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">🔥</div>
+              <div className="stat-content">
+                <span className="stat-number">
+                  {myCourses.filter(c => c.status === 'in-progress').length}
+                </span>
+                <span className="stat-label">In Progress</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="learning-hub-header">
         <h1>Learning Hub</h1>
         <p>Enhance your skills with our curated courses and learning paths</p>
@@ -277,12 +435,39 @@ const LearningHub = () => {
                           <span key={idx} className="skill-tag">{skill}</span>
                         ))}
                       </div>
-                      <button 
-                        className="enroll-btn"
-                        onClick={() => handleEnrollCourse(course._id)}
-                      >
-                        Enroll Now
-                      </button>
+                      {course.isEnrolled ? (
+                        <button 
+                          className="enrolled-btn"
+                          onClick={() => navigate(`/course/${course._id}`)}
+                          style={{ 
+                            backgroundColor: '#10b981', 
+                            cursor: 'pointer'
+                          }}
+                        >
+                          ✓ Enrolled - Continue Learning
+                        </button>
+                      ) : (
+                        <>
+                          {course.isPaid && (
+                            <div className="course-price">
+                              {course.discountPrice && new Date(course.discountEndDate) > new Date() ? (
+                                <>
+                                  <span className="original-price">₹{course.price}</span>
+                                  <span className="discount-price">₹{course.discountPrice}</span>
+                                </>
+                              ) : (
+                                <span className="price">₹{course.price}</span>
+                              )}
+                            </div>
+                          )}
+                          <button 
+                            className="enroll-btn"
+                            onClick={() => handleEnrollCourse(course._id, course.isPaid)}
+                          >
+                            {course.isPaid ? `Enroll Now - Pay ₹${course.discountPrice && new Date(course.discountEndDate) > new Date() ? course.discountPrice : course.price}` : 'Enroll Now - Free'}
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -322,12 +507,39 @@ const LearningHub = () => {
                           <span key={idx} className="skill-tag">{skill}</span>
                         ))}
                       </div>
-                      <button 
-                        className="enroll-btn"
-                        onClick={(e) => { e.stopPropagation(); handleEnrollCourse(course._id); }}
-                      >
-                        Enroll Now
-                      </button>
+                      {course.isEnrolled ? (
+                        <button 
+                          className="enrolled-btn"
+                          onClick={(e) => { e.stopPropagation(); navigate(`/course/${course._id}`); }}
+                          style={{ 
+                            backgroundColor: '#10b981', 
+                            cursor: 'pointer'
+                          }}
+                        >
+                          ✓ Enrolled - Continue Learning
+                        </button>
+                      ) : (
+                        <>
+                          {course.isPaid && (
+                            <div className="course-price">
+                              {course.discountPrice && new Date(course.discountEndDate) > new Date() ? (
+                                <>
+                                  <span className="original-price">₹{course.price}</span>
+                                  <span className="discount-price">₹{course.discountPrice}</span>
+                                </>
+                              ) : (
+                                <span className="price">₹{course.price}</span>
+                              )}
+                            </div>
+                          )}
+                          <button 
+                            className="enroll-btn"
+                            onClick={(e) => { e.stopPropagation(); handleEnrollCourse(course._id, course.isPaid); }}
+                          >
+                            {course.isPaid ? `Enroll Now - Pay ₹${course.discountPrice && new Date(course.discountEndDate) > new Date() ? course.discountPrice : course.price}` : 'Enroll Now - Free'}
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -360,32 +572,51 @@ const LearningHub = () => {
                     ) : (
                       <div className="placeholder-thumbnail">📚</div>
                     )}
-                    <div className="progress-overlay">
-                      <div className="progress-circle">
-                        <span>{progress.progressPercentage}%</span>
-                      </div>
+                    <div className="progress-badge">
+                      {progress.progressPercentage}%
                     </div>
                   </div>
                   <div className="course-content">
+                    <div className="status-badge" style={{ background: getStatusColor(progress.status) }}>
+                      {progress.status === 'in-progress' ? '🔥 Learning' : 
+                       progress.status === 'completed' ? '✅ Completed' : '📖 Enrolled'}
+                    </div>
                     <h3>{progress.courseId?.title}</h3>
-                    <div className="progress-bar">
+                    
+                    {/* Visual Progress Bar */}
+                    <div className="progress-bar-enhanced">
                       <div 
-                        className="progress-fill" 
-                        style={{ width: `${progress.progressPercentage}%` }}
+                        className="progress-fill-animated" 
+                        style={{ 
+                          width: `${progress.progressPercentage}%`,
+                          background: progress.status === 'completed' 
+                            ? 'linear-gradient(90deg, #10b981, #059669)' 
+                            : 'linear-gradient(90deg, #3b82f6, #2563eb)'
+                        }}
                       ></div>
                     </div>
-                    <div className="course-meta">
-                      <span style={{ color: getStatusColor(progress.status) }}>
-                        {progress.status === 'in-progress' ? 'In Progress' : 
-                         progress.status === 'completed' ? 'Completed' : 'Enrolled'}
-                      </span>
-                      <span>⏱️ {progress.timeSpent || 0} mins</span>
+                    
+                    {/* Mini Stats */}
+                    <div className="mini-stats">
+                      <div className="mini-stat">
+                        <span className="mini-stat-icon">📝</span>
+                        <span className="mini-stat-text">
+                          {progress.completedLessons?.length || 0} lessons
+                        </span>
+                      </div>
+                      <div className="mini-stat">
+                        <span className="mini-stat-icon">⏱️</span>
+                        <span className="mini-stat-text">
+                          {progress.timeSpent || 0} mins
+                        </span>
+                      </div>
                     </div>
+                    
                     <button 
-                      className="continue-btn"
+                      className="continue-btn-enhanced"
                       onClick={() => navigate(`/course/${progress.courseId._id}`)}
                     >
-                      {progress.status === 'completed' ? 'Review' : 'Continue Learning'}
+                      {progress.status === 'completed' ? '🎉 Review Course' : '🚀 Continue Learning'}
                     </button>
                   </div>
                 </div>
@@ -573,6 +804,65 @@ const LearningHub = () => {
       {/* Learning Paths Tab */}
       {activeTab === 'paths' && (
         <div className="paths-section">
+          {/* Recommended Paths Section */}
+          {recommendedPaths.length > 0 && (
+            <div className="recommended-paths-section" style={{ marginBottom: '40px' }}>
+              <h2>📌 Recommended for You</h2>
+              <p className="section-description">
+                Based on your job role, skills, and assessment results
+              </p>
+              <div className="paths-grid">
+                {recommendedPaths.map((path) => (
+                  <div key={path._id} className="path-card recommended-path">
+                    <div className="recommendation-badge">
+                      ⭐ Recommended
+                    </div>
+                    <div className="path-header">
+                      <h3>{path.title}</h3>
+                      <span className="level-badge" style={{ backgroundColor: getLevelBadgeColor(path.level) }}>
+                        {path.level}
+                      </span>
+                    </div>
+                    <p className="path-description">{path.description}</p>
+                    
+                    {/* Recommendation Reasons */}
+                    {path.recommendationReasons && path.recommendationReasons.length > 0 && (
+                      <div className="recommendation-reasons">
+                        <strong>Why this path?</strong>
+                        <ul>
+                          {path.recommendationReasons.map((reason, idx) => (
+                            <li key={idx}>{reason}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="path-meta">
+                      <span>🎯 {path.targetRole || path.targetJobRole}</span>
+                      <span>📚 {path.courses?.length || 0} courses</span>
+                      <span>⏱️ ~{path.estimatedDuration} hours</span>
+                    </div>
+                    <div className="path-skills">
+                      <strong>Skills you'll learn:</strong>
+                      <div className="skills-list">
+                        {path.skills.slice(0, 5).map((skill, idx) => (
+                          <span key={idx} className="skill-tag">{skill}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <button 
+                      className="enroll-btn"
+                      onClick={() => path.isEnrolled ? viewPathProgress(path._id) : handleEnrollPath(path._id)}
+                      style={path.isEnrolled ? { background: '#10b981' } : { background: '#f59e0b' }}
+                    >
+                      {path.isEnrolled ? 'View Progress' : '⭐ Start Recommended Path'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <h2>Learning Paths</h2>
           <p className="section-description">
             Follow structured paths designed for specific career roles
@@ -614,6 +904,75 @@ const LearningHub = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Learning Path Progress Modal */}
+      {selectedPathProgress && (
+        <div className="modal-overlay" onClick={() => setSelectedPathProgress(null)}>
+          <div className="modal-content learning-path-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{selectedPathProgress.progress.pathId.title}</h2>
+              <button className="close-btn" onClick={() => setSelectedPathProgress(null)}>×</button>
+            </div>
+            
+            <div className="path-progress-summary">
+              <div className="progress-stats">
+                <div className="stat-item">
+                  <span className="stat-value">{selectedPathProgress.completedCount}/{selectedPathProgress.totalCourses}</span>
+                  <span className="stat-label">Courses Completed</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-value">{selectedPathProgress.progress.progressPercentage}%</span>
+                  <span className="stat-label">Overall Progress</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-value">{selectedPathProgress.unlockedCount}</span>
+                  <span className="stat-label">Courses Unlocked</span>
+                </div>
+              </div>
+              <div className="progress-bar-large">
+                <div 
+                  className="progress-fill" 
+                  style={{ width: `${selectedPathProgress.progress.progressPercentage}%` }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="path-courses-list">
+              <h3>Course Sequence</h3>
+              {selectedPathProgress.courses.map((pathCourse, index) => (
+                <div 
+                  key={pathCourse._id} 
+                  className={`path-course-item ${pathCourse.status}`}
+                  onClick={() => pathCourse.isUnlocked ? navigate(`/course/${pathCourse.courseId._id}`) : null}
+                  style={{ cursor: pathCourse.isUnlocked ? 'pointer' : 'not-allowed' }}
+                >
+                  <div className="course-order">{index + 1}</div>
+                  <div className="course-info">
+                    <div className="course-title-row">
+                      <h4>{pathCourse.courseId.title}</h4>
+                      <div className="course-badges">
+                        {pathCourse.isRequired && <span className="badge required">Required</span>}
+                        {pathCourse.status === 'completed' && <span className="badge completed">✓ Completed</span>}
+                        {pathCourse.status === 'unlocked' && <span className="badge unlocked">🔓 Unlocked</span>}
+                        {pathCourse.status === 'locked' && <span className="badge locked">🔒 Locked</span>}
+                      </div>
+                    </div>
+                    <div className="course-meta-small">
+                      <span>{pathCourse.courseId.level}</span>
+                      <span>⏱️ {pathCourse.estimatedDuration || pathCourse.courseId.duration} hours</span>
+                    </div>
+                    {pathCourse.status === 'locked' && (
+                      <div className="locked-message">
+                        <span>⚠️ Complete the previous course to unlock this one</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

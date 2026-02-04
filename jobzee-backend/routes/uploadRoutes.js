@@ -272,4 +272,46 @@ router.post('/user/resume', uploadLimiter, auth, uploadResume, async (req, res) 
   }
 });
 
+// Upload course thumbnail (Admin only)
+router.post('/admin/course-thumbnail', uploadLimiter, adminAuth, uploadSingle, async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    // Upload to Cloudinary
+    const result = await uploadToCloudinary(req.file, 'jobzee/courses');
+
+    res.json({
+      message: 'Course thumbnail uploaded successfully',
+      imageUrl: result.secure_url,
+      publicId: result.public_id
+    });
+  } catch (error) {
+    console.error('Course thumbnail upload error:', error);
+    res.status(500).json({ message: 'Failed to upload course thumbnail' });
+  }
+});
+
+// Upload instructor photo (Admin only)
+router.post('/admin/instructor-photo', uploadLimiter, adminAuth, uploadSingle, async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    // Upload to Cloudinary
+    const result = await uploadToCloudinary(req.file, 'jobzee/instructors');
+
+    res.json({
+      message: 'Instructor photo uploaded successfully',
+      imageUrl: result.secure_url,
+      publicId: result.public_id
+    });
+  } catch (error) {
+    console.error('Instructor photo upload error:', error);
+    res.status(500).json({ message: 'Failed to upload instructor photo' });
+  }
+});
+
 module.exports = router;

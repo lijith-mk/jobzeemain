@@ -60,6 +60,13 @@ const courseSchema = new mongoose.Schema({
   averageRating: { type: Number, default: 0 },
   totalReviews: { type: Number, default: 0 },
   
+  // Pricing
+  isPaid: { type: Boolean, default: false },
+  price: { type: Number, default: 0, min: 0 },
+  currency: { type: String, default: 'INR', enum: ['INR', 'USD', 'EUR', 'GBP'] },
+  discountPrice: { type: Number, min: 0 }, // Optional discount price
+  discountEndDate: { type: Date }, // When discount expires
+  
   // Integration fields
   relatedMentors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'MentorApplication' }],
   relatedTests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Test' }],

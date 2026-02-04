@@ -66,6 +66,12 @@ const testSchema = new mongoose.Schema({
   tags: [{
     type: String,
   }],
+  skills: [{ // Skills tested by this test - for skill gap detection
+    type: String,
+  }],
+  requiredSkills: [{ // Alternative field name for compatibility
+    type: String,
+  }],
   instructions: {
     type: String,
   },

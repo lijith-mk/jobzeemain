@@ -9,7 +9,9 @@ const AdminCourseView = () => {
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
+  const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingQuizzes, setLoadingQuizzes] = useState(true);
   const [showLessonModal, setShowLessonModal] = useState(false);
   const [editingLesson, setEditingLesson] = useState(null);
   const [lessonForm, setLessonForm] = useState({
@@ -25,6 +27,7 @@ const AdminCourseView = () => {
 
   useEffect(() => {
     fetchCourseData();
+    fetchCourseQuizzes();
   }, [courseId]);
 
   const fetchCourseData = async () => {
@@ -48,6 +51,27 @@ const AdminCourseView = () => {
       toast.error('Network error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCourseQuizzes = async () => {
+    setLoadingQuizzes(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API_BASE_URL}/api/admin/micro-quiz/course/${courseId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setQuizzes(data.quizzes || []);
+      } else {
+        console.error('Failed to load quizzes');
+      }
+    } catch (error) {
+      console.error('Fetch quizzes error:', error);
+    } finally {
+      setLoadingQuizzes(false);
     }
   };
 
@@ -211,25 +235,71 @@ const AdminCourseView = () => {
         <button onClick={() => navigate('/admin/dashboard')} className="back-btn">
           ← Back to Dashboard
         </button>
-        <h1>Course Management</h1>
+        <div className="header-actions">
+          <div className="header-title-section">
+            <h1>📚 Course Management</h1>
+            <p className="header-subtitle">Manage course details, lessons, and quizzes</p>
+          </div>
+          <button 
+            onClick={() => navigate(`/admin/courses/${courseId}/analytics`)} 
+            className="analytics-btn"
+          >
+            📊 View Analytics
+          </button>
+        </div>
       </div>
 
       {/* Course Details */}
       <div className="course-details-card">
         <div className="course-details-header">
-          <h2>{course.title}</h2>
+          <div className="course-title-wrapper">
+            <div className="course-icon">{course.title.charAt(0).toUpperCase()}</div>
+            <div>
+              <h2>{course.title}</h2>
+              <p className="course-category-label">📂 {course.category}</p>
+            </div>
+          </div>
           <span className={`status-badge ${course.isActive ? 'active' : 'inactive'}`}>
-            {course.isActive ? 'Active' : 'Inactive'}
+            {course.isActive ? '✓ Active' : '⊘ Inactive'}
           </span>
         </div>
         <p className="course-description">{course.description}</p>
-        <div className="course-meta">
-          <span><strong>Category:</strong> {course.category}</span>
-          <span><strong>Level:</strong> {course.level}</span>
-          <span><strong>Skill Category:</strong> {course.skillCategory}</span>
-          <span><strong>Duration:</strong> {course.duration} hours</span>
-          <span><strong>Enrollments:</strong> {course.enrollmentCount || 0}</span>
-          <span><strong>Rating:</strong> ⭐ {course.averageRating?.toFixed(1) || 'N/A'}</span>
+        <div className="course-meta-grid">
+          <div className="meta-card">
+            <div className="meta-icon">📚</div>
+            <div className="meta-content">
+              <div className="meta-label">Level</div>
+              <div className="meta-value">{course.level}</div>
+            </div>
+          </div>
+          <div className="meta-card">
+            <div className="meta-icon">⏱️</div>
+            <div className="meta-content">
+              <div className="meta-label">Duration</div>
+              <div className="meta-value">{course.duration} hrs</div>
+            </div>
+          </div>
+          <div className="meta-card">
+            <div className="meta-icon">👥</div>
+            <div className="meta-content">
+              <div className="meta-label">Enrollments</div>
+              <div className="meta-value">{course.enrollmentCount || 0}</div>
+            </div>
+          </div>
+          <div className="meta-card">
+            <div className="meta-icon">⭐</div>
+            <div className="meta-content">
+              <div className="meta-label">Rating</div>
+              <div className="meta-value">{course.averageRating?.toFixed(1) || 'N/A'}</div>
+            </div>
+          </div>
+          <div className="meta-card">
+            <div className="meta-icon">🎯</div>
+            <div className="meta-content">
+              <div className="meta-label">Skill Category</div>
+              <div className="meta-value">{course.skillCategory}</div>
+            </div>
+          </div>
         </div>
         {course.targetJobRoles && course.targetJobRoles.length > 0 && (
           <div className="course-job-roles">
@@ -243,18 +313,101 @@ const AdminCourseView = () => {
         )}
       </div>
 
+      {/* Course Quizzes */}
+      <div className="course-quizzes-section">
+        <div className="quizzes-header">
+          <h2>Course Quizzes ({quizzes.length})</h2>
+        </div>
+
+        {loadingQuizzes ? (
+          <div className="loading-quizzes">Loading quizzes...</div>
+        ) : quizzes.length === 0 ? (
+          <div className="no-quizzes">
+            <p>No quizzes created yet. Add quizzes to lessons to track student performance!</p>
+          </div>
+        ) : (
+          <div className="quizzes-grid">
+            {quizzes.map((quiz, index) => (
+              <div key={quiz._id} className="quiz-card">
+                <div className="quiz-card-header">
+                  <div className="quiz-number">Quiz #{index + 1}</div>
+                  <span className={`quiz-status ${quiz.isActive ? 'active' : 'inactive'}`}>
+                    {quiz.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                <div className="quiz-card-content">
+                  <h3 className="quiz-title">{quiz.title}</h3>
+                  <p className="quiz-lesson">📚 Lesson: {quiz.lessonId?.title || 'N/A'}</p>
+                  {quiz.attemptCount > 0 && (
+                    <p className="quiz-attempts-count">
+                      👥 {quiz.attemptCount} student{quiz.attemptCount !== 1 ? 's' : ''} attempted
+                    </p>
+                  )}
+                  <div className="quiz-meta-grid">
+                    <div className="quiz-meta-item">
+                      <span className="meta-label">Questions</span>
+                      <span className="meta-value">{quiz.questions?.length || 0}</span>
+                    </div>
+                    <div className="quiz-meta-item">
+                      <span className="meta-label">Duration</span>
+                      <span className="meta-value">{quiz.duration || 10} min</span>
+                    </div>
+                    <div className="quiz-meta-item">
+                      <span className="meta-label">Passing Score</span>
+                      <span className="meta-value">{quiz.passingScore || 70}%</span>
+                    </div>
+                    <div className="quiz-meta-item">
+                      <span className="meta-label">Max Attempts</span>
+                      <span className="meta-value">{quiz.maxAttempts || 'Unlimited'}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="quiz-card-actions">
+                  <button
+                    onClick={() => window.open(`/admin/quiz/edit/${quiz._id}`, '_blank')}
+                    className="edit-quiz-btn"
+                    title="Edit Quiz"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    onClick={() => navigate(`/admin/quiz/${quiz._id}/attempts`)}
+                    className="view-attempts-btn"
+                    title="View Student Attempts"
+                  >
+                    👥 Attempts
+                  </button>
+                  <button
+                    onClick={() => navigate(`/admin/quiz/${quiz._id}/stats`)}
+                    className="view-stats-btn"
+                    title="View Statistics"
+                  >
+                    📊 Stats
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Lessons Management */}
       <div className="lessons-section">
         <div className="lessons-header">
-          <h2>Manage Lessons ({lessons.length})</h2>
+          <div>
+            <h2>🎬 Manage Lessons ({lessons.length})</h2>
+            <p className="section-subtitle">Organize and edit course lessons</p>
+          </div>
           <button onClick={openAddLessonModal} className="add-lesson-btn">
-            + Add Lesson
+            ✨ + Add Lesson
           </button>
         </div>
 
         {lessons.length === 0 ? (
           <div className="no-lessons">
-            <p>No lessons yet. Add your first lesson to get started!</p>
+            <div className="empty-state-icon">📚</div>
+            <h3>No lessons yet</h3>
+            <p>Add your first lesson to get started!</p>
           </div>
         ) : (
           <div className="lessons-list">
@@ -262,7 +415,10 @@ const AdminCourseView = () => {
               <div key={lesson._id} className={`lesson-card ${!lesson.isActive ? 'inactive' : ''}`}>
                 <div className="lesson-order">#{lesson.lessonOrder}</div>
                 <div className="lesson-content">
-                  <h3>{lesson.title}</h3>
+                  <div className="lesson-header-row">
+                    <h3>{lesson.title}</h3>
+                    {lesson.hasQuiz && <span className="quiz-badge">📝 Quiz Available</span>}
+                  </div>
                   {lesson.description && <p className="lesson-desc">{lesson.description}</p>}
                   <div className="lesson-meta">
                     <span className="lesson-duration">⏱️ {lesson.duration} mins</span>
@@ -271,6 +427,7 @@ const AdminCourseView = () => {
                     </span>
                     {lesson.videoUrl && <span className="lesson-type">📹 Video</span>}
                     {lesson.textContent && <span className="lesson-type">📄 Text</span>}
+                    {lesson.hasQuiz && <span className="lesson-type quiz-indicator">📝 Has Quiz</span>}
                     <span className={`lesson-status ${lesson.isActive ? 'active' : 'inactive'}`}>
                       {lesson.isActive ? 'Active' : 'Inactive'}
                     </span>
@@ -282,6 +439,13 @@ const AdminCourseView = () => {
                   </button>
                   <button onClick={() => moveLesson(lesson._id, 'down')} disabled={index === lessons.length - 1} title="Move Down">
                     ↓
+                  </button>
+                  <button 
+                    onClick={() => window.open(`/admin/quiz/${lesson.hasQuiz ? 'edit/' + lesson.microQuizId : 'create/' + lesson._id}`, '_blank')}
+                    className="quiz-btn"
+                    title={lesson.hasQuiz ? 'Edit Quiz' : 'Create Quiz'}
+                  >
+                    {lesson.hasQuiz ? '📝 Edit Quiz' : '➕ Add Quiz'}
                   </button>
                   <button onClick={() => openEditLessonModal(lesson)} className="edit-btn">
                     Edit

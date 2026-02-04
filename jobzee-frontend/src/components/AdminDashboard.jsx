@@ -9416,29 +9416,38 @@ const AdminDashboard = () => {
 
           {/* Courses Management */}
           {activeTab === "courses" && (
-            <div className="bg-white rounded-lg shadow-sm">
-              <div className="p-6 border-b">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Courses Management</h3>
-                  <div className="space-x-2">
-                    <button onClick={fetchCourses} className="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800">
-                      Refresh
+            <div className="bg-gradient-to-br from-white via-purple-50 to-blue-50 rounded-2xl shadow-2xl border border-purple-100">
+              <div className="p-8 border-b border-purple-100 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-2xl font-bold text-white mb-1 flex items-center gap-3">
+                      <span className="text-3xl">📚</span>
+                      Courses Management
+                    </h3>
+                    <p className="text-purple-100 text-sm">Manage and organize all your courses</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button onClick={fetchCourses} className="bg-white bg-opacity-20 backdrop-blur-sm text-white px-5 py-2.5 rounded-xl hover:bg-opacity-30 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 border border-white border-opacity-30">
+                      🔄 Refresh
                     </button>
-                    <button onClick={() => setShowCreateCourse(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                      + Create Course
+                    <button onClick={() => setShowCreateCourse(true)} className="bg-white text-purple-600 px-5 py-2.5 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                      ✨ + Create Course
                     </button>
                   </div>
                 </div>
                 
-                <div className="flex space-x-4 mb-4">
-                  <input
-                    type="text"
-                    placeholder="Search courses..."
-                    value={courseSearch}
-                    onChange={(e) => setCourseSearch(e.target.value)}
-                    className="flex-1 px-4 py-2 border rounded-lg"
-                  />
-                  <select value={courseCategory} onChange={(e) => setCourseCategory(e.target.value)} className="px-4 py-2 border rounded-lg">
+                <div className="flex gap-4">
+                  <div className="flex-1 relative">
+                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-400 text-lg">🔍</span>
+                    <input
+                      type="text"
+                      placeholder="Search courses..."
+                      value={courseSearch}
+                      onChange={(e) => setCourseSearch(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 bg-white bg-opacity-90 backdrop-blur-sm border-2 border-white border-opacity-50 rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-purple-300 transition-all duration-300 placeholder-purple-300 text-gray-800"
+                    />
+                  </div>
+                  <select value={courseCategory} onChange={(e) => setCourseCategory(e.target.value)} className="px-4 py-3 bg-white bg-opacity-90 backdrop-blur-sm border-2 border-white border-opacity-50 rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-purple-300 transition-all duration-300 text-gray-700 font-medium">
                     <option value="">All Categories</option>
                     <option value="web-development">Web Development</option>
                     <option value="data-science">Data Science</option>
@@ -9450,62 +9459,87 @@ const AdminDashboard = () => {
                     <option value="marketing">Marketing</option>
                     <option value="soft-skills">Soft Skills</option>
                   </select>
-                  <select value={courseLevel} onChange={(e) => setCourseLevel(e.target.value)} className="px-4 py-2 border rounded-lg">
+                  <select value={courseLevel} onChange={(e) => setCourseLevel(e.target.value)} className="px-4 py-3 bg-white bg-opacity-90 backdrop-blur-sm border-2 border-white border-opacity-50 rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-purple-300 transition-all duration-300 text-gray-700 font-medium">
                     <option value="">All Levels</option>
                     <option value="beginner">Beginner</option>
                     <option value="intermediate">Intermediate</option>
                     <option value="advanced">Advanced</option>
                   </select>
-                  <select value={courseStatus} onChange={(e) => setCourseStatus(e.target.value)} className="px-4 py-2 border rounded-lg">
+                  <select value={courseStatus} onChange={(e) => setCourseStatus(e.target.value)} className="px-4 py-3 bg-white bg-opacity-90 backdrop-blur-sm border-2 border-white border-opacity-50 rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-purple-300 transition-all duration-300 text-gray-700 font-medium">
                     <option value="">All Status</option>
                     <option value="true">Active</option>
                     <option value="false">Inactive</option>
                   </select>
-                  <button onClick={fetchCourses} className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                  <button onClick={fetchCourses} className="bg-indigo-500 bg-opacity-90 backdrop-blur-sm text-white px-6 py-3 rounded-xl hover:bg-indigo-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                     Filter
                   </button>
                 </div>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Level</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Enrollments</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <table className="min-w-full">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-purple-100 to-blue-100">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-purple-900 uppercase tracking-wider">Title</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-purple-900 uppercase tracking-wider">Category</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-purple-900 uppercase tracking-wider">Level</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-purple-900 uppercase tracking-wider">Enrollments</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-purple-900 uppercase tracking-wider">Rating</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-purple-900 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-purple-900 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {courses.map((course) => (
-                      <tr key={course._id}>
-                        <td className="px-6 py-4">
-                          <div className="font-medium text-gray-900">{course.title}</div>
-                          <div className="text-sm text-gray-500">{course.targetJobRoles?.slice(0, 2).join(', ')}</div>
+                  <tbody className="bg-white divide-y divide-purple-100">
+                    {courses.map((course, index) => (
+                      <tr key={course._id} className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all duration-200 group">
+                        <td className="px-6 py-5">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold shadow-lg group-hover:shadow-xl transition-shadow">
+                              {course.title.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="font-semibold text-gray-900 text-base group-hover:text-purple-600 transition-colors">{course.title}</div>
+                              <div className="text-sm text-gray-500 mt-1">{course.targetJobRoles?.slice(0, 2).join(', ')}</div>
+                            </div>
+                          </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">{course.category}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 text-xs rounded-full ${course.level === 'beginner' ? 'bg-green-100 text-green-800' : course.level === 'intermediate' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                        <td className="px-6 py-5">
+                          <span className="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg">{course.category}</span>
+                        </td>
+                        <td className="px-6 py-5">
+                          <span className={`px-3 py-1.5 text-xs font-bold rounded-lg shadow-sm ${course.level === 'beginner' ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white' : course.level === 'intermediate' ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white' : 'bg-gradient-to-r from-red-400 to-pink-500 text-white'}`}>
                             {course.level}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">{course.enrollmentCount || 0}</td>
-                        <td className="px-6 py-4 text-sm text-gray-700">⭐ {course.averageRating?.toFixed(1) || 'N/A'}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 text-xs rounded-full ${course.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                            {course.isActive ? 'Active' : 'Inactive'}
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">👥</span>
+                            <span className="text-sm font-semibold text-gray-700">{course.enrollmentCount || 0}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-1">
+                            <span className="text-yellow-500 text-lg">⭐</span>
+                            <span className="text-sm font-semibold text-gray-700">{course.averageRating?.toFixed(1) || 'N/A'}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <span className={`px-3 py-1.5 text-xs font-bold rounded-lg shadow-sm ${course.isActive ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white' : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white'}`}>
+                            {course.isActive ? '✓ Active' : '⊘ Inactive'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm space-x-2">
-                          <button onClick={() => navigate(`/admin/courses/${course._id}`)} className="text-blue-600 hover:text-blue-800">View</button>
-                          <button onClick={() => toggleCourseStatus(course._id)} className="text-yellow-600 hover:text-yellow-800">
-                            {course.isActive ? 'Deactivate' : 'Activate'}
-                          </button>
-                          <button onClick={() => deleteCourse(course._id)} className="text-red-600 hover:text-red-800">Delete</button>
+                        <td className="px-6 py-5">
+                          <div className="flex gap-2">
+                            <button onClick={() => navigate(`/admin/courses/${course._id}`)} className="px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                              View
+                            </button>
+                            <button onClick={() => toggleCourseStatus(course._id)} className="px-3 py-1.5 bg-yellow-500 text-white text-xs font-semibold rounded-lg hover:bg-yellow-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                              {course.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button onClick={() => deleteCourse(course._id)} className="px-3 py-1.5 bg-red-500 text-white text-xs font-semibold rounded-lg hover:bg-red-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -9514,11 +9548,27 @@ const AdminDashboard = () => {
               </div>
 
               {courseTotalPages > 1 && (
-                <div className="p-4 border-t flex justify-between items-center">
-                  <div className="text-sm text-gray-700">Page {coursePage} of {courseTotalPages}</div>
-                  <div className="flex space-x-2">
-                    <button disabled={coursePage === 1} onClick={() => { setCoursePage(coursePage - 1); }} className="px-3 py-1 border rounded disabled:opacity-50">Previous</button>
-                    <button disabled={coursePage === courseTotalPages} onClick={() => { setCoursePage(coursePage + 1); }} className="px-3 py-1 border rounded disabled:opacity-50">Next</button>
+                <div className="p-6 border-t border-purple-100 bg-gradient-to-r from-purple-50 to-blue-50 rounded-b-2xl">
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm font-semibold text-gray-700 bg-white px-4 py-2 rounded-lg shadow-sm">
+                      📄 Page {coursePage} of {courseTotalPages}
+                    </div>
+                    <div className="flex gap-3">
+                      <button 
+                        disabled={coursePage === 1} 
+                        onClick={() => { setCoursePage(coursePage - 1); }} 
+                        className="px-5 py-2 bg-white border-2 border-purple-200 text-purple-600 font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none"
+                      >
+                        ← Previous
+                      </button>
+                      <button 
+                        disabled={coursePage === courseTotalPages} 
+                        onClick={() => { setCoursePage(coursePage + 1); }} 
+                        className="px-5 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none"
+                      >
+                        Next →
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

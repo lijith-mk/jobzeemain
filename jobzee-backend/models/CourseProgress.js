@@ -35,7 +35,19 @@ const courseProgressSchema = new mongoose.Schema({
   certificateIssued: { type: Boolean, default: false },
   certificateUrl: { type: String },
   rating: { type: Number, min: 1, max: 5 },
-  review: { type: String }
+  review: { type: String },
+  
+  // Payment tracking for paid courses
+  isPaid: { type: Boolean, default: false },
+  paymentAmount: { type: Number, default: 0 },
+  paymentCurrency: { type: String, default: 'INR' },
+  paymentId: { type: String }, // Razorpay payment ID or order ID
+  paymentStatus: { 
+    type: String, 
+    enum: ['pending', 'completed', 'failed', 'refunded'],
+    default: 'completed' // Default completed for free courses
+  },
+  paidAt: { type: Date }
 }, { timestamps: true });
 
 // Compound index for user-course lookup

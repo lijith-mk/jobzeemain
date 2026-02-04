@@ -32,6 +32,7 @@ import AdminLogin from "./components/AdminLogin";
 import AdminDashboard from "./components/AdminDashboard";
 import AdminCreateCourse from "./components/AdminCreateCourse";
 import AdminCourseView from "./components/AdminCourseView";
+import AdminCourseAnalytics from "./pages/AdminCourseAnalytics";
 import EmployerPostJob from "./components/EmployerPostJob";
 import EmployerPostInternship from "./components/EmployerPostInternship";
 import EmployerInternships from "./pages/EmployerInternships";
@@ -91,6 +92,11 @@ import EmployerTests from "./pages/EmployerTests";
 import LearningHub from "./pages/LearningHub";
 import CourseView from "./pages/CourseView";
 import LessonViewer from "./pages/LessonViewer";
+import MicroQuizBuilder from "./pages/MicroQuizBuilder";
+import QuizTaker from "./pages/QuizTaker";
+import QuizResults from "./pages/QuizResults";
+import QuizStatistics from "./pages/QuizStatistics";
+import QuizAttempts from "./pages/QuizAttempts";
 
 function App() {
   // Initialize session manager and handle auto-logout
@@ -161,6 +167,13 @@ function App() {
             <Route path="/learning-hub" element={<LearningHub />} />
             <Route path="/course/:courseId" element={<CourseView />} />
             <Route path="/lesson/:lessonId" element={<LessonViewer />} />
+            {/* Micro Quiz Routes */}
+            <Route path="/admin/quiz/create/:lessonId" element={<MicroQuizBuilder />} />
+            <Route path="/admin/quiz/edit/:quizId" element={<MicroQuizBuilder />} />
+            <Route path="/admin/quiz/:quizId/stats" element={<QuizStatistics />} />
+            <Route path="/admin/quiz/:quizId/attempts" element={<QuizAttempts />} />
+            <Route path="/lesson/:lessonId/quiz" element={<QuizTaker />} />
+            <Route path="/quiz/results/:attemptId" element={<QuizResults />} />
             {/* Internships listing page - public access */}
             <Route path="/internships" element={<Internships />} />
             <Route path="/internships/:id" element={<InternshipDetails />} />
@@ -271,6 +284,7 @@ function App() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/create-course" element={<AdminCreateCourse />} />
             <Route path="/admin/courses/:courseId" element={<AdminCourseView />} />
+            <Route path="/admin/courses/:courseId/analytics" element={<AdminCourseAnalytics />} />
 
             <Route path="*" element={<PageNotFound />} />
           </Routes>

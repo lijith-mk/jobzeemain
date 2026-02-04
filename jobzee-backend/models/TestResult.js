@@ -87,7 +87,15 @@ const testResultSchema = new mongoose.Schema({
   completedAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  // Skill-wise performance analysis
+  skillAnalysis: [{
+    skill: { type: String },
+    questionsAttempted: { type: Number, default: 0 },
+    questionsCorrect: { type: Number, default: 0 },
+    accuracy: { type: Number, default: 0 }, // Percentage
+    isWeakArea: { type: Boolean, default: false } // Below 70% accuracy
+  }]
 }, {
   timestamps: true
 });

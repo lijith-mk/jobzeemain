@@ -235,6 +235,9 @@ const CourseView = () => {
                       {lesson.textContent && (
                         <span className="lesson-type">📄 Article</span>
                       )}
+                      {lesson.hasQuiz && (
+                        <span className="lesson-type quiz-badge">📝 Quiz</span>
+                      )}
                     </div>
                   </div>
 

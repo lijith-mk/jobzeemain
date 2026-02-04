@@ -3079,6 +3079,19 @@ router.get('/courses/:id', adminAuth, async (req, res) => {
       .sort({ lessonOrder: 1 })
       .populate('createdBy', 'name email');
     
+    // For lessons with hasQuiz=true but no microQuizId, fetch and set the quiz ID
+    const MicroQuiz = require('../models/MicroQuiz');
+    for (let lesson of lessons) {
+      if (lesson.hasQuiz && !lesson.microQuizId) {
+        const quiz = await MicroQuiz.findOne({ lessonId: lesson._id });
+        if (quiz) {
+          lesson.microQuizId = quiz._id;
+          // Optionally save to database to fix it permanently
+          await lesson.save();
+        }
+      }
+    }
+    
     res.json({ success: true, course, lessons });
   } catch (error) {
     console.error('Get course error:', error);
@@ -3192,6 +3205,24 @@ router.get('/courses/:courseId/lessons', adminAuth, async (req, res) => {
   } catch (error) {
     console.error('Get lessons error:', error);
     res.status(500).json({ success: false, message: 'Error fetching lessons', error: error.message });
+  }
+});
+
+// Get single lesson by ID (for quiz creation)
+router.get('/lessons/:id', adminAuth, async (req, res) => {
+  try {
+    const lesson = await Lesson.findById(req.params.id)
+      .populate('courseId', 'title category')
+      .populate('createdBy', 'name email');
+    
+    if (!lesson) {
+      return res.status(404).json({ success: false, message: 'Lesson not found' });
+    }
+    
+    res.json({ success: true, lesson });
+  } catch (error) {
+    console.error('Get lesson error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching lesson', error: error.message });
   }
 });
 

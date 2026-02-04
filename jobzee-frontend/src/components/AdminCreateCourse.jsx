@@ -7,6 +7,10 @@ import './AdminCreateCourse.css';
 const AdminCreateCourse = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [uploadingInstructorPhoto, setUploadingInstructorPhoto] = useState(false);
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
+  const [instructorPhotoPreview, setInstructorPhotoPreview] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -22,6 +26,10 @@ const AdminCreateCourse = () => {
     instructorBio: '',
     instructorPhoto: '',
     tags: '',
+    isPaid: false,
+    price: '',
+    currency: 'INR',
+    discountPrice: '',
     isActive: true
   });
 
@@ -61,6 +69,110 @@ const AdminCreateCourse = () => {
     }));
   };
 
+  const handleThumbnailUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setThumbnailPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    setUploadingThumbnail(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      const { data } = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/upload/admin/course-thumbnail`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      setFormData(prev => ({ ...prev, thumbnail: data.imageUrl }));
+      toast.success('Thumbnail uploaded successfully!');
+    } catch (error) {
+      console.error('Thumbnail upload error:', error);
+      toast.error('Failed to upload thumbnail');
+      setThumbnailPreview(null);
+    } finally {
+      setUploadingThumbnail(false);
+    }
+  };
+
+  const handleInstructorPhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setInstructorPhotoPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    setUploadingInstructorPhoto(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      const { data } = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/upload/admin/instructor-photo`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      setFormData(prev => ({ ...prev, instructorPhoto: data.imageUrl }));
+      toast.success('Instructor photo uploaded successfully!');
+    } catch (error) {
+      console.error('Instructor photo upload error:', error);
+      toast.error('Failed to upload instructor photo');
+      setInstructorPhotoPreview(null);
+    } finally {
+      setUploadingInstructorPhoto(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -93,6 +205,10 @@ const AdminCreateCourse = () => {
           photo: formData.instructorPhoto || undefined
         },
         tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
+        isPaid: formData.isPaid,
+        price: formData.isPaid && formData.price ? Number(formData.price) : 0,
+        currency: formData.currency || 'INR',
+        discountPrice: formData.discountPrice ? Number(formData.discountPrice) : undefined,
         isActive: formData.isActive,
         modules: [] // Empty initially, lessons will be added separately
       };
@@ -153,14 +269,26 @@ const AdminCreateCourse = () => {
           </div>
 
           <div className="form-group">
-            <label>Thumbnail URL</label>
+            <label>Course Thumbnail</label>
             <input
-              type="url"
-              name="thumbnail"
-              value={formData.thumbnail}
-              onChange={handleChange}
-              placeholder="https://example.com/course-image.jpg"
+              type="file"
+              accept="image/*"
+              onChange={handleThumbnailUpload}
+              disabled={uploadingThumbnail}
+              className="file-input"
             />
+            {uploadingThumbnail && (
+              <div className="upload-progress">
+                <span>Uploading thumbnail...</span>
+              </div>
+            )}
+            {thumbnailPreview && (
+              <div className="image-preview">
+                <img src={thumbnailPreview} alt="Thumbnail preview" />
+                <p className="text-success">✓ Thumbnail uploaded</p>
+              </div>
+            )}
+            <small>Upload a course thumbnail image (Max 5MB, JPG/PNG)</small>
           </div>
         </div>
 
@@ -290,14 +418,26 @@ const AdminCreateCourse = () => {
           </div>
 
           <div className="form-group">
-            <label>Instructor Photo URL</label>
+            <label>Instructor Photo</label>
             <input
-              type="url"
-              name="instructorPhoto"
-              value={formData.instructorPhoto}
-              onChange={handleChange}
-              placeholder="https://example.com/instructor-photo.jpg"
+              type="file"
+              accept="image/*"
+              onChange={handleInstructorPhotoUpload}
+              disabled={uploadingInstructorPhoto}
+              className="file-input"
             />
+            {uploadingInstructorPhoto && (
+              <div className="upload-progress">
+                <span>Uploading photo...</span>
+              </div>
+            )}
+            {instructorPhotoPreview && (
+              <div className="image-preview">
+                <img src={instructorPhotoPreview} alt="Instructor preview" />
+                <p className="text-success">✓ Photo uploaded</p>
+              </div>
+            )}
+            <small>Upload instructor photo (Max 5MB, JPG/PNG)</small>
           </div>
         </div>
 
@@ -317,6 +457,73 @@ const AdminCreateCourse = () => {
             </label>
             <small>Uncheck to save as draft</small>
           </div>
+        </div>
+
+        {/* Pricing */}
+        <div className="form-section">
+          <h2>Pricing</h2>
+          
+          <div className="form-group checkbox-group">
+            <label>
+              <input
+                type="checkbox"
+                name="isPaid"
+                checked={formData.isPaid}
+                onChange={handleChange}
+              />
+              <span>This is a paid course</span>
+            </label>
+            <small>Enable payment requirement for enrollment</small>
+          </div>
+
+          {formData.isPaid && (
+            <>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Price *</label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleChange}
+                    placeholder="999"
+                    min="0"
+                    step="0.01"
+                    required={formData.isPaid}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Currency *</label>
+                  <select
+                    name="currency"
+                    value={formData.currency}
+                    onChange={handleChange}
+                    required={formData.isPaid}
+                  >
+                    <option value="INR">INR (₹)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Discount Price (Optional)</label>
+                <input
+                  type="number"
+                  name="discountPrice"
+                  value={formData.discountPrice}
+                  onChange={handleChange}
+                  placeholder="799"
+                  min="0"
+                  step="0.01"
+                />
+                <small>Leave empty if no discount</small>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Submit */}
