@@ -383,8 +383,19 @@ exports.verifyCertificate = async (req, res) => {
       });
     }
 
-    // Use verification service
-    const verification = await verifyCertificateById(certificateId);
+    // Build request context for logging
+    const requestContext = {
+      ip: req.ip || req.connection.remoteAddress,
+      userAgent: req.get('user-agent') || 'unknown',
+      userId: req.user?._id || req.user?.id || null,
+      userType: req.user?.role || 'guest',
+      method: 'web',
+      url: req.originalUrl,
+      referer: req.get('referer') || null
+    };
+
+    // Use verification service with logging
+    const verification = await verifyCertificateById(certificateId, requestContext);
 
     res.json({
       success: verification.valid,
@@ -416,8 +427,19 @@ exports.verifyCertificateByHash = async (req, res) => {
       });
     }
 
-    // Use verification service
-    const verification = await verifyCertificateByHash(certificateHash);
+    // Build request context for logging
+    const requestContext = {
+      ip: req.ip || req.connection.remoteAddress,
+      userAgent: req.get('user-agent') || 'unknown',
+      userId: req.user?._id || req.user?.id || null,
+      userType: req.user?.role || 'guest',
+      method: 'web',
+      url: req.originalUrl,
+      referer: req.get('referer') || null
+    };
+
+    // Use verification service with logging
+    const verification = await verifyCertificateByHash(certificateHash, requestContext);
 
     res.json({
       success: verification.valid,
@@ -458,8 +480,19 @@ exports.batchVerifyCertificates = async (req, res) => {
       });
     }
 
-    // Use verification service
-    const results = await batchVerifyCertificates(certificateIds);
+    // Build request context for logging
+    const requestContext = {
+      ip: req.ip || req.connection.remoteAddress,
+      userAgent: req.get('user-agent') || 'unknown',
+      userId: req.user?._id || req.user?.id || null,
+      userType: req.user?.role || 'guest',
+      method: 'api',
+      url: req.originalUrl,
+      referer: req.get('referer') || null
+    };
+
+    // Use verification service with logging
+    const results = await batchVerifyCertificates(certificateIds, requestContext);
 
     res.json({
       success: true,

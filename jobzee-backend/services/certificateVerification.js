@@ -1,9 +1,11 @@
 const Certificate = require('../models/Certificate');
+const CertificateVerificationLog = require('../models/CertificateVerificationLog');
 const { verifyCertificateHash } = require('../utils/certificateHash');
 
 /**
  * Certificate Verification Service
  * Handles certificate verification logic and business rules
+ * All verification attempts are logged for audit trail and fraud detection
  */
 
 /**
@@ -11,23 +13,20 @@ const { verifyCertificateHash } = require('../utils/certificateHash');
  * Performs complete verification including existence, integrity, and revocation checks
  * 
  * @param {string} certificateId - Unique certificate identifier
+ * @param {Object} requestContext - Request information for logging
+ * @param {string} requestContext.ip - Verifier IP address
+ * @param {string} requestContext.userAgent - Verifier user agent
+ * @param {string} requestContext.userId - Optional logged-in user ID
+ * @param {string} requestContext.userType - Optional user type ('user', 'employer', 'guest')
+ * @param {string} requestContext.method - Verification method ('web', 'api', 'qr_scan')
+ * @param {string} requestContext.url - Request URL
+ * @param {string} requestContext.referer - Request referer
  * @returns {Promise<Object>} - Verification result with status and certificate data
- * 
- * @example
- * const result = await verifyCertificateById('CERT-2026-ABC123');
- * // Returns:
- * // {
- * //   valid: true,
- * //   verificationStatus: 'verified',
- * //   message: 'Certificate is valid',
- * //   certificateId: 'CERT-2026-ABC123',
- * //   courseName: 'JavaScript Fundamentals',
- * //   issuedTo: 'John Doe',
- * //   issuedAt: '2026-02-05T10:30:00.000Z',
- * //   certificate: { ... }
- * // }
  */
-async function verifyCertificateById(certificateId) {
+async function verifyCertificateById(certificateId, requestContext = {}) {
+  const startTime = Date.now();
+  let result, resultMessage;
+
   try {
     // Step 1: Check if certificate exists
     const certificate = await Certificate.findOne({ certificateId })
@@ -35,20 +34,56 @@ async function verifyCertificateById(certificateId) {
       .lean();
 
     if (!certificate) {
+      result = 'not_found';
+      resultMessage = 'Certificate not found';
+      
+      // Log failed verification attempt
+      await CertificateVerificationLog.logVerification({
+        certificateId,
+        result,
+        resultMessage,
+        verifierIp: requestContext.ip || 'unknown',
+        verifierUserAgent: requestContext.userAgent || 'unknown',
+        verifierUserId: requestContext.userId || null,
+        verifierUserType: requestContext.userType || 'guest',
+        verificationMethod: requestContext.method || 'web',
+        requestUrl: requestContext.url || null,
+        requestReferer: requestContext.referer || null,
+        responseTime: Date.now() - startTime
+      });
+
       return {
         valid: false,
         verificationStatus: 'not_found',
-        message: 'Certificate not found',
+        message: resultMessage,
         certificateId
       };
     }
 
     // Step 2: Check if certificate is revoked
     if (certificate.isRevoked) {
+      result = 'revoked';
+      resultMessage = 'This certificate has been revoked';
+      
+      // Log revoked certificate verification
+      await CertificateVerificationLog.logVerification({
+        certificateId,
+        result,
+        resultMessage,
+        verifierIp: requestContext.ip || 'unknown',
+        verifierUserAgent: requestContext.userAgent || 'unknown',
+        verifierUserId: requestContext.userId || null,
+        verifierUserType: requestContext.userType || 'guest',
+        verificationMethod: requestContext.method || 'web',
+        requestUrl: requestContext.url || null,
+        requestReferer: requestContext.referer || null,
+        responseTime: Date.now() - startTime
+      });
+
       return {
         valid: false,
         verificationStatus: 'revoked',
-        message: 'This certificate has been revoked',
+        message: resultMessage,
         certificateId: certificate.certificateId,
         courseName: certificate.courseName,
         issuedTo: certificate.userName,
@@ -62,15 +97,33 @@ async function verifyCertificateById(certificateId) {
     const integrityValid = verifyCertificateHash(certificate);
 
     if (!integrityValid) {
+      result = 'integrity_failed';
+      resultMessage = 'Certificate integrity check failed - possible tampering detected';
+      
+      // Log integrity failure (high priority for fraud detection)
+      await CertificateVerificationLog.logVerification({
+        certificateId,
+        result,
+        resultMessage,
+        verifierIp: requestContext.ip || 'unknown',
+        verifierUserAgent: requestContext.userAgent || 'unknown',
+        verifierUserId: requestContext.userId || null,
+        verifierUserType: requestContext.userType || 'guest',
+        verificationMethod: requestContext.method || 'web',
+        requestUrl: requestContext.url || null,
+        requestReferer: requestContext.referer || null,
+        responseTime: Date.now() - startTime
+      });
+
       return {
         valid: false,
         verificationStatus: 'integrity_failed',
-        message: 'Certificate integrity check failed - possible tampering detected',
+        message: resultMessage,
         certificateId: certificate.certificateId
       };
     }
 
-    // Step 4: Record verification attempt
+    // Step 4: Record verification attempt in Certificate model
     await Certificate.findOneAndUpdate(
       { certificateId },
       {
@@ -79,11 +132,31 @@ async function verifyCertificateById(certificateId) {
       }
     );
 
-    // Step 5: Return successful verification
+    // Step 5: Log successful verification
+    result = 'success';
+    resultMessage = 'Certificate is valid and verified';
+    
+    await CertificateVerificationLog.logVerification({
+      certificateId,
+      result,
+      resultMessage,
+      verifierIp: requestContext.ip || 'unknown',
+      verifierUserAgent: requestContext.userAgent || 'unknown',
+      verifierUserId: requestContext.userId || null,
+      verifierUserType: requestContext.userType || 'guest',
+      verificationMethod: requestContext.method || 'web',
+      requestUrl: requestContext.url || null,
+      requestReferer: requestContext.referer || null,
+      responseTime: Date.now() - startTime,
+      blockchainVerified: !!certificate.blockchainTxHash,
+      blockchainNetwork: certificate.blockchainNetwork || null
+    });
+
+    // Step 6: Return successful verification
     return {
       valid: true,
       verificationStatus: certificate.verificationStatus,
-      message: 'Certificate is valid and verified',
+      message: resultMessage,
       certificateId: certificate.certificateId,
       courseName: certificate.courseName,
       issuedTo: certificate.userName,
@@ -101,6 +174,22 @@ async function verifyCertificateById(certificateId) {
 
   } catch (error) {
     console.error('Certificate verification error:', error);
+    
+    // Log error
+    await CertificateVerificationLog.logVerification({
+      certificateId,
+      result: 'error',
+      resultMessage: error.message,
+      verifierIp: requestContext.ip || 'unknown',
+      verifierUserAgent: requestContext.userAgent || 'unknown',
+      verifierUserId: requestContext.userId || null,
+      verifierUserType: requestContext.userType || 'guest',
+      verificationMethod: requestContext.method || 'web',
+      requestUrl: requestContext.url || null,
+      requestReferer: requestContext.referer || null,
+      responseTime: Date.now() - startTime
+    }).catch(err => console.error('Failed to log error:', err));
+
     throw new Error(`Verification failed: ${error.message}`);
   }
 }
@@ -110,28 +199,68 @@ async function verifyCertificateById(certificateId) {
  * Alternative verification method using certificate hash
  * 
  * @param {string} certificateHash - SHA-256 hash of certificate
+ * @param {Object} requestContext - Request information for logging
  * @returns {Promise<Object>} - Verification result
  */
-async function verifyCertificateByHash(certificateHash) {
+async function verifyCertificateByHash(certificateHash, requestContext = {}) {
+  const startTime = Date.now();
+  let result, resultMessage, certificateId = 'unknown';
+
   try {
     const certificate = await Certificate.findOne({ certificateHash })
       .select('-userAgent -ipAddress -userEmail')
       .lean();
 
     if (!certificate) {
+      result = 'not_found';
+      resultMessage = 'Certificate not found';
+      
+      await CertificateVerificationLog.logVerification({
+        certificateId: certificateHash.substring(0, 16) + '...', // Log partial hash
+        result,
+        resultMessage,
+        verifierIp: requestContext.ip || 'unknown',
+        verifierUserAgent: requestContext.userAgent || 'unknown',
+        verifierUserId: requestContext.userId || null,
+        verifierUserType: requestContext.userType || 'guest',
+        verificationMethod: requestContext.method || 'web',
+        requestUrl: requestContext.url || null,
+        requestReferer: requestContext.referer || null,
+        responseTime: Date.now() - startTime
+      });
+
       return {
         valid: false,
         verificationStatus: 'not_found',
-        message: 'Certificate not found'
+        message: resultMessage
       };
     }
 
+    certificateId = certificate.certificateId;
+
     // Check revocation
     if (certificate.isRevoked) {
+      result = 'revoked';
+      resultMessage = 'This certificate has been revoked';
+      
+      await CertificateVerificationLog.logVerification({
+        certificateId,
+        result,
+        resultMessage,
+        verifierIp: requestContext.ip || 'unknown',
+        verifierUserAgent: requestContext.userAgent || 'unknown',
+        verifierUserId: requestContext.userId || null,
+        verifierUserType: requestContext.userType || 'guest',
+        verificationMethod: requestContext.method || 'web',
+        requestUrl: requestContext.url || null,
+        requestReferer: requestContext.referer || null,
+        responseTime: Date.now() - startTime
+      });
+
       return {
         valid: false,
         verificationStatus: 'revoked',
-        message: 'This certificate has been revoked',
+        message: resultMessage,
         revokedAt: certificate.revokedAt
       };
     }
@@ -140,10 +269,27 @@ async function verifyCertificateByHash(certificateHash) {
     const integrityValid = verifyCertificateHash(certificate);
 
     if (!integrityValid) {
+      result = 'integrity_failed';
+      resultMessage = 'Certificate integrity check failed';
+      
+      await CertificateVerificationLog.logVerification({
+        certificateId,
+        result,
+        resultMessage,
+        verifierIp: requestContext.ip || 'unknown',
+        verifierUserAgent: requestContext.userAgent || 'unknown',
+        verifierUserId: requestContext.userId || null,
+        verifierUserType: requestContext.userType || 'guest',
+        verificationMethod: requestContext.method || 'web',
+        requestUrl: requestContext.url || null,
+        requestReferer: requestContext.referer || null,
+        responseTime: Date.now() - startTime
+      });
+
       return {
         valid: false,
         verificationStatus: 'integrity_failed',
-        message: 'Certificate integrity check failed'
+        message: resultMessage
       };
     }
 
@@ -156,10 +302,30 @@ async function verifyCertificateByHash(certificateHash) {
       }
     );
 
+    // Log success
+    result = 'success';
+    resultMessage = 'Certificate is valid';
+    
+    await CertificateVerificationLog.logVerification({
+      certificateId,
+      result,
+      resultMessage,
+      verifierIp: requestContext.ip || 'unknown',
+      verifierUserAgent: requestContext.userAgent || 'unknown',
+      verifierUserId: requestContext.userId || null,
+      verifierUserType: requestContext.userType || 'guest',
+      verificationMethod: requestContext.method || 'web',
+      requestUrl: requestContext.url || null,
+      requestReferer: requestContext.referer || null,
+      responseTime: Date.now() - startTime,
+      blockchainVerified: !!certificate.blockchainTxHash,
+      blockchainNetwork: certificate.blockchainNetwork || null
+    });
+
     return {
       valid: true,
       verificationStatus: certificate.verificationStatus,
-      message: 'Certificate is valid',
+      message: resultMessage,
       certificateId: certificate.certificateId,
       courseName: certificate.courseName,
       issuedTo: certificate.userName,
@@ -169,6 +335,21 @@ async function verifyCertificateByHash(certificateHash) {
 
   } catch (error) {
     console.error('Certificate hash verification error:', error);
+    
+    await CertificateVerificationLog.logVerification({
+      certificateId: certificateId || certificateHash.substring(0, 16) + '...',
+      result: 'error',
+      resultMessage: error.message,
+      verifierIp: requestContext.ip || 'unknown',
+      verifierUserAgent: requestContext.userAgent || 'unknown',
+      verifierUserId: requestContext.userId || null,
+      verifierUserType: requestContext.userType || 'guest',
+      verificationMethod: requestContext.method || 'web',
+      requestUrl: requestContext.url || null,
+      requestReferer: requestContext.referer || null,
+      responseTime: Date.now() - startTime
+    }).catch(err => console.error('Failed to log error:', err));
+
     throw new Error(`Verification failed: ${error.message}`);
   }
 }
@@ -178,11 +359,12 @@ async function verifyCertificateByHash(certificateHash) {
  * Useful for employer verification of multiple candidate certificates
  * 
  * @param {Array<string>} certificateIds - Array of certificate IDs to verify
+ * @param {Object} requestContext - Request information for logging
  * @returns {Promise<Array>} - Array of verification results
  */
-async function batchVerifyCertificates(certificateIds) {
+async function batchVerifyCertificates(certificateIds, requestContext = {}) {
   const results = await Promise.all(
-    certificateIds.map(id => verifyCertificateById(id).catch(err => ({
+    certificateIds.map(id => verifyCertificateById(id, requestContext).catch(err => ({
       valid: false,
       certificateId: id,
       message: err.message
