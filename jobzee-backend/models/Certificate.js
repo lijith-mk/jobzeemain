@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const { generateCertificateHash, verifyCertificateHash } = require('../utils/certificateHash');
 
 /**
  * Certificate Model
@@ -250,22 +251,22 @@ certificateSchema.pre('save', function(next) {
   
   // Only generate hash on creation (when document is new)
   if (this.isNew) {
-    // Create blockchain-ready hash from core immutable identifiers
-    // Using ONLY: certificateId, userId, courseId, issuedAt
-    const data = `${this.certificateId}-${this.userId}-${this.courseId}-${this.issuedAt.toISOString()}`;
-    console.log('Generating blockchain-ready hash from:', data);
-    this.certificateHash = crypto.createHash('sha256').update(data).digest('hex');
-    console.log('Generated hash:', this.certificateHash);
+    // Use centralized hash utility for blockchain-ready hash
+    this.certificateHash = generateCertificateHash({
+      certificateId: this.certificateId,
+      userId: this.userId.toString(),
+      courseId: this.courseId.toString(),
+      issuedAt: this.issuedAt
+    });
+    console.log('Generated blockchain-ready hash:', this.certificateHash);
   }
   next();
 });
 
 // Method to verify certificate integrity
 certificateSchema.methods.verifyIntegrity = function() {
-  // Verify using same core immutable fields used for hash generation
-  const data = `${this.certificateId}-${this.userId}-${this.courseId}-${this.issuedAt.toISOString()}`;
-  const expectedHash = crypto.createHash('sha256').update(data).digest('hex');
-  return this.certificateHash === expectedHash;
+  // Use centralized hash utility for verification
+  return verifyCertificateHash(this);
 };
 
 // Method to revoke certificate (admin only)

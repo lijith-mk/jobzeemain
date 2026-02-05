@@ -170,6 +170,11 @@
   color: white;
 }
 
+.result-header.invalid {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  color: white;
+}
+
 .result-icon {
   font-size: 3rem;
   width: 80px;
@@ -180,6 +185,16 @@
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(10px);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 .result-header h2 {
@@ -245,6 +260,31 @@
   font-weight: 700;
 }
 
+.cert-id {
+  font-family: 'Courier New', monospace;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 1.1rem;
+}
+
+.category-badge {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 5px 15px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+}
+
+.level-badge {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  padding: 5px 15px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+}
+
 /* Grade & Status Badges */
 .grade-badge,
 .status-badge {
@@ -291,6 +331,11 @@
 
 .status-badge.verified {
   background: #48bb78;
+  color: white;
+}
+
+.status-badge.invalid {
+  background: #f56565;
   color: white;
 }
 
@@ -345,9 +390,9 @@
 }
 
 /* Security Info */
-.security-info {
-  background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
-  border: 2px solid #81e6d9;
+.invalid-info {
+  background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+  border: 2px solid #fc8181;
 }
 
 .security-details {
@@ -374,6 +419,18 @@
   font-family: 'Courier New', monospace;
   color: #4a5568;
   word-break: break-all;
+  border: 1px solid #e2e8f0;
+}
+
+.blockchain-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 8px;
 }
 
 .security-item .value {
@@ -388,6 +445,48 @@
   margin: 0;
   color: #2d3748;
   font-weight: 600;
+  border-left: 4px solid #48bb78;
+}
+
+.invalid-note {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0 0 0;
+  margin-bottom: 30px;
+}
+
+.verify-info li {
+  margin-bottom: 12px;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.verify-info li strong {
+  color: #ffd700;
+}
+
+.trust-indicators {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.trust-icon {
+  font-size: 1.5rem;
 }
 
 /* Verify Info */
@@ -412,6 +511,14 @@
 
 .verify-info li {
   margin-bottom: 12px;
+
+  .trust-indicators {
+    grid-template-columns: 1fr;
+  }
+
+  .verify-info {
+    padding: 20px;
+  }
   font-size: 1.05rem;
   line-height: 1.6;
 }

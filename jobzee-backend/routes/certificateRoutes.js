@@ -87,6 +87,17 @@ router.post(
   certificateController.verifyCertificateByHash
 );
 
+/**
+ * Batch verify multiple certificates (Public)
+ * POST /api/certificates/verify-batch
+ * Public: No authentication required
+ * Useful for employers verifying candidate certificates
+ */
+router.post(
+  '/verify-batch',
+  certificateController.batchVerifyCertificates
+);
+
 // ============================================
 // ADMIN ROUTES - Certificate Management
 // ============================================

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -29,11 +29,17 @@ const VerifyCertificate = () => {
         `${process.env.REACT_APP_API_URL}/api/certificates/verify/${certificateId.trim()}`
       );
 
-      setVerificationResult(data);
-      toast.success('Certificate verified successfully!');
+      if (data.valid) {
+        setVerificationResult(data);
+        toast.success('✅ Certificate verified successfully!');
+      } else {
+        setError(data.message || 'Certificate verification failed');
+        setVerificationResult(data);
+      }
     } catch (err) {
       console.error('Verification error:', err);
-      setError(err.response?.data?.message || 'Certificate not found or invalid');
+      const errorMsg = err.response?.data?.message || 'Unable to verify certificate. Please check the ID and try again.';
+      setError(errorMsg);
       setVerificationResult(null);
     } finally {
       setLoading(false);
@@ -41,10 +47,11 @@ const VerifyCertificate = () => {
   };
 
   // Auto-verify if certificateId is in URL
-  React.useEffect(() => {
-    if (urlCertificateId) {
+  useEffect(() => {
+    if (urlCertificateId && urlCertificateId.trim()) {
       handleVerify();
     }
+    // eslint-disable-next-line
   }, []);
 
   const getGradeBadgeClass = (grade) => {
@@ -114,7 +121,7 @@ const VerifyCertificate = () => {
               <div className="result-icon">✅</div>
               <div>
                 <h2>Certificate Verified</h2>
-                <p>This certificate is authentic and valid</p>
+                <p>{verificationResult.message || 'This certificate is authentic and valid'}</p>
               </div>
             </div>
 
@@ -124,35 +131,39 @@ const VerifyCertificate = () => {
                 <div className="result-info">
                   <div className="info-row">
                     <span className="info-label">Certificate ID:</span>
-                    <span className="info-value">{verificationResult.certificate.certificateId}</span>
+                    <span className="info-value cert-id">{verificationResult.certificateId}</span>
                   </div>
                   <div className="info-row">
                     <span className="info-label">Recipient:</span>
-                    <span className="info-value">{verificationResult.certificate.userName}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Email:</span>
-                    <span className="info-value">{verificationResult.certificate.userEmail}</span>
+                    <span className="info-value">{verificationResult.issuedTo}</span>
                   </div>
                   <div className="info-row">
                     <span className="info-label">Course:</span>
-                    <span className="info-value">{verificationResult.certificate.courseName}</span>
+                    <span className="info-value">{verificationResult.courseName}</span>
                   </div>
-                  <div className="info-row">
-                    <span className="info-label">Category:</span>
-                    <span className="info-value">{verificationResult.certificate.courseCategory}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Level:</span>
-                    <span className="info-value">{verificationResult.certificate.courseLevel}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Grade:</span>
-                    <span className={`grade-badge ${getGradeBadgeClass(verificationResult.certificate.grade)}`}>
-                      {verificationResult.certificate.grade}
-                    </span>
-                  </div>
-                  {verificationResult.certificate.honors && (
+                  {verificationResult.courseCategory && (
+                    <div className="info-row">
+                      <span className="info-label">Category:</span>
+                      <span className="info-value category-badge">{verificationResult.courseCategory}</span>
+                    </div>
+                  )}
+                  {verificationResult.courseLevel && (
+                    <div className="info-row">
+                      <span className="info-label">Level:</span>
+                      <span className="info-value level-badge">
+                        {verificationResult.courseLevel.charAt(0).toUpperCase() + verificationResult.courseLevel.slice(1)}
+                      </span>
+                    </div>
+                  )}
+                  {verificationResult.grade && (
+                    <div className="info-row">
+                      <span className="info-label">Grade:</span>
+                      <span className={`grade-badge ${getGradeBadgeClass(verificationResult.grade)}`}>
+                        {verificationResult.grade}
+                      </span>
+                    </div>
+                  )}
+                  {verificationResult.honors && (
                     <div className="info-row">
                       <span className="info-label">Achievement:</span>
                       <span className="honors-badge">🏆 With Honors</span>
@@ -161,7 +172,7 @@ const VerifyCertificate = () => {
                   <div className="info-row">
                     <span className="info-label">Issued On:</span>
                     <span className="info-value">
-                      {new Date(verificationResult.certificate.issuedAt).toLocaleDateString('en-US', {
+                      {new Date(verificationResult.issuedAt).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
@@ -171,79 +182,137 @@ const VerifyCertificate = () => {
                   <div className="info-row">
                     <span className="info-label">Verification Status:</span>
                     <span className="status-badge verified">
-                      ✓ {verificationResult.certificate.verificationStatus}
+                      ✓ {verificationResult.verificationStatus || 'Verified'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {verificationResult.certificate.skillsAchieved && verificationResult.certificate.skillsAchieved.length > 0 && (
+              {verificationResult.skillsAchieved && verificationResult.skillsAchieved.length > 0 && (
                 <div className="result-card">
                   <h3>🎯 Skills Achieved</h3>
                   <div className="skills-list">
-                    {verificationResult.certificate.skillsAchieved.map((skill, idx) => (
+                    {verificationResult.skillsAchieved.map((skill, idx) => (
                       <span key={idx} className="skill-tag">{skill}</span>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="result-card">
-                <h3>📊 Performance Metrics</h3>
-                <div className="metrics-grid">
-                  <div className="metric-item">
-                    <div className="metric-value">
-                      {verificationResult.certificate.completionMetrics?.completedLessons || 0}/
-                      {verificationResult.certificate.completionMetrics?.totalLessons || 0}
+              {verificationResult.completionMetrics && (
+                <div className="result-card">
+                  <h3>📊 Performance Metrics</h3>
+                  <div className="metrics-grid">
+                    <div className="metric-item">
+                      <div className="metric-value">
+                        {verificationResult.completionMetrics.completedLessons || 0}/
+                        {verificationResult.completionMetrics.totalLessons || 0}
+                      </div>
+                      <div className="metric-label">Lessons Completed</div>
                     </div>
-                    <div className="metric-label">Lessons</div>
-                  </div>
-                  <div className="metric-item">
-                    <div className="metric-value">
-                      {verificationResult.certificate.completionMetrics?.passedQuizzes || 0}/
-                      {verificationResult.certificate.completionMetrics?.totalQuizzes || 0}
+                    <div className="metric-item">
+                      <div className="metric-value">
+                        {verificationResult.completionMetrics.passedQuizzes || 0}/
+                        {verificationResult.completionMetrics.totalQuizzes || 0}
+                      </div>
+                      <div className="metric-label">Quizzes Passed</div>
                     </div>
-                    <div className="metric-label">Quizzes</div>
-                  </div>
-                  <div className="metric-item">
-                    <div className="metric-value">
-                      {verificationResult.certificate.completionMetrics?.averageQuizScore?.toFixed(0) || 0}%
+                    <div className="metric-item">
+                      <div className="metric-value">
+                        {verificationResult.completionMetrics.averageQuizScore?.toFixed(0) || 0}%
+                      </div>
+                      <div className="metric-label">Average Score</div>
                     </div>
-                    <div className="metric-label">Average Score</div>
-                  </div>
-                  <div className="metric-item">
-                    <div className="metric-value">
-                      {verificationResult.certificate.completionMetrics?.completionPercentage || 100}%
+                    <div className="metric-item">
+                      <div className="metric-value">
+                        {verificationResult.completionMetrics.completionPercentage || 100}%
+                      </div>
+                      <div className="metric-label">Completion Rate</div>
                     </div>
-                    <div className="metric-label">Completion</div>
                   </div>
                 </div>
-              </div>
+              )}
 
               <div className="result-card security-info">
-                <h3>🔐 Security Information</h3>
+                <h3>🔐 Security & Verification</h3>
                 <div className="security-details">
                   <div className="security-item">
-                    <span className="label">Certificate Hash:</span>
+                    <span className="label">Certificate Hash (SHA-256):</span>
                     <code className="hash-code">
-                      {verificationResult.certificate.certificateHash?.substring(0, 32)}...
+                      {verificationResult.certificateHash?.substring(0, 40)}...
                     </code>
                   </div>
-                  <div className="security-item">
-                    <span className="label">Verification Count:</span>
-                    <span className="value">{verificationResult.verificationCount || 0} times</span>
-                  </div>
-                  {verificationResult.certificate.lastVerifiedAt && (
+                  {verificationResult.blockchainTxHash && (
                     <div className="security-item">
-                      <span className="label">Last Verified:</span>
-                      <span className="value">
-                        {new Date(verificationResult.certificate.lastVerifiedAt).toLocaleDateString()}
-                      </span>
+                      <span className="label">Blockchain Transaction:</span>
+                      <code className="hash-code">
+                        {verificationResult.blockchainTxHash.substring(0, 40)}...
+                      </code>
+                      {verificationResult.blockchainNetwork && (
+                        <span className="blockchain-badge">
+                          {verificationResult.blockchainNetwork.toUpperCase()}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
                 <p className="security-note">
-                  ✓ This certificate has been cryptographically verified and is immutable.
+                  ✓ This certificate has been cryptographically verified using blockchain-ready SHA-256 hashing.
+                  All certificate data is immutable and tamper-proof.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {verificationResult && !verificationResult.valid && (
+          <div className="verification-result">
+            <div className="result-header invalid">
+              <div className="result-icon">❌</div>
+              <div>
+                <h2>Verification Failed</h2>
+                <p>{verificationResult.message || 'This certificate could not be verified'}</p>
+              </div>
+            </div>
+
+            <div className="result-body">
+              <div className="result-card invalid-info">
+                <h3>⚠️ Verification Details</h3>
+                <div className="result-info">
+                  <div className="info-row">
+                    <span className="info-label">Status:</span>
+                    <span className="status-badge invalid">
+                      {verificationResult.verificationStatus || 'Invalid'}
+                    </span>
+                  </div>
+                  {verificationResult.certificateId && (
+                    <div className="info-row">
+                      <span className="info-label">Certificate ID:</span>
+                      <span className="info-value">{verificationResult.certificateId}</span>
+                    </div>
+                  )}
+                  {verificationResult.revokedAt && (
+                    <div className="info-row">
+                      <span className="info-label">Revoked On:</span>
+                      <span className="info-value">
+                        {new Date(verificationResult.revokedAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                  )}
+                  {verificationResult.revokedReason && (
+                    <div className="info-row">
+                      <span className="info-label">Reason:</span>
+                      <span className="info-value revoked-reason">{verificationResult.revokedReason}</span>
+                    </div>
+                  )}
+                </div>
+                <p className="invalid-note">
+                  This certificate may have been revoked, tampered with, or does not exist in our records.
+                  Please contact the certificate issuer for more information.
                 </p>
               </div>
             </div>
@@ -252,13 +321,27 @@ const VerifyCertificate = () => {
       </div>
 
       <div className="verify-info">
-        <h3>How to Verify a Certificate</h3>
+        <h3>📖 How to Verify a Certificate</h3>
         <ol>
-          <li>Obtain the certificate ID from the certificate holder</li>
-          <li>Enter the certificate ID in the form above</li>
-          <li>Click "Verify Certificate" to check authenticity</li>
-          <li>View the complete certificate details if valid</li>
+          <li>Obtain the <strong>Certificate ID</strong> from the certificate holder (format: CERT-YEAR-XXXXXX)</li>
+          <li>Enter the certificate ID in the verification form above</li>
+          <li>Click <strong>"Verify Certificate"</strong> to initiate the verification process</li>
+          <li>Review the verification results including certificate details, recipient information, and security data</li>
         </ol>
+        <div className="trust-indicators">
+          <div className="trust-item">
+            <span className="trust-icon">🔒</span>
+            <span>Blockchain-Ready Hashing</span>
+          </div>
+          <div className="trust-item">
+            <span className="trust-icon">✓</span>
+            <span>Cryptographically Verified</span>
+          </div>
+          <div className="trust-item">
+            <span className="trust-icon">🛡️</span>
+            <span>Tamper-Proof Records</span>
+          </div>
+        </div>
       </div>
     </div>
   );

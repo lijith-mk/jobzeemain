@@ -4,6 +4,8 @@ const CourseProgress = require('../models/CourseProgress');
 const User = require('../models/User');
 const crypto = require('crypto');
 const fs = require('fs');
+const { generateCertificateHash } = require('../utils/certificateHash');
+const { verifyCertificateById, verifyCertificateByHash, batchVerifyCertificates } = require('../services/certificateVerification');
 const path = require('path');
 const { 
   validateCertificateGeneration,
@@ -102,9 +104,12 @@ exports.generateCertificate = async (req, res) => {
 
     // Manually generate hash (in case pre-save hook doesn't run)
     if (!certificate.certificateHash) {
-      // Generate blockchain-ready hash using core immutable identifiers
-      const data = `${certificate.certificateId}-${certificate.userId}-${certificate.courseId}-${certificate.issuedAt.toISOString()}`;
-      certificate.certificateHash = crypto.createHash('sha256').update(data).digest('hex');
+      certificate.certificateHash = generateCertificateHash({
+        certificateId: certificate.certificateId,
+        userId: certificate.userId.toString(),
+        courseId: certificate.courseId.toString(),
+        issuedAt: certificate.issuedAt
+      });
       console.log('Manually generated blockchain-ready hash:', certificate.certificateHash);
     }
 
@@ -370,7 +375,16 @@ exports.verifyCertificate = async (req, res) => {
   try {
     const { certificateId } = req.params;
 
-    const verification = await Certificate.verifyCertificate(certificateId);
+    // Input validation
+    if (!certificateId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Certificate ID is required'
+      });
+    }
+
+    // Use verification service
+    const verification = await verifyCertificateById(certificateId);
 
     res.json({
       success: verification.valid,
@@ -402,42 +416,12 @@ exports.verifyCertificateByHash = async (req, res) => {
       });
     }
 
-    const certificate = await Certificate.findOne({ certificateHash });
-
-    if (!certificate) {
-      return res.json({
-        success: false,
-        valid: false,
-        message: 'Certificate not found'
-      });
-    }
-
-    const integrityValid = certificate.verifyIntegrity();
-
-    if (!integrityValid) {
-      return res.json({
-        success: false,
-        valid: false,
-        message: 'Certificate integrity check failed'
-      });
-    }
-
-    if (certificate.isRevoked) {
-      return res.json({
-        success: false,
-        valid: false,
-        message: 'Certificate has been revoked',
-        revokedAt: certificate.revokedAt
-      });
-    }
-
-    await certificate.recordVerification();
+    // Use verification service
+    const verification = await verifyCertificateByHash(certificateHash);
 
     res.json({
-      success: true,
-      valid: true,
-      message: 'Certificate is valid',
-      certificate: certificate.getPublicData()
+      success: verification.valid,
+      ...verification
     });
 
   } catch (error) {
@@ -445,6 +429,49 @@ exports.verifyCertificateByHash = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error verifying certificate',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Batch verify multiple certificates (public)
+ * POST /api/certificates/verify-batch
+ * Useful for employers verifying multiple candidate certificates
+ */
+exports.batchVerifyCertificates = async (req, res) => {
+  try {
+    const { certificateIds } = req.body;
+
+    if (!certificateIds || !Array.isArray(certificateIds) || certificateIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Certificate IDs array is required'
+      });
+    }
+
+    // Limit to 50 certificates per request
+    if (certificateIds.length > 50) {
+      return res.status(400).json({
+        success: false,
+        message: 'Maximum 50 certificates can be verified at once'
+      });
+    }
+
+    // Use verification service
+    const results = await batchVerifyCertificates(certificateIds);
+
+    res.json({
+      success: true,
+      message: `Verified ${results.total} certificates`,
+      ...results
+    });
+
+  } catch (error) {
+    console.error('Batch verify certificates error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error verifying certificates',
       error: error.message
     });
   }

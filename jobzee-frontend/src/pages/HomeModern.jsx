@@ -350,6 +350,12 @@ const HomeModern = () => {
                     <span className="text-slate-300/90 font-semibold">Google</span>
                     <span className="text-slate-300/90 font-semibold">LinkedIn</span>
                     <span className="text-slate-300/90 font-semibold">Slack</span>
+                    <Link 
+                      to="/verify-certificate"
+                      className="text-blue-300 font-semibold hover:text-blue-200 transition-colors duration-200 flex items-center gap-1.5"
+                    >
+                      🔍 Verify Certificate
+                    </Link>
                   </div>
                 </div>
               </div>
