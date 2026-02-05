@@ -102,6 +102,7 @@ const employerQuestionBankRoutes = require("./routes/employerQuestionBankRoutes"
 const learningRoutes = require("./routes/learningRoutes");
 const learningPathRoutes = require("./routes/learningPathRoutes");
 const microQuizRoutes = require("./routes/microQuizRoutes");
+const certificateRoutes = require("./routes/certificateRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/employers", employerRoutes);
@@ -144,6 +145,7 @@ app.use("/api/employer-questions", employerQuestionBankRoutes);
 app.use("/api/learning", learningRoutes);
 app.use("/api/learning-paths", learningPathRoutes);
 app.use("/api", microQuizRoutes); // Micro quiz routes
+app.use("/api/certificates", certificateRoutes); // Certificate routes
 
 // Debug endpoint to test frontend connectivity
 app.get("/api/debug", (req, res) => {
