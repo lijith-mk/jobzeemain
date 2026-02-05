@@ -250,9 +250,10 @@ certificateSchema.pre('save', function(next) {
   
   // Only generate hash on creation (when document is new)
   if (this.isNew) {
-    // Create hash from critical certificate data
-    const data = `${this.certificateId}-${this.userId}-${this.courseId}-${this.issuedAt.toISOString()}-${this.userName}-${this.courseName}`;
-    console.log('Generating hash from:', data);
+    // Create blockchain-ready hash from core immutable identifiers
+    // Using ONLY: certificateId, userId, courseId, issuedAt
+    const data = `${this.certificateId}-${this.userId}-${this.courseId}-${this.issuedAt.toISOString()}`;
+    console.log('Generating blockchain-ready hash from:', data);
     this.certificateHash = crypto.createHash('sha256').update(data).digest('hex');
     console.log('Generated hash:', this.certificateHash);
   }
@@ -261,7 +262,8 @@ certificateSchema.pre('save', function(next) {
 
 // Method to verify certificate integrity
 certificateSchema.methods.verifyIntegrity = function() {
-  const data = `${this.certificateId}-${this.userId}-${this.courseId}-${this.issuedAt.toISOString()}-${this.userName}-${this.courseName}`;
+  // Verify using same core immutable fields used for hash generation
+  const data = `${this.certificateId}-${this.userId}-${this.courseId}-${this.issuedAt.toISOString()}`;
   const expectedHash = crypto.createHash('sha256').update(data).digest('hex');
   return this.certificateHash === expectedHash;
 };

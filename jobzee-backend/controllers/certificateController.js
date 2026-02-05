@@ -102,9 +102,10 @@ exports.generateCertificate = async (req, res) => {
 
     // Manually generate hash (in case pre-save hook doesn't run)
     if (!certificate.certificateHash) {
-      const data = `${certificate.certificateId}-${certificate.userId}-${certificate.courseId}-${certificate.issuedAt.toISOString()}-${certificate.userName}-${certificate.courseName}`;
+      // Generate blockchain-ready hash using core immutable identifiers
+      const data = `${certificate.certificateId}-${certificate.userId}-${certificate.courseId}-${certificate.issuedAt.toISOString()}`;
       certificate.certificateHash = crypto.createHash('sha256').update(data).digest('hex');
-      console.log('Manually generated hash:', certificate.certificateHash);
+      console.log('Manually generated blockchain-ready hash:', certificate.certificateHash);
     }
 
     await certificate.save();
