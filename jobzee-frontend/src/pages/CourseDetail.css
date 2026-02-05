@@ -932,3 +932,167 @@
     margin: 0 auto;
   }
 }
+/* Certificate Section Styles */
+.certificate-card {
+  background: linear-gradient(135deg, #f3e7ff 0%, #e9d5ff 100%);
+  border: 2px solid #a855f7 !important;
+  margin-top: 2rem;
+}
+
+.certificate-card h3 {
+  color: #7c3aed;
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
+}
+
+.certificate-earned,
+.certificate-eligible,
+.certificate-not-eligible {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.cert-icon-large {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: bounceIn 0.6s ease;
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.cert-earned-text {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #059669;
+  margin-bottom: 1.5rem;
+}
+
+.cert-eligible-text {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #7c3aed;
+  margin-bottom: 0.5rem;
+}
+
+.cert-details-text {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.honors-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #d97706;
+  margin-bottom: 1rem;
+}
+
+.cert-not-eligible-text {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.cert-requirements {
+  text-align: left;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  list-style: none;
+  margin: 0;
+}
+
+.cert-requirements li {
+  padding: 0.5rem 0;
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.view-certificate-btn,
+.generate-certificate-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.view-certificate-btn {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: white;
+}
+
+.view-certificate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.3);
+}
+
+.generate-certificate-btn {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: white;
+}
+
+.generate-certificate-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.3);
+}
+
+.generate-certificate-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Certificate Loading & Check Button Styles */
+.certificate-loading {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.cert-checking-text {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0.5rem 0;
+}
+
+.check-eligibility-btn {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #7c3aed;
+  background: white;
+  color: #7c3aed;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.check-eligibility-btn:hover:not(:disabled) {
+  background: #7c3aed;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.check-eligibility-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

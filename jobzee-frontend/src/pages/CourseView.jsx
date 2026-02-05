@@ -12,10 +12,20 @@ const CourseView = () => {
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [certificateEligibility, setCertificateEligibility] = useState(null);
+  const [generatingCertificate, setGeneratingCertificate] = useState(false);
+  const [hasCertificate, setHasCertificate] = useState(false);
+  const [checkingEligibility, setCheckingEligibility] = useState(false);
 
   useEffect(() => {
     fetchCourseData();
   }, [courseId]);
+
+  useEffect(() => {
+    if (isEnrolled && progress) {
+      checkCertificateEligibility();
+    }
+  }, [isEnrolled, progress?.status, progress?.progressPercentage]);
 
   const fetchCourseData = async () => {
     setLoading(true);
@@ -70,6 +80,68 @@ const CourseView = () => {
     }
     // Navigate to lesson viewer page
     navigate(`/lesson/${lesson._id}`);
+  };
+
+  const checkCertificateEligibility = async () => {
+    try {
+      setCheckingEligibility(true);
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      console.log('=== Certificate Eligibility Check ===');
+      console.log('Course ID:', courseId);
+      console.log('Is Enrolled:', isEnrolled);
+      console.log('Progress:', progress);
+
+      const { data } = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/certificates/eligibility/${courseId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      console.log('=== Certificate Response ===');
+      console.log('Data:', data);
+      console.log('Eligible:', data.eligible);
+      console.log('Message:', data.message);
+      console.log('Has Certificate:', data.hasCertificate);
+      
+      setCertificateEligibility(data);
+      setHasCertificate(data.hasCertificate || false);
+    } catch (error) {
+      console.error('Error checking certificate eligibility:', error);
+      console.error('Error response:', error.response?.data);
+      setCertificateEligibility({
+        eligible: false,
+        message: 'Unable to check certificate eligibility',
+        details: {}
+      });
+    } finally {
+      setCheckingEligibility(false);
+    }
+  };
+
+  const handleGenerateCertificate = async () => {
+    try {
+      setGeneratingCertificate(true);
+      const token = localStorage.getItem('token');
+      const { data } = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/certificates/generate`,
+        { courseId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success('🎉 Certificate generated successfully!');
+      setHasCertificate(true);
+      setCertificateEligibility({ ...certificateEligibility, hasCertificate: true });
+      
+      setTimeout(() => {
+        navigate(`/certificates/${data.certificate.certificateId}`);
+      }, 1500);
+    } catch (error) {
+      console.error('Error generating certificate:', error);
+      toast.error(error.response?.data?.message || 'Failed to generate certificate');
+    } finally {
+      setGeneratingCertificate(false);
+    }
   };
 
   const getLevelBadgeClass = (level) => {
@@ -273,6 +345,77 @@ const CourseView = () => {
                 {course.instructor.bio && <p>{course.instructor.bio}</p>}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Certificate Section */}
+        {isEnrolled && (
+          <div className="certificate-section">
+            <h3>🎓 Certificate</h3>
+            {checkingEligibility ? (
+              <div className="cert-loading">
+                <p>⏳ Checking eligibility...</p>
+              </div>
+            ) : !certificateEligibility ? (
+              <div className="cert-loading">
+                <p>📋 Loading certificate status...</p>
+                <button 
+                  className="btn-check-eligibility"
+                  onClick={checkCertificateEligibility}
+                  disabled={checkingEligibility}
+                >
+                  Check Eligibility
+                </button>
+              </div>
+            ) : hasCertificate ? (
+              <div className="cert-earned">
+                <p className="cert-icon">✅</p>
+                <p><strong>Certificate Earned!</strong></p>
+                <button 
+                  className="btn-view-certificate"
+                  onClick={() => navigate('/certificates')}
+                >
+                  View Certificate
+                </button>
+              </div>
+            ) : certificateEligibility.eligible ? (
+              <div className="cert-eligible">
+                <p className="cert-icon">🎉</p>
+                <p><strong>You're eligible for a certificate!</strong></p>
+                <p>Grade: {certificateEligibility.details?.grade || 'N/A'}</p>
+                {certificateEligibility.details?.honors && (
+                  <p className="honors">🏆 With Honors!</p>
+                )}
+                <button 
+                  className="btn-generate-cert"
+                  onClick={handleGenerateCertificate}
+                  disabled={generatingCertificate}
+                >
+                  {generatingCertificate ? 'Generating...' : 'Generate Certificate'}
+                </button>
+              </div>
+            ) : (
+              <div className="cert-not-eligible">
+                <p className="cert-icon">📋</p>
+                <p>{certificateEligibility.message}</p>
+                {certificateEligibility.details && (
+                  <ul className="cert-requirements">
+                    {certificateEligibility.details.totalLessons && (
+                      <li>
+                        Lessons: {certificateEligibility.details.completedLessons || 0}/
+                        {certificateEligibility.details.totalLessons}
+                      </li>
+                    )}
+                    {certificateEligibility.details.totalMandatoryQuizzes > 0 && (
+                      <li>
+                        Quizzes: {certificateEligibility.details.passedMandatoryQuizzes || 0}/
+                        {certificateEligibility.details.totalMandatoryQuizzes}
+                      </li>
+                    )}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         )}
 

@@ -97,6 +97,9 @@ import QuizTaker from "./pages/QuizTaker";
 import QuizResults from "./pages/QuizResults";
 import QuizStatistics from "./pages/QuizStatistics";
 import QuizAttempts from "./pages/QuizAttempts";
+import Certificates from "./pages/Certificates";
+import CertificateDetail from "./pages/CertificateDetail";
+import VerifyCertificate from "./pages/VerifyCertificate";
 
 function App() {
   // Initialize session manager and handle auto-logout
@@ -174,6 +177,11 @@ function App() {
             <Route path="/admin/quiz/:quizId/attempts" element={<QuizAttempts />} />
             <Route path="/lesson/:lessonId/quiz" element={<QuizTaker />} />
             <Route path="/quiz/results/:attemptId" element={<QuizResults />} />
+            {/* Certificate Routes */}
+            <Route path="/certificates" element={<Certificates />} />
+            <Route path="/certificates/:certificateId" element={<CertificateDetail />} />
+            <Route path="/verify-certificate" element={<VerifyCertificate />} />
+            <Route path="/verify-certificate/:certificateId" element={<VerifyCertificate />} />
             {/* Internships listing page - public access */}
             <Route path="/internships" element={<Internships />} />
             <Route path="/internships/:id" element={<InternshipDetails />} />

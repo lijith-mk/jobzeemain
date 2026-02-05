@@ -26,6 +26,7 @@
     "express-rate-limit": "^8.0.1",
     "express-validator": "^7.2.1",
     "google-auth-library": "^9.15.1",
+    "handlebars": "^4.7.8",
     "helmet": "^8.1.0",
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.2",
@@ -33,6 +34,7 @@
     "multer": "^2.0.2",
     "nodemailer": "^7.0.5",
     "pdfkit": "^0.17.2",
+    "puppeteer": "^21.11.0",
     "qrcode": "^1.5.3",
     "razorpay": "^2.9.6",
     "stream-buffers": "^3.0.3"

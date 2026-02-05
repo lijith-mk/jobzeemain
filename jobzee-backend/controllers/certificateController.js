@@ -2,10 +2,17 @@ const Certificate = require('../models/Certificate');
 const Course = require('../models/Course');
 const CourseProgress = require('../models/CourseProgress');
 const User = require('../models/User');
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const { 
   validateCertificateGeneration,
   checkCertificateEligibility 
 } = require('../utils/certificateEligibility');
+const {
+  generateAndSaveCertificate,
+  generateCertificateBuffer
+} = require('../utils/certificateGenerator');
 
 /**
  * Certificate Controller
@@ -23,7 +30,11 @@ const {
 exports.generateCertificate = async (req, res) => {
   try {
     const { courseId } = req.body;
-    const userId = req.user._id;
+    const userId = req.user?._id || req.user?.id;
+    
+    console.log('=== generateCertificate Controller ===');
+    console.log('User ID:', userId);
+    console.log('Course ID:', courseId);
 
     if (!courseId) {
       return res.status(400).json({
@@ -82,7 +93,50 @@ exports.generateCertificate = async (req, res) => {
       userAgent: req.headers['user-agent']
     });
 
+    console.log('Certificate before save:', {
+      certificateId: certificate.certificateId,
+      issuedAt: certificate.issuedAt,
+      userName: certificate.userName,
+      courseName: certificate.courseName
+    });
+
+    // Manually generate hash (in case pre-save hook doesn't run)
+    if (!certificate.certificateHash) {
+      const data = `${certificate.certificateId}-${certificate.userId}-${certificate.courseId}-${certificate.issuedAt.toISOString()}-${certificate.userName}-${certificate.courseName}`;
+      certificate.certificateHash = crypto.createHash('sha256').update(data).digest('hex');
+      console.log('Manually generated hash:', certificate.certificateHash);
+    }
+
     await certificate.save();
+    
+    console.log('Certificate after save:', {
+      certificateId: certificate.certificateId,
+      certificateHash: certificate.certificateHash
+    });
+
+    // Generate PDF certificate
+    try {
+      const pdfResult = await generateAndSaveCertificate({
+        certificateId: certificate.certificateId,
+        userName: certificate.userName,
+        courseName: certificate.courseName,
+        courseCategory: certificate.courseCategory,
+        courseLevel: certificate.courseLevel,
+        grade: certificate.grade,
+        honors: certificate.honors,
+        skillsAchieved: certificate.skillsAchieved,
+        issuedAt: certificate.issuedAt
+      });
+
+      // Update certificate with PDF URL
+      const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
+      certificate.certificateUrl = `${baseUrl}/${pdfResult.filePath}`;
+      await certificate.save();
+
+    } catch (pdfError) {
+      console.error('PDF generation error:', pdfError);
+      // Don't fail the certificate creation, just log the error
+    }
 
     // Update course progress
     await CourseProgress.findOneAndUpdate(
@@ -118,7 +172,13 @@ exports.generateCertificate = async (req, res) => {
 exports.checkEligibility = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const userId = req.user._id;
+    console.log('=== checkEligibility Controller ===');
+    console.log('req.user:', req.user);
+    console.log('req.user._id:', req.user?._id);
+    console.log('req.user.id:', req.user?.id);
+    
+    const userId = req.user?._id || req.user?.id;
+    console.log('Using userId:', userId);
 
     const eligibility = await checkCertificateEligibility(userId, courseId);
 
@@ -143,7 +203,7 @@ exports.checkEligibility = async (req, res) => {
  */
 exports.getMyCertificates = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user?._id || req.user?.id;
     const { page = 1, limit = 10, sortBy = '-issuedAt' } = req.query;
 
     const certificates = await Certificate.find({ userId, isRevoked: false })
@@ -182,7 +242,7 @@ exports.getMyCertificates = async (req, res) => {
 exports.getCertificate = async (req, res) => {
   try {
     const { certificateId } = req.params;
-    const userId = req.user._id;
+    const userId = req.user?._id || req.user?.id;
 
     const certificate = await Certificate.findOne({ 
       certificateId,
@@ -218,7 +278,7 @@ exports.getCertificate = async (req, res) => {
 exports.downloadCertificate = async (req, res) => {
   try {
     const { certificateId } = req.params;
-    const userId = req.user._id;
+    const userId = req.user?._id || req.user?.id;
 
     const certificate = await Certificate.findOne({ 
       certificateId,
@@ -239,14 +299,53 @@ exports.downloadCertificate = async (req, res) => {
       });
     }
 
-    // TODO: Implement PDF generation logic here
-    // For now, return certificate data
-    res.json({
-      success: true,
-      message: 'Certificate download initiated',
-      certificate: certificate.getPublicData(),
-      downloadUrl: certificate.certificateUrl || null
-    });
+    // Check if certificate file exists on disk
+    if (certificate.certificateUrl) {
+      const filePath = path.join(__dirname, '..', certificate.certificateUrl);
+      
+      if (fs.existsSync(filePath)) {
+        // Read the file and send it
+        const fileBuffer = fs.readFileSync(filePath);
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="certificate_${certificateId}.pdf"`);
+        res.setHeader('Content-Length', fileBuffer.length);
+        
+        return res.send(fileBuffer);
+      }
+    }
+
+    // Generate PDF if file doesn't exist
+    console.log('Generating fresh PDF for certificate:', certificateId);
+    try {
+      const pdfBuffer = await generateCertificateBuffer({
+        certificateId: certificate.certificateId,
+        userName: certificate.userName,
+        courseName: certificate.courseName,
+        courseCategory: certificate.courseCategory,
+        courseLevel: certificate.courseLevel,
+        grade: certificate.grade,
+        honors: certificate.honors,
+        skillsAchieved: certificate.skillsAchieved,
+        issuedAt: certificate.issuedAt
+      });
+
+      // Set headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="certificate_${certificateId}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      
+      // Send PDF
+      res.send(pdfBuffer);
+
+    } catch (pdfError) {
+      console.error('PDF generation error:', pdfError);
+      return res.status(500).json({
+        success: false,
+        message: 'Error generating certificate PDF',
+        error: pdfError.message
+      });
+    }
 
   } catch (error) {
     console.error('Download certificate error:', error);
@@ -604,6 +703,28 @@ exports.bulkGenerateCertificates = async (req, res) => {
           });
 
           await certificate.save();
+
+          // Generate PDF certificate
+          try {
+            const pdfResult = await generateAndSaveCertificate({
+              certificateId: certificate.certificateId,
+              userName: certificate.userName,
+              courseName: certificate.courseName,
+              courseCategory: certificate.courseCategory,
+              courseLevel: certificate.courseLevel,
+              grade: certificate.grade,
+              honors: certificate.honors,
+              skillsAchieved: certificate.skillsAchieved,
+              issuedAt: certificate.issuedAt
+            });
+
+            // Update certificate with PDF URL
+            const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
+            certificate.certificateUrl = `${baseUrl}/${pdfResult.filePath}`;
+            await certificate.save();
+          } catch (pdfError) {
+            console.error('PDF generation error for bulk:', pdfError);
+          }
 
           await CourseProgress.findByIdAndUpdate(progress._id, {
             certificateIssued: true,

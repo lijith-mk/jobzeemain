@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate of Completion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 0;
+            margin: 0;
+        }
+
+        .certificate-container {
+            width: 1200px;
+            height: 850px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+            margin: 0;
+            position: relative;
+            overflow: hidden;
+            border: 20px solid #fff;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Decorative corner elements */
+        .corner {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border: 3px solid #667eea;
+        }
+
+        .corner.top-left {
+            top: 30px;
+            left: 30px;
+            border-right: none;
+            border-bottom: none;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+        }
+
+        .corner.top-right {
+            top: 30px;
+            right: 30px;
+            border-left: none;
+            border-bottom: none;
+            background: linear-gradient(225deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+        }
+
+        .corner.bottom-left {
+            bottom: 30px;
+            left: 30px;
+            border-right: none;
+            border-top: none;
+            background: linear-gradient(45deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+        }
+
+        .corner.bottom-right {
+            bottom: 30px;
+            right: 30px;
+            border-left: none;
+            border-top: none;
+            background: linear-gradient(315deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+        }
+
+        /* Decorative patterns */
+        .pattern {
+            position: absolute;
+            opacity: 0.03;
+            font-size: 200px;
+            color: #667eea;
+            font-weight: bold;
+            transform: rotate(-15deg);
+        }
+
+        .pattern.p1 { top: -50px; left: -50px; }
+        .pattern.p2 { top: 200px; right: -50px; }
+        .pattern.p3 { bottom: -50px; left: 100px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 50px 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 48px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #666;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Main content */
+        .content {
+            text-align: center;
+            padding: 40px 100px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .certificate-title {
+            font-size: 52px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-bottom: 3px solid #667eea;
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+
+        .intro-text {
+            font-size: 20px;
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .recipient-name {
+            font-size: 56px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 30px 0;
+            padding: 20px;
+            border-top: 2px solid #e2e8f0;
+            border-bottom: 2px solid #e2e8f0;
+            letter-spacing: 1px;
+        }
+
+        .achievement-text {
+            font-size: 20px;
+            color: #4a5568;
+            margin: 25px 0;
+            line-height: 1.6;
+        }
+
+        .course-name {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2d3748;
+            margin: 30px 0;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        /* Footer */
+        .footer {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            padding: 0 100px;
+            z-index: 10;
+        }
+
+        .footer-section {
+            text-align: center;
+        }
+
+        .footer-label {
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .footer-value {
+            font-size: 18px;
+            color: #2d3748;
+            font-weight: bold;
+        }
+
+        .signature-line {
+            width: 200px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #667eea 50%, transparent 100%);
+            margin: 10px auto 5px;
+        }
+
+        /* Certificate ID Badge */
+        .certificate-id {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            z-index: 20;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Skills badges */
+        .skills-section {
+            margin: 25px 0;
+            padding: 20px;
+        }
+
+        .skills-title {
+            font-size: 18px;
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .skill-badge {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+            color: #667eea;
+            padding: 8px 20px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: 600;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+        }
+
+        /* Verification section */
+        .verification {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            color: #a0aec0;
+            z-index: 10;
+        }
+
+        .verification-url {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        /* Seal/Stamp */
+        .seal {
+            position: absolute;
+            bottom: 80px;
+            left: 80px;
+            width: 120px;
+            height: 120px;
+            border: 5px solid #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+            z-index: 15;
+        }
+
+        .seal-inner {
+            width: 90px;
+            height: 90px;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+        .seal-text {
+            font-size: 14px;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .seal-year {
+            font-size: 18px;
+            font-weight: bold;
+            color: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="certificate-container">
+        <!-- Background patterns -->
+        <div class="pattern p1">★</div>
+        <div class="pattern p2">✦</div>
+        <div class="pattern p3">◆</div>
+
+        <!-- Corner decorations -->
+        <div class="corner top-left"></div>
+        <div class="corner top-right"></div>
+        <div class="corner bottom-left"></div>
+        <div class="corner bottom-right"></div>
+
+        <!-- Certificate ID Badge -->
+        <div class="certificate-id">ID: {{certificateId}}</div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">JOBZEE</div>
+            <div class="subtitle">Learning Platform</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <div class="certificate-title">Certificate of Completion</div>
+            
+            <div class="intro-text">This is to certify that</div>
+            
+            <div class="recipient-name">{{userName}}</div>
+            
+            <div class="achievement-text">
+                has successfully completed the course
+            </div>
+            
+            <div class="course-name">{{courseName}}</div>
+            
+            <div class="achievement-text">
+                Level: <strong>{{courseLevel}}</strong> | Category: <strong>{{courseCategory}}</strong>
+            </div>
+
+            {{#if skillsAchieved}}
+            <div class="skills-section">
+                <div class="skills-title">Skills Achieved</div>
+                <div class="skills-list">
+                    {{#each skillsAchieved}}
+                    <span class="skill-badge">{{this}}</span>
+                    {{/each}}
+                </div>
+            </div>
+            {{/if}}
+        </div>
+
+        <!-- Seal -->
+        <div class="seal">
+            <div class="seal-inner">
+                <div class="seal-text">CERTIFIED</div>
+                <div class="seal-year">{{year}}</div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-section">
+                <div class="footer-label">Issued On</div>
+                <div class="signature-line"></div>
+                <div class="footer-value">{{issueDate}}</div>
+            </div>
+            
+            <div class="footer-section">
+                <div class="footer-label">Certificate ID</div>
+                <div class="signature-line"></div>
+                <div class="footer-value">{{certificateId}}</div>
+            </div>
+            
+            <div class="footer-section">
+                <div class="footer-label">Verified By</div>
+                <div class="signature-line"></div>
+                <div class="footer-value">JOBZEE Platform</div>
+            </div>
+        </div>
+
+        <!-- Verification -->
+        <div class="verification">
+            Verify this certificate at: <a href="{{verificationUrl}}" class="verification-url">{{verificationUrl}}</a>
+        </div>
+    </div>
+</body>
+</html>

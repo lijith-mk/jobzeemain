@@ -29,6 +29,9 @@ const Dashboard = () => {
   const [upcomingInterviews, setUpcomingInterviews] = useState([]);
   const [upcomingLoading, setUpcomingLoading] = useState(true);
   const [sessionCount, setSessionCount] = useState(0);
+  const [certificatesCount, setCertificatesCount] = useState(0);
+  const [certificatesLoading, setCertificatesLoading] = useState(true);
+  const [recentCertificates, setRecentCertificates] = useState([]);
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -62,6 +65,9 @@ const Dashboard = () => {
 
     // Load session count
     loadSessionCount();
+
+    // Load certificates
+    loadCertificates();
 
     // Update time every minute
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -179,6 +185,32 @@ const Dashboard = () => {
       }
     } catch (err) {
       console.error('Failed to load session count:', err);
+    }
+  };
+
+  const loadCertificates = async () => {
+    try {
+      setCertificatesLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      const res = await fetch(`${API_BASE_URL}/api/certificates/my-certificates`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setCertificatesCount(data.certificates?.length || 0);
+        // Get the 3 most recent certificates
+        const sorted = (data.certificates || []).sort((a, b) => 
+          new Date(b.issuedAt) - new Date(a.issuedAt)
+        );
+        setRecentCertificates(sorted.slice(0, 3));
+      }
+    } catch (err) {
+      console.error('Failed to load certificates:', err);
+    } finally {
+      setCertificatesLoading(false);
     }
   };
 
@@ -555,6 +587,17 @@ const Dashboard = () => {
         iconPath: "M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z",
         backgroundImage: "https://res.cloudinary.com/dxspcarx8/image/upload/v1756236931/desfourss_hklwst.png"
       },
+      {
+        id: "certificates",
+        title: "My Certificates",
+        value: certificatesLoading ? "..." : certificatesCount.toString(),
+        change: certificatesCount > 0 ? "+" + certificatesCount : "0",
+        changeType: "positive",
+        description: "Certificates earned from courses",
+        icon: "🎓",
+        iconPath: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z",
+        backgroundImage: "https://res.cloudinary.com/dxspcarx8/image/upload/v1756236764/desones_vkv4fh.png"
+      },
     ];
 
     // If dashboard assets are loaded, use Cloudinary images, otherwise use direct URLs
@@ -722,6 +765,12 @@ const Dashboard = () => {
                         </svg>
                         <span>Saved Jobs</span>
                       </Link>
+                      <Link to="/certificates" className="flex items-center space-x-3 w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                        </svg>
+                        <span>My Certificates</span>
+                      </Link>
                       <Link to="/internships" className="flex items-center space-x-3 w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
                         <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
@@ -856,6 +905,7 @@ const Dashboard = () => {
                 else if (stat.id === 'interviews') navigate('/interviews');
                 else if (stat.id === 'mySessions') navigate('/my-sessions');
                 else if (stat.id === 'savedJobs') navigate('/saved-jobs');
+                else if (stat.id === 'certificates') navigate('/certificates');
               }}
               className="group relative rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:scale-105 hover:-translate-y-1"
               style={{ animationDelay: `${300 + index * 100}ms` }}
@@ -1368,6 +1418,139 @@ const Dashboard = () => {
             </div>
           )}
         </div>
+
+        {/* My Certificates Section */}
+        {certificatesCount > 0 && (
+          <div className={`bg-white rounded-2xl shadow-lg border-0 overflow-hidden mb-8 ${animate ? 'animate-fade-in-up animation-delay-900' : 'opacity-0'}`}>
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-6 border-b border-purple-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">My Certificates</h3>
+                    <p className="text-sm text-gray-600">Track your learning achievements and certifications</p>
+                  </div>
+                </div>
+                <Link
+                  to="/certificates"
+                  className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
+                >
+                  View All
+                </Link>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {certificatesLoading ? (
+                <div className="text-center py-8">
+                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-4 h-4 text-purple-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-600 text-sm">Loading your certificates...</p>
+                </div>
+              ) : recentCertificates.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No certificates yet</h3>
+                  <p className="text-gray-600 mb-4">Complete courses to earn certificates</p>
+                  <Link
+                    to="/learning-hub"
+                    className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all inline-block"
+                  >
+                    Browse Courses
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {recentCertificates.map((cert, index) => (
+                    <Link
+                      key={cert._id}
+                      to={`/certificates/${cert.certificateId}`}
+                      className="group bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-5 border-2 border-purple-100 hover:border-purple-300 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="p-2 bg-white rounded-lg shadow-sm group-hover:shadow-md transition-shadow">
+                          <span className="text-2xl">🎓</span>
+                        </div>
+                        {cert.honors && (
+                          <span className="px-2 py-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-bold rounded-full">
+                            🏆 Honors
+                          </span>
+                        )}
+                      </div>
+                      
+                      <h4 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-700 transition-colors">
+                        {cert.courseName}
+                      </h4>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Grade:</span>
+                          <span className={`px-2 py-1 rounded-full font-bold text-xs ${
+                            cert.grade === 'A+' ? 'bg-pink-100 text-pink-700' :
+                            cert.grade === 'A' ? 'bg-blue-100 text-blue-700' :
+                            cert.grade === 'B+' ? 'bg-green-100 text-green-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {cert.grade}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Issued:</span>
+                          <span className="text-gray-900 font-medium">
+                            {new Date(cert.issuedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">ID:</span>
+                          <span className="text-xs font-mono text-gray-700 bg-white px-2 py-1 rounded">
+                            {cert.certificateId.substring(0, 12)}...
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 pt-4 border-t border-purple-200 flex items-center justify-between">
+                        <span className="text-xs text-gray-600">
+                          {cert.completionMetrics?.completedLessons || 0} Lessons
+                        </span>
+                        <svg className="w-4 h-4 text-purple-600 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+              
+              {recentCertificates.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between">
+                  <p className="text-sm text-gray-600">
+                    Showing {recentCertificates.length} of {certificatesCount} certificates
+                  </p>
+                  <Link
+                    to="/certificates"
+                    className="text-purple-600 hover:text-purple-700 text-sm font-medium transition-colors flex items-center space-x-1"
+                  >
+                    <span>View All Certificates</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Recommended Internships Section */}
         <RecommendedInternships />

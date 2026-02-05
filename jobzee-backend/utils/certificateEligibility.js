@@ -18,9 +18,14 @@ const Certificate = require('../models/Certificate');
  */
 async function checkCertificateEligibility(userId, courseId) {
   try {
+    console.log('=== BACKEND: Certificate Eligibility Check ===');
+    console.log('User ID:', userId);
+    console.log('Course ID:', courseId);
+    
     // 1. Check if certificate already exists
     const existingCertificate = await Certificate.findOne({ userId, courseId });
     if (existingCertificate) {
+      console.log('Certificate already exists');
       return {
         eligible: false,
         message: 'Certificate already issued for this course',
@@ -33,6 +38,8 @@ async function checkCertificateEligibility(userId, courseId) {
 
     // 2. Get course and its lessons
     const course = await Course.findById(courseId);
+    console.log('Course found:', !!course);
+    console.log('Course has modules:', course?.modules?.length || 0);
     if (!course) {
       return {
         eligible: false,
@@ -41,7 +48,35 @@ async function checkCertificateEligibility(userId, courseId) {
     }
 
     const lessons = await Lesson.find({ courseId, isActive: true }).sort({ lessonOrder: 1 });
-    if (lessons.length === 0) {
+    console.log('Separate lessons found:', lessons.length);
+    
+    // If no separate lesson documents, check for embedded lessons in course.modules
+    let totalLessons = lessons.length;
+    let lessonsToCheck = lessons;
+    
+    if (lessons.length === 0 && course.modules && course.modules.length > 0) {
+      console.log('Using embedded lessons from course.modules');
+      // Use embedded lessons from course.modules (old structure)
+      lessonsToCheck = [];
+      course.modules.forEach((module, moduleIndex) => {
+        if (module.lessons && module.lessons.length > 0) {
+          module.lessons.forEach((lesson, lessonIndex) => {
+            lessonsToCheck.push({
+              _id: `${moduleIndex}-${lessonIndex}`, // Create pseudo ID
+              title: lesson.title,
+              moduleIndex,
+              lessonIndex,
+              isEmbedded: true
+            });
+          });
+        }
+      });
+      totalLessons = lessonsToCheck.length;
+      console.log('Total embedded lessons:', totalLessons);
+    }
+    
+    if (totalLessons === 0) {
+      console.log('No lessons found in course');
       return {
         eligible: false,
         message: 'Course has no active lessons'
@@ -50,12 +85,16 @@ async function checkCertificateEligibility(userId, courseId) {
 
     // 3. Get user's course progress
     const progress = await CourseProgress.findOne({ userId, courseId });
+    console.log('Progress found:', !!progress);
+    console.log('Completed lessons:', progress?.completedLessons?.length || 0);
+    
     if (!progress) {
+      console.log('ERROR: No CourseProgress record found for user');
       return {
         eligible: false,
         message: 'User not enrolled in this course',
         details: {
-          totalLessons: lessons.length,
+          totalLessons: totalLessons,
           completedLessons: 0,
           progressPercentage: 0
         }
@@ -63,11 +102,18 @@ async function checkCertificateEligibility(userId, courseId) {
     }
 
     // 4. Check if all lessons are completed
-    const completedLessonIds = progress.completedLessons.map(cl => cl.lessonId.toString());
-    const totalLessons = lessons.length;
-    const completedCount = lessons.filter(lesson => 
-      completedLessonIds.includes(lesson._id.toString())
-    ).length;
+    let completedCount = 0;
+    
+    if (lessonsToCheck[0]?.isEmbedded) {
+      // For embedded lessons, check completedLessons array with moduleIndex/lessonIndex
+      completedCount = progress.completedLessons ? progress.completedLessons.length : 0;
+    } else {
+      // For separate lesson documents, check by lessonId
+      const completedLessonIds = progress.completedLessons.map(cl => cl.lessonId.toString());
+      completedCount = lessons.filter(lesson => 
+        completedLessonIds.includes(lesson._id.toString())
+      ).length;
+    }
 
     if (completedCount < totalLessons) {
       return {
@@ -82,10 +128,23 @@ async function checkCertificateEligibility(userId, courseId) {
       };
     }
 
-    // 5. Check mandatory quizzes
-    const quizEligibility = await checkQuizEligibility(userId, courseId, lessons);
-    if (!quizEligibility.eligible) {
-      return quizEligibility;
+    // 5. Check mandatory quizzes (only for separate lesson structure)
+    let quizEligibility;
+    if (lessonsToCheck[0]?.isEmbedded) {
+      // Skip quiz check for embedded lessons (old structure doesn't use microQuizzes)
+      quizEligibility = {
+        eligible: true,
+        details: {
+          totalMandatoryQuizzes: 0,
+          passedMandatoryQuizzes: 0,
+          averageQuizScore: 0
+        }
+      };
+    } else {
+      quizEligibility = await checkQuizEligibility(userId, courseId, lessons);
+      if (!quizEligibility.eligible) {
+        return quizEligibility;
+      }
     }
 
     // 6. All checks passed

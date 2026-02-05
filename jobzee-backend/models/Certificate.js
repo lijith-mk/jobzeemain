@@ -243,11 +243,18 @@ certificateSchema.index({ isRevoked: 1 });
 
 // Pre-save hook to generate certificate hash
 certificateSchema.pre('save', function(next) {
+  console.log('=== Certificate pre-save hook ===');
+  console.log('isNew:', this.isNew);
+  console.log('certificateId:', this.certificateId);
+  console.log('issuedAt:', this.issuedAt);
+  
   // Only generate hash on creation (when document is new)
   if (this.isNew) {
     // Create hash from critical certificate data
     const data = `${this.certificateId}-${this.userId}-${this.courseId}-${this.issuedAt.toISOString()}-${this.userName}-${this.courseName}`;
+    console.log('Generating hash from:', data);
     this.certificateHash = crypto.createHash('sha256').update(data).digest('hex');
+    console.log('Generated hash:', this.certificateHash);
   }
   next();
 });
