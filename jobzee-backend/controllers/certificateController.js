@@ -15,6 +15,7 @@ const {
   generateAndSaveCertificate,
   generateCertificateBuffer
 } = require('../utils/certificateGenerator');
+const { registerCertificateOnBlockchain, isBlockchainConfigured } = require('../services/blockchainService');
 
 /**
  * Certificate Controller
@@ -154,6 +155,40 @@ exports.generateCertificate = async (req, res) => {
         completedAt: new Date()
       }
     );
+
+    // Register certificate on blockchain (if configured)
+    if (isBlockchainConfigured()) {
+      try {
+        console.log('🔗 Registering certificate on blockchain...');
+        const blockchainResult = await registerCertificateOnBlockchain(
+          certificate.certificateId,
+          certificate.certificateHash
+        );
+
+        if (blockchainResult.success) {
+          console.log('✅ Certificate registered on blockchain:', blockchainResult.transactionHash);
+          
+          // Update certificate with blockchain data
+          certificate.blockchainTxHash = blockchainResult.transactionHash;
+          certificate.blockchainNetwork = blockchainResult.network;
+          certificate.blockchainTimestamp = blockchainResult.blockchainTimestamp 
+            ? new Date(blockchainResult.blockchainTimestamp * 1000) 
+            : null;
+          certificate.status = 'blockchain-verified';
+          await certificate.save();
+          
+          console.log('   Explorer:', blockchainResult.explorer);
+        } else {
+          console.error('❌ Blockchain registration failed:', blockchainResult.error);
+          // Don't fail certificate generation, just log the error
+        }
+      } catch (blockchainError) {
+        console.error('❌ Blockchain registration error:', blockchainError);
+        // Don't fail certificate generation, blockchain is optional
+      }
+    } else {
+      console.log('⚠️  Blockchain not configured - certificate saved without blockchain verification');
+    }
 
     res.status(201).json({
       success: true,

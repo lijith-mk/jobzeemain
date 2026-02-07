@@ -1,6 +1,7 @@
 const Certificate = require('../models/Certificate');
 const CertificateVerificationLog = require('../models/CertificateVerificationLog');
 const { verifyCertificateHash } = require('../utils/certificateHash');
+const { verifyCertificateOnBlockchain, isBlockchainConfigured } = require('./blockchainService');
 
 /**
  * Certificate Verification Service
@@ -132,7 +133,32 @@ async function verifyCertificateById(certificateId, requestContext = {}) {
       }
     );
 
-    // Step 5: Log successful verification
+    // Step 5: Blockchain verification (if configured and certificate has blockchain data)
+    let blockchainVerification = null;
+    if (isBlockchainConfigured() && certificate.blockchainTxHash) {
+      try {
+        console.log(`🔗 Verifying certificate ${certificateId} on blockchain...`);
+        blockchainVerification = await verifyCertificateOnBlockchain(
+          certificate.certificateId,
+          certificate.certificateHash
+        );
+        
+        if (blockchainVerification.verified) {
+          console.log('✅ Certificate verified on blockchain');
+        } else {
+          console.warn('⚠️  Blockchain verification failed:', blockchainVerification.reason);
+        }
+      } catch (blockchainError) {
+        console.error('❌ Blockchain verification error:', blockchainError);
+        // Don't fail verification if blockchain check fails
+        blockchainVerification = {
+          error: blockchainError.message,
+          verified: false
+        };
+      }
+    }
+
+    // Step 6: Log successful verification
     result = 'success';
     resultMessage = 'Certificate is valid and verified';
     
@@ -168,6 +194,7 @@ async function verifyCertificateById(certificateId, requestContext = {}) {
       certificateHash: certificate.certificateHash,
       blockchainTxHash: certificate.blockchainTxHash,
       blockchainNetwork: certificate.blockchainNetwork,
+      blockchainVerification: blockchainVerification,
       honors: certificate.honors,
       grade: certificate.grade
     };
