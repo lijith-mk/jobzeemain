@@ -22,7 +22,7 @@ const SkillGapAnalysis = () => {
       
       // Fetch dashboard data first
       const dashboardRes = await axios.get(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/learning/skill-gaps/dashboard`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/learning/skill-gaps/dashboard`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -34,13 +34,13 @@ const SkillGapAnalysis = () => {
 
       // Fetch detailed analysis
       const analysisRes = await axios.get(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/learning/skill-gaps/analysis`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/learning/skill-gaps/analysis`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       // Fetch recommendations
       const recommendRes = await axios.get(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/learning/skill-gaps/recommendations`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/learning/skill-gaps/recommendations`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -58,7 +58,7 @@ const SkillGapAnalysis = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/learning/skill-gaps/report`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/learning/skill-gaps/report`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

@@ -33,7 +33,7 @@ const AdminCourseAnalytics = () => {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
       const response = await axios.get(
-        `http://localhost:5000/api/learning/admin/courses/${courseId}/analytics`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/learning/admin/courses/${courseId}/analytics`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setAnalytics(response.data);
@@ -64,7 +64,7 @@ const AdminCourseAnalytics = () => {
       }
 
       const response = await axios.get(
-        `http://localhost:5000/api/learning/admin/courses/${courseId}/enrollments?${params}`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/learning/admin/courses/${courseId}/enrollments?${params}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setEnrollments(response.data);
@@ -78,7 +78,7 @@ const AdminCourseAnalytics = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const response = await axios.get(
-        `http://localhost:5000/api/learning/admin/courses/${courseId}/payments?page=${paymentPage}&limit=20`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/learning/admin/courses/${courseId}/payments?page=${paymentPage}&limit=20`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setPayments(response.data);
