@@ -433,6 +433,46 @@
   margin-top: 8px;
 }
 
+.etherscan-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.etherscan-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.blockchain-status {
+  padding: 12px;
+  background: #f7fafc;
+  border-radius: 8px;
+  border-left: 4px solid #48bb78;
+}
+
+.blockchain-date {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #718096;
+  font-style: italic;
+}
+
+.status-badge.warning {
+  background: #fed7aa;
+  color: #9c4221;
+}
+
 .security-item .value {
   color: #2d3748;
   font-weight: 600;

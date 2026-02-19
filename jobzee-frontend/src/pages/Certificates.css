@@ -154,6 +154,28 @@
   font-family: 'Courier New', monospace;
 }
 
+.cert-badges {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.blockchain-badge-mini {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 6px 10px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  cursor: help;
+  transition: all 0.3s ease;
+}
+
+.blockchain-badge-mini:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.1);
+}
+
 .honors-badge {
   background: rgba(255, 215, 0, 0.3);
   padding: 6px 15px;

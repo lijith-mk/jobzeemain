@@ -83,9 +83,9 @@ module.exports = {
    * Etherscan Configuration (Optional)
    * Uncomment and add ETHERSCAN_API_KEY to .env for contract verification
    */
-  // etherscan: {
-  //   apiKey: process.env.ETHERSCAN_API_KEY || "",
-  // },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY || "",
+  },
 
   /**
    * Gas Reporter Configuration (Optional)

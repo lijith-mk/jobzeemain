@@ -214,11 +214,18 @@ const Certificates = () => {
                   <span className="id-label">ID:</span>
                   <span className="id-value">{cert.certificateId}</span>
                 </div>
-                {cert.honors && (
-                  <div className="honors-badge">
-                    <span>🏆 Honors</span>
-                  </div>
-                )}
+                <div className="cert-badges">
+                  {cert.blockchainTxHash && (
+                    <div className="blockchain-badge-mini" title="Verified on Blockchain">
+                      ⛓️
+                    </div>
+                  )}
+                  {cert.honors && (
+                    <div className="honors-badge">
+                      <span>🏆 Honors</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="cert-card-body">

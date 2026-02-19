@@ -276,6 +276,33 @@ const CertificateDetail = () => {
                     <button onClick={() => copyToClipboard(certificate.certificateHash)}>📋</button>
                   </div>
                 </div>
+                {certificate.blockchainTxHash && (
+                  <>
+                    <div className="verification-row blockchain-row">
+                      <span>⛓️ Blockchain Transaction:</span>
+                      <div className="hash-value">
+                        <code>{certificate.blockchainTxHash.substring(0, 32)}...</code>
+                        <button onClick={() => copyToClipboard(certificate.blockchainTxHash)}>📋</button>
+                      </div>
+                    </div>
+                    <div className="verification-row">
+                      <a 
+                        href={`https://sepolia.etherscan.io/tx/${certificate.blockchainTxHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="etherscan-button"
+                      >
+                        🔗 View on Etherscan
+                      </a>
+                    </div>
+                    {certificate.blockchainNetwork && (
+                      <div className="verification-row">
+                        <span>Network: </span>
+                        <span className="network-badge">{certificate.blockchainNetwork.toUpperCase()}</span>
+                      </div>
+                    )}
+                  </>
+                )}
                 <div className="verification-row">
                   <span>Verified {verificationInfo.verificationCount || 0} times</span>
                 </div>

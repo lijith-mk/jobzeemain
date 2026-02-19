@@ -253,11 +253,39 @@ const VerifyCertificate = () => {
                           {verificationResult.blockchainNetwork.toUpperCase()}
                         </span>
                       )}
+                      <a 
+                        href={`https://sepolia.etherscan.io/tx/${verificationResult.blockchainTxHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="etherscan-link"
+                      >
+                        🔗 View on Etherscan
+                      </a>
+                    </div>
+                  )}
+                  {verificationResult.blockchainVerification && (
+                    <div className="security-item blockchain-status">
+                      <span className="label">Blockchain Status:</span>
+                      {verificationResult.blockchainVerification.verified ? (
+                        <span className="status-badge verified">
+                          ✓ Verified on Blockchain
+                        </span>
+                      ) : (
+                        <span className="status-badge warning">
+                          ⚠ Not Verified on Blockchain
+                        </span>
+                      )}
+                      {verificationResult.blockchainVerification.issuedAtDate && (
+                        <span className="blockchain-date">
+                          Registered: {new Date(verificationResult.blockchainVerification.issuedAtDate).toLocaleDateString()}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
                 <p className="security-note">
-                  ✓ This certificate has been cryptographically verified using blockchain-ready SHA-256 hashing.
+                  ✓ This certificate has been cryptographically verified using SHA-256 hashing
+                  {verificationResult.blockchainTxHash && ' and registered on Ethereum Sepolia blockchain'}.
                   All certificate data is immutable and tamper-proof.
                 </p>
               </div>
@@ -330,12 +358,12 @@ const VerifyCertificate = () => {
         </ol>
         <div className="trust-indicators">
           <div className="trust-item">
-            <span className="trust-icon">🔒</span>
-            <span>Blockchain-Ready Hashing</span>
+            <span className="trust-icon">⛓️</span>
+            <span>Blockchain Verified</span>
           </div>
           <div className="trust-item">
             <span className="trust-icon">✓</span>
-            <span>Cryptographically Verified</span>
+            <span>Cryptographically Secured</span>
           </div>
           <div className="trust-item">
             <span className="trust-icon">🛡️</span>

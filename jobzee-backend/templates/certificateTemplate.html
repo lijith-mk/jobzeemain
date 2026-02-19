@@ -113,7 +113,7 @@
         /* Main content */
         .content {
             text-align: center;
-            padding: 40px 100px;
+            padding: 30px 100px 20px;
             position: relative;
             z-index: 10;
         }
@@ -152,9 +152,9 @@
         }
 
         .achievement-text {
-            font-size: 20px;
+            font-size: 18px;
             color: #4a5568;
-            margin: 25px 0;
+            margin: 20px 0;
             line-height: 1.6;
         }
 
@@ -172,38 +172,48 @@
         /* Footer */
         .footer {
             position: absolute;
-            bottom: 40px;
+            bottom: 60px;
             left: 0;
             right: 0;
             display: flex;
-            justify-content: space-around;
-            padding: 0 100px;
+            justify-content: space-evenly;
+            align-items: flex-start;
+            padding: 0 120px;
             z-index: 10;
+            gap: 40px;
         }
 
         .footer-section {
             text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 200px;
         }
 
         .footer-label {
-            font-size: 14px;
+            font-size: 13px;
             color: #718096;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            font-weight: 600;
         }
 
         .footer-value {
-            font-size: 18px;
+            font-size: 16px;
             color: #2d3748;
             font-weight: bold;
+            margin-top: 8px;
+            white-space: nowrap;
         }
 
         .signature-line {
-            width: 200px;
+            width: 180px;
             height: 2px;
             background: linear-gradient(90deg, transparent 0%, #667eea 50%, transparent 100%);
-            margin: 10px auto 5px;
+            margin: 8px auto;
         }
 
         /* Certificate ID Badge */
@@ -224,14 +234,14 @@
 
         /* Skills badges */
         .skills-section {
-            margin: 25px 0;
-            padding: 20px;
+            margin: 20px 0 15px;
+            padding: 15px;
         }
 
         .skills-title {
-            font-size: 18px;
+            font-size: 16px;
             color: #4a5568;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -257,28 +267,30 @@
         /* Verification section */
         .verification {
             position: absolute;
-            bottom: 15px;
+            bottom: 20px;
             left: 0;
             right: 0;
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             color: #a0aec0;
             z-index: 10;
+            padding: 0 100px;
         }
 
         .verification-url {
             color: #667eea;
             text-decoration: none;
             font-weight: bold;
+            word-break: break-all;
         }
 
         /* Seal/Stamp */
         .seal {
             position: absolute;
-            bottom: 80px;
-            left: 80px;
-            width: 120px;
-            height: 120px;
+            bottom: 100px;
+            left: 70px;
+            width: 110px;
+            height: 110px;
             border: 5px solid #667eea;
             border-radius: 50%;
             display: flex;
@@ -290,8 +302,8 @@
         }
 
         .seal-inner {
-            width: 90px;
-            height: 90px;
+            width: 85px;
+            height: 85px;
             border: 2px solid #667eea;
             border-radius: 50%;
             display: flex;
@@ -302,7 +314,7 @@
         }
 
         .seal-text {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             color: #667eea;
             text-align: center;
@@ -310,7 +322,7 @@
         }
 
         .seal-year {
-            font-size: 18px;
+            font-size: 17px;
             font-weight: bold;
             color: #764ba2;
         }
@@ -352,8 +364,8 @@
             
             <div class="course-name">{{courseName}}</div>
             
-            <div class="achievement-text">
-                Level: <strong>{{courseLevel}}</strong> | Category: <strong>{{courseCategory}}</strong>
+            <div class="achievement-text" style="margin-top: 15px; margin-bottom: 10px;">
+                <strong>Level:</strong> {{courseLevel}} | <strong>Category:</strong> {{courseCategory}}{{#if grade}} | <strong>Grade:</strong> {{grade}}{{/if}}
             </div>
 
             {{#if skillsAchieved}}

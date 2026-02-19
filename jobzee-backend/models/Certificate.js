@@ -99,7 +99,7 @@ const certificateSchema = new mongoose.Schema({
   
   blockchainNetwork: {
     type: String,
-    enum: ['ethereum', 'polygon', 'binance', null],
+    enum: ['ethereum', 'polygon', 'binance', 'sepolia', null],
     default: null
   },
   
