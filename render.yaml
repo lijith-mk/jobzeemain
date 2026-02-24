@@ -9,6 +9,8 @@ services:
     buildCommand: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true npm install --production
     startCommand: npm start
     healthCheckPath: /api/health
+    buildPacks:
+      - url: https://github.com/jontewks/puppeteer-heroku-buildpack
     envVars:
       - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
         value: true
