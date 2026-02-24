@@ -176,11 +176,10 @@
             left: 0;
             right: 0;
             display: flex;
-            justify-content: space-evenly;
+            justify-content: space-between;
             align-items: flex-start;
-            padding: 0 150px;
+            padding: 0 180px;
             z-index: 10;
-            gap: 50px;
         }
 
         .footer-section {
@@ -189,34 +188,32 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-width: 180px;
+            justify-content: flex-start;
         }
 
         .footer-label {
             font-size: 12px;
             color: #718096;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 1px;
             font-weight: 600;
+            white-space: nowrap;
         }
 
         .footer-value {
             font-size: 15px;
             color: #2d3748;
             font-weight: bold;
-            margin-top: 5px;
+            margin-top: 8px;
             white-space: nowrap;
-            max-width: 250px;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .signature-line {
-            width: 150px;
+            width: 160px;
             height: 2px;
             background: linear-gradient(90deg, transparent 0%, #667eea 50%, transparent 100%);
-            margin: 6px auto;
+            margin: 0 auto;
         }
 
         /* Certificate ID Badge */
@@ -237,40 +234,43 @@
 
         /* Skills badges */
         .skills-section {
-            margin: 15px 0 10px;
-            padding: 12px;
+            margin: 20px 0 15px;
+            padding: 15px 80px;
         }
 
         .skills-title {
             font-size: 15px;
             color: #4a5568;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
+            text-align: center;
         }
 
         .skills-list {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 8px;
+            align-items: center;
+            gap: 10px;
         }
 
         .skill-badge {
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
             color: #667eea;
-            padding: 6px 16px;
+            padding: 8px 18px;
             border-radius: 15px;
             font-size: 13px;
             font-weight: 600;
             border: 2px solid rgba(102, 126, 234, 0.3);
+            display: inline-block;
         }
 
         /* Verification section */
         .verification {
             position: absolute;
-            bottom: 15px;
+            bottom: 20px;
             left: 0;
             right: 0;
             text-align: center;
@@ -278,7 +278,7 @@
             color: #a0aec0;
             z-index: 10;
             padding: 0 120px;
-            line-height: 1.4;
+            line-height: 1.6;
         }
 
         .verification-url {
@@ -286,7 +286,9 @@
             text-decoration: none;
             font-weight: bold;
             word-break: break-all;
-            font-size: 9px;
+            font-size: 10px;
+            display: inline-block;
+            margin-top: 2px;
         }
 
         /* Seal/Stamp */
@@ -416,7 +418,8 @@
 
         <!-- Verification -->
         <div class="verification">
-            Verify this certificate at: <a href="{{verificationUrl}}" class="verification-url">{{verificationUrl}}</a>
+            Verify this certificate at:<br>
+            <a href="{{verificationUrl}}" class="verification-url">{{verificationUrl}}</a>
         </div>
     </div>
 </body>

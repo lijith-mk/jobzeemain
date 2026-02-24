@@ -49,6 +49,11 @@ Thumbs.db
 # Optional eslint cache
 .eslintcache
 
+# Documentation files with secrets (DO NOT COMMIT)
+RENDER_DEPLOYMENT_GUIDE.md
+RENDER_DEPLOYMENT_CHECKLIST.md
+CERTIFICATE_BLOCKCHAIN_SUMMARY.md
+
 # Build files
 *.tsbuildinfo
 
@@ -56,3 +61,9 @@ Thumbs.db
 *.tmp
 temp/
 tmp/
+
+# Documentation with potential secrets
+*DEPLOYMENT_GUIDE*.md
+*DEPLOYMENT_CHECKLIST*.md
+RENDER_*.md
+*_SUMMARY.md

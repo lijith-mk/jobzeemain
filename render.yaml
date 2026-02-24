@@ -6,10 +6,14 @@ services:
     region: oregon
     plan: free
     rootDir: jobzee-backend
-    buildCommand: npm install
+    buildCommand: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true npm install --production
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
+      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+        value: true
+      - key: PUPPETEER_EXECUTABLE_PATH
+        value: /usr/bin/chromium-browser
       - key: NODE_ENV
         value: production
       - key: PORT
@@ -45,6 +49,18 @@ services:
         value: "Jobzee Platform"
       - key: APP_NAME
         value: JobZee
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      # Optional: Blockchain Certificate Registry (Ethereum Sepolia)
+      # Only set these if you want blockchain-verified certificates
+      - key: ETH_RPC_URL
+        sync: false
+      - key: BLOCKCHAIN_PRIVATE_KEY
+        sync: false
+      - key: CONTRACT_ADDRESS
+        sync: false
 
   # Frontend Static Site
   - type: web
