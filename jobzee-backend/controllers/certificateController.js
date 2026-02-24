@@ -391,12 +391,16 @@ exports.downloadCertificate = async (req, res) => {
 
     } catch (pdfError) {
       console.error('[Certificate Download] PDF generation error:', pdfError);
-      console.error('Stack:', pdfError.stack);
+      console.error('[Certificate Download] Error name:', pdfError.name);
+      console.error('[Certificate Download] Error message:', pdfError.message);
+      console.error('[Certificate Download] Stack:', pdfError.stack);
+      
       return res.status(500).json({
         success: false,
-        message: 'Error generating certificate PDF',
+        message: 'Failed to generate certificate PDF',
         error: pdfError.message,
-        details: process.env.NODE_ENV === 'development' ? pdfError.stack : undefined
+        errorType: pdfError.name,
+        details: process.env.NODE_ENV === 'development' ? pdfError.stack : 'Please contact support'
       });
     }
 

@@ -77,14 +77,28 @@ const CertificateDetail = () => {
       toast.success('Certificate downloaded successfully!');
     } catch (error) {
       console.error('Error downloading certificate:', error);
+      console.error('Error response:', error.response);
       
       let errorMessage = 'Failed to download certificate';
-      if (error.response?.data?.message) {
+      
+      // Handle blob error responses (convert to JSON)
+      if (error.response?.data instanceof Blob && error.response.data.type === 'application/json') {
+        try {
+          const text = await error.response.data.text();
+          const errorData = JSON.parse(text);
+          console.error('Error data:', errorData);
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+          console.error('Failed to parse error response:', e);
+        }
+      } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.code === 'ECONNABORTED') {
-        errorMessage = 'Download timeout. Please try again.';
+        errorMessage = 'Download timeout. The server is taking too long. Please try again.';
       } else if (!error.response) {
         errorMessage = 'Network error. Please check your connection.';
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Server error generating certificate. Please try again or contact support.';
       }
       
       toast.error(errorMessage);

@@ -81,7 +81,9 @@ async function generateCertificatePDF(certificateData) {
         '--disable-extensions',
         '--no-first-run',
         '--no-zygote',
-        '--single-process'
+        '--single-process',
+        '--disable-web-security',
+        '--disable-features=IsolateOrigins,site-per-process'
       ]
     };
 
@@ -97,12 +99,22 @@ async function generateCertificatePDF(certificateData) {
 
     const page = await browser.newPage();
 
-    // Set content and wait for fonts and images to load
+    // Bypass CSP for PDF generation
+    await page.setBypassCSP(true);
+    
+    // Set content with timeout
+    console.log('[Puppeteer] Setting page content...');
     await page.setContent(html, {
-      waitUntil: ['networkidle0', 'load', 'domcontentloaded']
+      waitUntil: ['load', 'domcontentloaded'],
+      timeout: 30000
     });
+    console.log('[Puppeteer] Page content set');
+
+    // Wait a bit for any fonts to load
+    await page.evaluate(() => document.fonts.ready);
 
     // Generate PDF with high quality
+    console.log('[Puppeteer] Generating PDF...');
     const pdfBuffer = await page.pdf({
       width: '1200px',
       height: '850px',
@@ -116,6 +128,7 @@ async function generateCertificatePDF(certificateData) {
         left: 0
       }
     });
+    console.log('[Puppeteer] PDF generated successfully');
 
     return pdfBuffer;
 
