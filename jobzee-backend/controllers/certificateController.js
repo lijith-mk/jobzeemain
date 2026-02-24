@@ -953,16 +953,5 @@ exports.checkPuppeteerHealth = async (req, res) => {
     });
   }
 };
-    });
-
-  } catch (error) {
-    console.error('Bulk generate certificates error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error generating certificates',
-      error: error.message
-    });
-  }
-};
 
 module.exports = exports;
