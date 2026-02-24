@@ -15,6 +15,10 @@ const {
   generateAndSaveCertificate,
   generateCertificateBuffer
 } = require('../utils/certificateGenerator');
+const {
+  generateSimpleCertificatePDF,
+  generateAndSaveSimpleCertificate
+} = require('../utils/simpleCertificateGenerator');
 const { registerCertificateOnBlockchain, isBlockchainConfigured } = require('../services/blockchainService');
 
 /**
@@ -139,10 +143,36 @@ exports.generateCertificate = async (req, res) => {
       const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
       certificate.certificateUrl = `${baseUrl}/${pdfResult.filePath}`;
       await certificate.save();
+      console.log('[Certificate] PDF generated and saved successfully');
 
     } catch (pdfError) {
-      console.error('PDF generation error:', pdfError);
-      // Don't fail the certificate creation, just log the error
+      console.error('[Certificate] Puppeteer PDF generation failed:', pdfError.message);
+      console.log('[Certificate] Attempting fallback with simple PDF generator...');
+      
+      // FALLBACK: Try simple PDF generator
+      try {
+        const simplePdfResult = await generateAndSaveSimpleCertificate({
+          certificateId: certificate.certificateId,
+          userName: certificate.userName,
+          courseName: certificate.courseName,
+          courseCategory: certificate.courseCategory,
+          courseLevel: certificate.courseLevel,
+          grade: certificate.grade,
+          honors: certificate.honors,
+          skillsAchieved: certificate.skillsAchieved,
+          issuedAt: certificate.issuedAt
+        });
+
+        // Update certificate with PDF URL
+        const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
+        certificate.certificateUrl = `${baseUrl}/${simplePdfResult.filePath}`;
+        await certificate.save();
+        console.log('[Certificate] Fallback PDF generated and saved successfully');
+
+      } catch (fallbackError) {
+        console.error('[Certificate] Fallback PDF generation also failed:', fallbackError);
+        // Don't fail the certificate creation, PDF can be generated on-demand later
+      }
     }
 
     // Update course progress
@@ -390,18 +420,48 @@ exports.downloadCertificate = async (req, res) => {
       return res.send(pdfBuffer);
 
     } catch (pdfError) {
-      console.error('[Certificate Download] PDF generation error:', pdfError);
-      console.error('[Certificate Download] Error name:', pdfError.name);
-      console.error('[Certificate Download] Error message:', pdfError.message);
-      console.error('[Certificate Download] Stack:', pdfError.stack);
+      console.error('[Certificate Download] Puppeteer PDF generation failed:', pdfError.message);
+      console.log('[Certificate Download] Attempting fallback with simple PDF generator...');
       
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to generate certificate PDF',
-        error: pdfError.message,
-        errorType: pdfError.name,
-        details: process.env.NODE_ENV === 'development' ? pdfError.stack : 'Please contact support'
-      });
+      // FALLBACK: Try simple PDF generator
+      try {
+        const simplePdfBuffer = await generateSimpleCertificatePDF({
+          certificateId: certificate.certificateId,
+          userName: certificate.userName,
+          courseName: certificate.courseName,
+          courseCategory: certificate.courseCategory,
+          courseLevel: certificate.courseLevel,
+          grade: certificate.grade,
+          honors: certificate.honors,
+          skillsAchieved: certificate.skillsAchieved,
+          issuedAt: certificate.issuedAt
+        });
+
+        console.log(`[Certificate Download] Fallback PDF generated successfully, size: ${simplePdfBuffer.length} bytes`);
+
+        // Set headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="certificate_${certificateId}.pdf"`);
+        res.setHeader('Content-Length', simplePdfBuffer.length);
+        
+        // Send PDF
+        return res.send(simplePdfBuffer);
+
+      } catch (fallbackError) {
+        console.error('[Certificate Download] Fallback PDF generation also failed:', fallbackError);
+        console.error('[Certificate Download] Error name:', fallbackError.name);
+        console.error('[Certificate Download] Error message:', fallbackError.message);
+        console.error('[Certificate Download] Stack:', fallbackError.stack);
+        
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to generate certificate PDF. Please contact support.',
+          error: fallbackError.message,
+          errorType: fallbackError.name,
+          certificateId: certificateId,
+          details: process.env.NODE_ENV === 'development' ? fallbackError.stack : 'Server error generating PDF'
+        });
+      }
     }
 
   } catch (error) {
