@@ -1382,6 +1382,22 @@ exports.verifyCoursePayment = async (req, res) => {
       courseId
     } = req.body;
 
+    console.log('[Payment Verification] Starting...');
+    console.log('[Payment Verification] User ID:', userId);
+    console.log('[Payment Verification] Course ID:', courseId);
+    console.log('[Payment Verification] Order ID:', razorpayOrderId);
+    console.log('[Payment Verification] Payment ID:', razorpayPaymentId);
+
+    // Check if Razorpay secret is configured
+    if (!process.env.RAZORPAY_KEY_SECRET) {
+      console.error('[Payment Verification] RAZORPAY_KEY_SECRET not configured!');
+      return res.status(500).json({ 
+        success: false,
+        message: 'Payment gateway not configured properly. Please contact support.',
+        debugInfo: process.env.NODE_ENV === 'development' ? 'RAZORPAY_KEY_SECRET missing' : undefined
+      });
+    }
+
     // Verify signature
     const crypto = require('crypto');
     const expectedSignature = crypto
@@ -1390,14 +1406,28 @@ exports.verifyCoursePayment = async (req, res) => {
       .digest('hex');
 
     if (expectedSignature !== razorpaySignature) {
-      return res.status(400).json({ message: 'Payment verification failed' });
+      console.error('[Payment Verification] Signature mismatch!');
+      console.error('[Payment Verification] Expected:', expectedSignature);
+      console.error('[Payment Verification] Received:', razorpaySignature);
+      return res.status(400).json({ 
+        success: false,
+        message: 'Payment verification failed. Invalid signature.' 
+      });
     }
+
+    console.log('[Payment Verification] Signature verified successfully');
 
     // Get course details
     const course = await Course.findById(courseId);
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      console.error('[Payment Verification] Course not found:', courseId);
+      return res.status(404).json({ 
+        success: false,
+        message: 'Course not found' 
+      });
     }
+
+    console.log('[Payment Verification] Course found:', course.title);
 
     // Calculate amount paid
     let amount = course.price;
@@ -1407,8 +1437,34 @@ exports.verifyCoursePayment = async (req, res) => {
       amount = course.discountPrice;
     }
 
+    console.log('[Payment Verification] Amount:', amount, 'Discount:', discountAmount);
+
     // Get user details for invoice
     const user = await User.findById(userId).select('name email phone');
+    if (!user) {
+      console.error('[Payment Verification] User not found:', userId);
+      return res.status(404).json({ 
+        success: false,
+        message: 'User not found' 
+      });
+    }
+
+    console.log('[Payment Verification] User found:', user.email);
+
+    // Check if already enrolled
+    const existingProgress = await CourseProgress.findOne({
+      userId: userId,
+      courseId: courseId
+    });
+
+    if (existingProgress) {
+      console.log('[Payment Verification] User already enrolled');
+      return res.status(200).json({
+        success: true,
+        message: 'Already enrolled in this course',
+        courseProgress: existingProgress
+      });
+    }
 
     // Create enrollment with payment details
     const courseProgress = new CourseProgress({
@@ -1423,50 +1479,68 @@ exports.verifyCoursePayment = async (req, res) => {
     });
 
     await courseProgress.save();
+    console.log('[Payment Verification] Course progress created');
 
     // Increment enrollment count
     course.enrolledUsers += 1;
     await course.save();
+    console.log('[Payment Verification] Enrollment count updated');
 
     // Generate invoice
-    const invoice = new CourseInvoice({
-      userId: userId,
-      courseId: courseId,
-      courseName: course.title,
-      paymentId: razorpayPaymentId,
-      razorpayOrderId: razorpayOrderId,
-      razorpayPaymentId: razorpayPaymentId,
-      originalPrice: course.price,
-      discountAmount: discountAmount,
-      subtotal: amount,
-      taxPercentage: 18,
-      currency: course.currency || 'INR',
-      billingDetails: {
-        name: user?.name || '',
-        email: user?.email || '',
-        phone: user?.phone || ''
-      },
-      paymentStatus: 'paid',
-      status: 'issued'
-    });
+    try {
+      const invoice = new CourseInvoice({
+        userId: userId,
+        courseId: courseId,
+        courseName: course.title,
+        paymentId: razorpayPaymentId,
+        razorpayOrderId: razorpayOrderId,
+        razorpayPaymentId: razorpayPaymentId,
+        originalPrice: course.price,
+        discountAmount: discountAmount,
+        subtotal: amount,
+        taxPercentage: 18,
+        currency: course.currency || 'INR',
+        billingDetails: {
+          name: user?.name || '',
+          email: user?.email || '',
+          phone: user?.phone || ''
+        },
+        paymentStatus: 'paid',
+        status: 'issued'
+      });
 
-    await invoice.save();
+      await invoice.save();
+      console.log('[Payment Verification] Invoice created:', invoice.invoiceNumber);
 
-    res.status(200).json({
-      message: 'Payment verified and enrolled successfully',
-      courseProgress,
-      invoice: {
-        invoiceNumber: invoice.invoiceNumber,
-        invoiceId: invoice._id,
-        totalAmount: invoice.totalAmount
-      }
-    });
+      res.status(200).json({
+        success: true,
+        message: 'Payment verified and enrolled successfully',
+        courseProgress,
+        invoice: {
+          invoiceNumber: invoice.invoiceNumber,
+          invoiceId: invoice._id,
+          totalAmount: invoice.totalAmount
+        }
+      });
+    } catch (invoiceError) {
+      console.error('[Payment Verification] Invoice creation error:', invoiceError);
+      // Still return success as enrollment was successful
+      res.status(200).json({
+        success: true,
+        message: 'Payment verified and enrolled successfully. Invoice generation pending.',
+        courseProgress,
+        invoiceError: true
+      });
+    }
 
   } catch (error) {
-    console.error('Error verifying course payment:', error);
+    console.error('[Payment Verification] Error:', error);
+    console.error('[Payment Verification] Stack:', error.stack);
     res.status(500).json({
+      success: false,
       message: 'Error verifying payment',
-      error: error.message
+      error: error.message,
+      debugInfo: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };

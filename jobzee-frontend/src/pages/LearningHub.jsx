@@ -202,6 +202,9 @@ const LearningHub = () => {
         order_id: data.orderId,
         handler: async (response) => {
           try {
+            console.log('[Payment] Payment successful, verifying...');
+            console.log('[Payment] Response:', response);
+            
             // Verify payment
             const verifyResponse = await axios.post(
               `${process.env.REACT_APP_API_URL}/api/learning/courses/verify-payment`,
@@ -214,12 +217,30 @@ const LearningHub = () => {
               { headers: { Authorization: `Bearer ${token}` } }
             );
             
+            console.log('[Payment] Verification response:', verifyResponse.data);
+            
             const { invoice } = verifyResponse.data;
-            toast.success(`Payment successful! Invoice ${invoice?.invoiceNumber} generated.`);
-            navigate(`/course/${courseId}`);
+            
+            if (verifyResponse.data.success !== false) {
+              toast.success(`✅ Payment successful! ${invoice?.invoiceNumber ? `Invoice ${invoice.invoiceNumber} generated.` : 'Enrollment complete.'}`);
+              setTimeout(() => {
+                navigate(`/course/${courseId}`);
+              }, 1000);
+            } else {
+              toast.error(verifyResponse.data.message || 'Payment verification failed');
+            }
           } catch (error) {
-            console.error('Payment verification error:', error);
-            toast.error('Payment verification failed. Please contact support.');
+            console.error('[Payment] Verification error:', error);
+            console.error('[Payment] Error response:', error.response?.data);
+            
+            let errorMessage = 'Payment verification failed';
+            if (error.response?.data?.message) {
+              errorMessage = error.response.data.message;
+            } else if (error.message) {
+              errorMessage = error.message;
+            }
+            
+            toast.error(`❌ ${errorMessage}. Please contact support with payment ID: ${response.razorpay_payment_id}`);
           }
         },
         prefill: {
