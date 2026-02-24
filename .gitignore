@@ -5,32 +5,38 @@
 .env.test.local
 .env.production.local
 *.env
+!.env.example
+!.env.production.template
 
 # Dependencies
 node_modules/
 /.pnp
 .pnp.js
+package-lock.json
 
 # Testing
 /coverage
+*.spec.js
+*.test.js
 
 # Production
 /build
 /dist
+.dist/
 
-# Misc
-.DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Hardhat/Blockchain
+artifacts/
+cache/
+typechain/
+typechain-types/
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-logs
+logs/
 *.log
+seed_output.log
 
 # IDE
 .vscode/
@@ -38,21 +44,20 @@ logs
 *.swp
 *.swo
 *~
+.zencoder/
+.zenflow/
 
 # OS
 Thumbs.db
 .DS_Store
+ehthumbs.db
+Desktop.ini
 
 # Optional npm cache directory
 .npm
 
 # Optional eslint cache
 .eslintcache
-
-# Documentation files with secrets (DO NOT COMMIT)
-RENDER_DEPLOYMENT_GUIDE.md
-RENDER_DEPLOYMENT_CHECKLIST.md
-CERTIFICATE_BLOCKCHAIN_SUMMARY.md
 
 # Build files
 *.tsbuildinfo
@@ -62,8 +67,15 @@ CERTIFICATE_BLOCKCHAIN_SUMMARY.md
 temp/
 tmp/
 
-# Documentation with potential secrets
-*DEPLOYMENT_GUIDE*.md
-*DEPLOYMENT_CHECKLIST*.md
-RENDER_*.md
-*_SUMMARY.md
+# Uploads and user generated content
+uploads/
+**/uploads/
+
+# Test files and outputs
+test-*.pdf
+*.test.pdf
+test_*.js
+
+# Specific deployment docs with secrets
+RENDER_DEPLOYMENT_GUIDE.md
+RENDER_DEPLOYMENT_CHECKLIST.md
