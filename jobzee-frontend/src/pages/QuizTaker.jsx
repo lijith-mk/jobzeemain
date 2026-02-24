@@ -61,11 +61,7 @@ const QuizTaker = () => {
       // Initialize empty answers
       const initialAnswers = {};
       data.quiz.questions.forEach((q, index) => {
-        if (q.questionType === 'multiple-choice') {
-          initialAnswers[index] = [];
-        } else {
-          initialAnswers[index] = '';
-        }
+        initialAnswers[index] = '';
       });
       setUserAnswers(initialAnswers);
     } catch (error) {
@@ -83,19 +79,11 @@ const QuizTaker = () => {
     }
   };
 
-  const handleAnswerChange = (questionIndex, answer, isMultiple = false) => {
-    setUserAnswers(prev => {
-      if (isMultiple) {
-        const currentAnswers = prev[questionIndex] || [];
-        if (currentAnswers.includes(answer)) {
-          return { ...prev, [questionIndex]: currentAnswers.filter(a => a !== answer) };
-        } else {
-          return { ...prev, [questionIndex]: [...currentAnswers, answer] };
-        }
-      } else {
-        return { ...prev, [questionIndex]: answer };
-      }
-    });
+  const handleAnswerChange = (questionIndex, answer) => {
+    setUserAnswers(prev => ({
+      ...prev,
+      [questionIndex]: answer
+    }));
   };
 
   const formatTime = (seconds) => {
@@ -105,10 +93,7 @@ const QuizTaker = () => {
   };
 
   const getAnsweredCount = () => {
-    return Object.values(userAnswers).filter(ans => {
-      if (Array.isArray(ans)) return ans.length > 0;
-      return ans !== '';
-    }).length;
+    return Object.values(userAnswers).filter(ans => ans !== '' && ans !== null && ans !== undefined).length;
   };
 
   const handleAutoSubmit = async () => {
@@ -133,10 +118,18 @@ const QuizTaker = () => {
 
     try {
       const token = localStorage.getItem('token');
+      
+      // Convert answers from index-based to questionId-based
+      const formattedAnswers = {};
+      quiz.questions.forEach((question, index) => {
+        const questionId = question._id;
+        formattedAnswers[questionId] = userAnswers[index];
+      });
+      
       const { data } = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/micro-quiz/${quiz._id}/submit`,
         { 
-          answers: userAnswers,
+          answers: formattedAnswers,
           timeTaken: quiz.timeLimit ? (quiz.timeLimit * 60 - timeRemaining) : Math.floor((Date.now() - startTime) / 1000),
           startedAt: startTime
         },
@@ -251,17 +244,16 @@ const QuizTaker = () => {
             {question.questionType === 'multiple-choice' && (
               <div className="options-container">
                 {question.options.map((option, optIndex) => {
-                  const isSelected = Array.isArray(userAnswers[index]) && 
-                                   userAnswers[index].includes(option.text);
+                  const isSelected = userAnswers[index] === option._id;
                   
                   return (
                     <div 
                       key={optIndex} 
                       className={`option ${isSelected ? 'selected' : ''}`}
-                      onClick={() => handleAnswerChange(index, option.text, true)}
+                      onClick={() => handleAnswerChange(index, option._id)}
                     >
-                      <div className="option-checkbox">
-                        {isSelected && '✓'}
+                      <div className="option-radio">
+                        {isSelected && '●'}
                       </div>
                       <span className="option-text">{option.text}</span>
                     </div>

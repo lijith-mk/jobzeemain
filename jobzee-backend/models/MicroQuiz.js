@@ -193,11 +193,11 @@ microQuizSchema.methods.gradeAttempt = function(userAnswers) {
     if (question.questionType === 'multiple-choice') {
       const correctOption = question.options.find(opt => opt.isCorrect);
       correctAnswer = correctOption ? correctOption._id.toString() : null;
-      isCorrect = userAnswer && userAnswer === correctAnswer;
+      isCorrect = userAnswer && userAnswer.toString() === correctAnswer;
     } else if (question.questionType === 'true-false') {
       const correctOption = question.options.find(opt => opt.isCorrect);
       correctAnswer = correctOption ? correctOption.text : null;
-      isCorrect = userAnswer && userAnswer === correctAnswer;
+      isCorrect = userAnswer && String(userAnswer) === String(correctAnswer);
     } else if (question.questionType === 'fill-blank') {
       correctAnswer = question.correctAnswer;
       isCorrect = userAnswer && 
