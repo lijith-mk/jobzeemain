@@ -68,18 +68,32 @@ async function generateCertificatePDF(certificateData) {
     const template = Handlebars.compile(templateHtml);
     const html = template(data);
 
-    // Launch headless browser
-    browser = await puppeteer.launch({
+    // Launch headless browser with production-friendly config
+    const launchOptions = {
       headless: 'new',
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-accelerated-2d-canvas',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-software-rasterizer',
+        '--disable-extensions',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process'
       ]
-    });
+    };
+
+    // Set executable path for production
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+      launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+      console.log(`[Puppeteer] Using custom executable: ${process.env.PUPPETEER_EXECUTABLE_PATH}`);
+    }
+
+    console.log('[Puppeteer] Launching browser...');
+    browser = await puppeteer.launch(launchOptions);
+    console.log('[Puppeteer] Browser launched successfully');
 
     const page = await browser.newPage();
 
@@ -106,11 +120,25 @@ async function generateCertificatePDF(certificateData) {
     return pdfBuffer;
 
   } catch (error) {
-    console.error('Certificate PDF generation error:', error);
-    throw new Error(`Failed to generate certificate PDF: ${error.message}`);
+    console.error('[Certificate Generator] Error:', error);
+    console.error('[Certificate Generator] Stack:', error.stack);
+    
+    // Provide more specific error messages
+    if (error.message.includes('Failed to launch')) {
+      throw new Error(`Puppeteer launch failed. Please ensure Chrome/Chromium is installed. Original error: ${error.message}`);
+    } else if (error.message.includes('ENOENT')) {
+      throw new Error(`Certificate template file not found. Please check the template path.`);
+    } else {
+      throw new Error(`Failed to generate certificate PDF: ${error.message}`);
+    }
   } finally {
     if (browser) {
-      await browser.close();
+      try {
+        await browser.close();
+        console.log('[Puppeteer] Browser closed');
+      } catch (closeError) {
+        console.error('[Puppeteer] Error closing browser:', closeError);
+      }
     }
   }
 }

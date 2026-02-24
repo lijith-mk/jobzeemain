@@ -5,6 +5,20 @@ const { adminAuth } = require('../middleware/adminAuth');
 const certificateController = require('../controllers/certificateController');
 
 // ============================================
+// HEALTH CHECK ROUTE
+// ============================================
+
+/**
+ * Check if Puppeteer is working (for debugging deployment issues)
+ * GET /api/certificates/health/puppeteer
+ * Public: No authentication required
+ */
+router.get(
+  '/health/puppeteer',
+  certificateController.checkPuppeteerHealth
+);
+
+// ============================================
 // USER ROUTES - Certificate Operations
 // ============================================
 

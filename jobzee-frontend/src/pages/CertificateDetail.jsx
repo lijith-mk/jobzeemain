@@ -54,11 +54,14 @@ const CertificateDetail = () => {
   const handleDownload = async () => {
     try {
       const token = localStorage.getItem('token');
+      toast.info('Generating certificate PDF...')
+      
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}/api/certificates/${certificateId}/download`,
         { 
           headers: { Authorization: `Bearer ${token}` },
-          responseType: 'blob'
+          responseType: 'blob',
+          timeout: 60000 // 60 second timeout for PDF generation
         }
       );
 
@@ -69,11 +72,22 @@ const CertificateDetail = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
       
       toast.success('Certificate downloaded successfully!');
     } catch (error) {
       console.error('Error downloading certificate:', error);
-      toast.error('Failed to download certificate');
+      
+      let errorMessage = 'Failed to download certificate';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.code === 'ECONNABORTED') {
+        errorMessage = 'Download timeout. Please try again.';
+      } else if (!error.response) {
+        errorMessage = 'Network error. Please check your connection.';
+      }
+      
+      toast.error(errorMessage);
     }
   };
 

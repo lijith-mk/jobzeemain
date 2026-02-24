@@ -321,12 +321,15 @@ exports.downloadCertificate = async (req, res) => {
     const { certificateId } = req.params;
     const userId = req.user?._id || req.user?.id;
 
+    console.log(`[Certificate Download] Requested by user ${userId}, certId: ${certificateId}`);
+
     const certificate = await Certificate.findOne({ 
       certificateId,
       userId 
     }).populate('courseId', 'title thumbnail');
 
     if (!certificate) {
+      console.error(`[Certificate Download] Not found: ${certificateId}`);
       return res.status(404).json({
         success: false,
         message: 'Certificate not found'
@@ -334,6 +337,7 @@ exports.downloadCertificate = async (req, res) => {
     }
 
     if (certificate.isRevoked) {
+      console.error(`[Certificate Download] Revoked: ${certificateId}`);
       return res.status(403).json({
         success: false,
         message: 'Certificate has been revoked'
@@ -344,7 +348,9 @@ exports.downloadCertificate = async (req, res) => {
     if (certificate.certificateUrl) {
       const filePath = path.join(__dirname, '..', certificate.certificateUrl);
       
+      console.log(`[Certificate Download] Checking file: ${filePath}`);
       if (fs.existsSync(filePath)) {
+        console.log(`[Certificate Download] Serving existing file`);
         // Read the file and send it
         const fileBuffer = fs.readFileSync(filePath);
         
@@ -353,11 +359,13 @@ exports.downloadCertificate = async (req, res) => {
         res.setHeader('Content-Length', fileBuffer.length);
         
         return res.send(fileBuffer);
+      } else {
+        console.log(`[Certificate Download] File not found on disk, will regenerate`);
       }
     }
 
     // Generate PDF if file doesn't exist
-    console.log('Generating fresh PDF for certificate:', certificateId);
+    console.log(`[Certificate Download] Generating fresh PDF for: ${certificateId}`);
     try {
       const pdfBuffer = await generateCertificateBuffer({
         certificateId: certificate.certificateId,
@@ -371,29 +379,35 @@ exports.downloadCertificate = async (req, res) => {
         issuedAt: certificate.issuedAt
       });
 
+      console.log(`[Certificate Download] PDF generated successfully, size: ${pdfBuffer.length} bytes`);
+
       // Set headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="certificate_${certificateId}.pdf"`);
       res.setHeader('Content-Length', pdfBuffer.length);
       
       // Send PDF
-      res.send(pdfBuffer);
+      return res.send(pdfBuffer);
 
     } catch (pdfError) {
-      console.error('PDF generation error:', pdfError);
+      console.error('[Certificate Download] PDF generation error:', pdfError);
+      console.error('Stack:', pdfError.stack);
       return res.status(500).json({
         success: false,
         message: 'Error generating certificate PDF',
-        error: pdfError.message
+        error: pdfError.message,
+        details: process.env.NODE_ENV === 'development' ? pdfError.stack : undefined
       });
     }
 
   } catch (error) {
-    console.error('Download certificate error:', error);
+    console.error('[Certificate Download] General error:', error);
+    console.error('Stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Error downloading certificate',
-      error: error.message
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
@@ -842,6 +856,103 @@ exports.bulkGenerateCertificates = async (req, res) => {
       success: true,
       message: 'Bulk certificate generation completed',
       results
+    });
+  } catch (error) {
+    console.error('Bulk generate certificates error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error in bulk certificate generation',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Health check for certificate generation (Puppeteer test)
+ * GET /api/certificates/health/puppeteer
+ */
+exports.checkPuppeteerHealth = async (req, res) => {
+  try {
+    console.log('[Health Check] Testing Puppeteer...');
+    
+    const puppeteer = require('puppeteer');
+    let browser;
+    
+    try {
+      const launchOptions = {
+        headless: 'new',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--disable-gpu',
+          '--disable-software-rasterizer',
+          '--disable-extensions',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process'
+        ]
+      };
+
+      if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+      }
+
+      const startTime = Date.now();
+      browser = await puppeteer.launch(launchOptions);
+      const launchTime = Date.now() - startTime;
+      
+      const page = await browser.newPage();
+      await page.setContent('<html><body><h1>Test</h1></body></html>');
+      
+      const pdfStartTime = Date.now();
+      const pdfBuffer = await page.pdf({ format: 'A4' });
+      const pdfTime = Date.now() - pdfStartTime;
+      
+      await browser.close();
+      
+      console.log(`[Health Check] Puppeteer OK - Launch: ${launchTime}ms, PDF: ${pdfTime}ms`);
+      
+      res.json({
+        success: true,
+        message: 'Puppeteer is working correctly',
+        details: {
+          executablePath: launchOptions.executablePath || 'system default',
+          launchTime: `${launchTime}ms`,
+          pdfGenerationTime: `${pdfTime}ms`,
+          pdfSize: `${pdfBuffer.length} bytes`,
+          environment: process.env.NODE_ENV || 'development'
+        }
+      });
+      
+    } catch (puppeteerError) {
+      console.error('[Health Check] Puppeteer failed:', puppeteerError);
+      
+      if (browser) {
+        await browser.close();
+      }
+      
+      res.status(500).json({
+        success: false,
+        message: 'Puppeteer health check failed',
+        error: puppeteerError.message,
+        details: {
+          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || 'not set',
+          environment: process.env.NODE_ENV || 'development'
+        }
+      });
+    }
+    
+  } catch (error) {
+    console.error('[Health Check] Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Health check error',
+      error: error.message
+    });
+  }
+};
     });
 
   } catch (error) {
