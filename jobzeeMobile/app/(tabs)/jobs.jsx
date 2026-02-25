@@ -8,33 +8,145 @@ import {
   ActivityIndicator,
   RefreshControl,
   TextInput,
+  Modal,
+  ScrollView,
 } from 'react-native';
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../../utils/api';
 import { API_ENDPOINTS } from '../../constants/config';
 
+const SEARCH_HISTORY_KEY = '@job_search_history';
+const MAX_HISTORY_ITEMS = 20;
+
 export default function JobsScreen() {
+  const router = useRouter();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredJobs, setFilteredJobs] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchHistory, setSearchHistory] = useState([]);
+  const [showSearchHistory, setShowSearchHistory] = useState(false);
+  const [searchInputFocused, setSearchInputFocused] = useState(false);
+  
+  // Filter states
+  const [filters, setFilters] = useState({
+    locationType: 'all',
+    employmentType: 'all',
+    experienceLevel: 'all',
+  });
 
   useEffect(() => {
     fetchJobs();
+    loadSearchHistory();
   }, []);
 
   useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredJobs(jobs);
-    } else {
-      const filtered = jobs.filter(job =>
+    applyFilters();
+  }, [searchQuery, jobs, filters]);
+
+  const loadSearchHistory = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(SEARCH_HISTORY_KEY);
+      if (stored) {
+        setSearchHistory(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Failed to load search history:', error);
+    }
+  };
+
+  const saveToHistory = async (searchTerm) => {
+    if (!searchTerm.trim()) return;
+
+    try {
+      const trimmedTerm = searchTerm.trim();
+      
+      // Remove if already exists to avoid duplicates
+      const filtered = searchHistory.filter(
+        item => item.searchTerm.toLowerCase() !== trimmedTerm.toLowerCase()
+      );
+
+      // Add new search at the beginning
+      const newHistory = [
+        {
+          id: Date.now().toString(),
+          searchTerm: trimmedTerm,
+          timestamp: new Date().toISOString(),
+        },
+        ...filtered,
+      ].slice(0, MAX_HISTORY_ITEMS); // Keep only MAX_HISTORY_ITEMS
+
+      await AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(newHistory));
+      setSearchHistory(newHistory);
+    } catch (error) {
+      console.error('Failed to save search history:', error);
+    }
+  };
+
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim()) {
+      saveToHistory(searchQuery);
+      setShowSearchHistory(false);
+      setSearchInputFocused(false);
+    }
+  };
+
+  const handleHistoryItemPress = (searchTerm) => {
+    setSearchQuery(searchTerm);
+    setShowSearchHistory(false);
+    setSearchInputFocused(false);
+    saveToHistory(searchTerm);
+  };
+
+  const applyFilters = () => {
+    let filtered = jobs;
+
+    // Search filter
+    if (searchQuery.trim() !== '') {
+      filtered = filtered.filter(job =>
         job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         job.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
         job.employer?.companyName?.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      setFilteredJobs(filtered);
     }
-  }, [searchQuery, jobs]);
+
+    // Location type filter
+    if (filters.locationType !== 'all') {
+      filtered = filtered.filter(job => job.locationType === filters.locationType);
+    }
+
+    // Employment type filter
+    if (filters.employmentType !== 'all') {
+      filtered = filtered.filter(job => job.employmentType === filters.employmentType);
+    }
+
+    // Experience level filter
+    if (filters.experienceLevel !== 'all') {
+      filtered = filtered.filter(job => job.experienceLevel === filters.experienceLevel);
+    }
+
+    setFilteredJobs(filtered);
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      locationType: 'all',
+      employmentType: 'all',
+      experienceLevel: 'all',
+    });
+    setShowFilters(false);
+  };
+
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (filters.locationType !== 'all') count++;
+    if (filters.employmentType !== 'all') count++;
+    if (filters.experienceLevel !== 'all') count++;
+    return count;
+  };
 
   const fetchJobs = async () => {
     try {
@@ -68,7 +180,10 @@ export default function JobsScreen() {
   };
 
   const renderJobCard = ({ item }) => (
-    <TouchableOpacity style={styles.jobCard}>
+    <TouchableOpacity 
+      style={styles.jobCard}
+      onPress={() => router.push(`/job-details?id=${item._id}`)}
+    >
       <View style={styles.jobHeader}>
         <Text style={styles.jobTitle} numberOfLines={1}>
           {item.title}
@@ -119,9 +234,9 @@ export default function JobsScreen() {
         <Text style={styles.postedDate}>
           {new Date(item.createdAt).toLocaleDateString()}
         </Text>
-        <TouchableOpacity style={styles.applyButton}>
-          <Text style={styles.applyButtonText}>View Details</Text>
-        </TouchableOpacity>
+        <View style={styles.applyButton}>
+          <Text style={styles.applyButtonText}>View Details →</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -136,15 +251,70 @@ export default function JobsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Search Bar */}
+      {/* Search and Filter Bar */}
       <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search jobs, companies, location..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+        <View style={styles.searchInputContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search jobs, companies, location..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onFocus={() => {
+              setSearchInputFocused(true);
+              if (searchHistory.length > 0) {
+                setShowSearchHistory(true);
+              }
+            }}
+            onBlur={() => {
+              // Delay hiding to allow taps on history items
+              setTimeout(() => {
+                setSearchInputFocused(false);
+                setShowSearchHistory(false);
+              }, 200);
+            }}
+            onSubmitEditing={handleSearchSubmit}
+            returnKeyType="search"
+          />
+          <TouchableOpacity
+            style={styles.historyIconButton}
+            onPress={() => router.push('/search-history')}
+          >
+            <Text style={styles.historyIcon}>🕐</Text>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={() => setShowFilters(true)}
+        >
+          <Text style={styles.filterButtonText}>
+            🔍 Filters {getActiveFilterCount() > 0 && `(${getActiveFilterCount()})`}
+          </Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Recent Searches Dropdown */}
+      {showSearchHistory && searchHistory.length > 0 && (
+        <View style={styles.searchHistoryDropdown}>
+          <View style={styles.historyHeader}>
+            <Text style={styles.historyHeaderText}>Recent Searches</Text>
+            <TouchableOpacity onPress={() => router.push('/search-history')}>
+              <Text style={styles.viewAllText}>View All</Text>
+            </TouchableOpacity>
+          </View>
+          {searchHistory.slice(0, 5).map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.historyItem}
+              onPress={() => handleHistoryItemPress(item.searchTerm)}
+            >
+              <Text style={styles.historyItemIcon}>🔍</Text>
+              <Text style={styles.historyItemText} numberOfLines={1}>
+                {item.searchTerm}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {/* Jobs List */}
       <FlatList
@@ -158,11 +328,128 @@ export default function JobsScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
-              {searchQuery ? 'No jobs found matching your search' : 'No jobs available'}
+              {searchQuery || getActiveFilterCount() > 0 
+                ? 'No jobs found matching your criteria' 
+                : 'No jobs available'}
             </Text>
           </View>
         }
       />
+
+      {/* Filter Modal */}
+      <Modal
+        visible={showFilters}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowFilters(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Filter Jobs</Text>
+              <TouchableOpacity onPress={() => setShowFilters(false)}>
+                <Text style={styles.closeButton}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.filterScroll}>
+              {/* Location Type Filter */}
+              <View style={styles.filterSection}>
+                <Text style={styles.filterLabel}>Location Type</Text>
+                <View style={styles.filterOptions}>
+                  {['all', 'remote', 'hybrid', 'on-site'].map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.filterOption,
+                        filters.locationType === type && styles.filterOptionActive,
+                      ]}
+                      onPress={() => setFilters({ ...filters, locationType: type })}
+                    >
+                      <Text
+                        style={[
+                          styles.filterOptionText,
+                          filters.locationType === type && styles.filterOptionTextActive,
+                        ]}
+                      >
+                        {type === 'all' ? 'All' : type.charAt(0).toUpperCase() + type.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Employment Type Filter */}
+              <View style={styles.filterSection}>
+                <Text style={styles.filterLabel}>Employment Type</Text>
+                <View style={styles.filterOptions}>
+                  {['all', 'full-time', 'part-time', 'contract', 'internship'].map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.filterOption,
+                        filters.employmentType === type && styles.filterOptionActive,
+                      ]}
+                      onPress={() => setFilters({ ...filters, employmentType: type })}
+                    >
+                      <Text
+                        style={[
+                          styles.filterOptionText,
+                          filters.employmentType === type && styles.filterOptionTextActive,
+                        ]}
+                      >
+                        {type === 'all' ? 'All' : type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Experience Level Filter */}
+              <View style={styles.filterSection}>
+                <Text style={styles.filterLabel}>Experience Level</Text>
+                <View style={styles.filterOptions}>
+                  {['all', 'entry', 'mid', 'senior', 'executive'].map((level) => (
+                    <TouchableOpacity
+                      key={level}
+                      style={[
+                        styles.filterOption,
+                        filters.experienceLevel === level && styles.filterOptionActive,
+                      ]}
+                      onPress={() => setFilters({ ...filters, experienceLevel: level })}
+                    >
+                      <Text
+                        style={[
+                          styles.filterOptionText,
+                          filters.experienceLevel === level && styles.filterOptionTextActive,
+                        ]}
+                      >
+                        {level === 'all' ? 'All' : level.charAt(0).toUpperCase() + level.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Modal Actions */}
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.resetButton}
+                onPress={resetFilters}
+              >
+                <Text style={styles.resetButtonText}>Reset</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.applyButton}
+                onPress={() => setShowFilters(false)}
+              >
+                <Text style={styles.applyButtonText}>Apply Filters</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -182,14 +469,137 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
+    gap: 8,
   },
-  searchInput: {
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#f9fafb',
     borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
     borderWidth: 1,
     borderColor: '#d1d5db',
+    paddingRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    padding: 12,
+    fontSize: 16,
+  },
+  historyIconButton: {
+    padding: 8,
+  },
+  historyIcon: {
+    fontSize: 20,
+  },
+  filterButton: {
+    backgroundColor: '#2563eb',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  filterButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  closeButton: {
+    fontSize: 24,
+    color: '#6b7280',
+  },
+  filterScroll: {
+    padding: 20,
+  },
+  filterSection: {
+    marginBottom: 24,
+  },
+  filterLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  filterOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  filterOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  filterOptionActive: {
+    backgroundColor: '#dbeafe',
+    borderColor: '#2563eb',
+  },
+  filterOptionText: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  filterOptionTextActive: {
+    color: '#2563eb',
+    fontWeight: '600',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    padding: 20,
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  resetButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  resetButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  applyButton: {
+    flex: 2,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#2563eb',
+  },
+  applyButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
   listContent: {
     padding: 16,
@@ -304,5 +714,49 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6b7280',
     textAlign: 'center',
+  },
+  searchHistoryDropdown: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  historyHeaderText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  viewAllText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2563eb',
+  },
+  historyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+  },
+  historyItemIcon: {
+    fontSize: 16,
+    marginRight: 12,
+  },
+  historyItemText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#111827',
   },
 });

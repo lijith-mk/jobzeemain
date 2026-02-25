@@ -9,10 +9,12 @@ import {
   RefreshControl,
   Image,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { api } from '../../utils/api';
 import { API_ENDPOINTS } from '../../constants/config';
 
 export default function CoursesScreen() {
+  const router = useRouter();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,7 +54,10 @@ export default function CoursesScreen() {
   };
 
   const renderCourseCard = ({ item }) => (
-    <TouchableOpacity style={styles.courseCard}>
+    <TouchableOpacity 
+      style={styles.courseCard}
+      onPress={() => router.push(`/course-details?id=${item._id}`)}
+    >
       {item.thumbnail && (
         <Image
           source={{ uri: item.thumbnail }}
@@ -109,11 +114,11 @@ export default function CoursesScreen() {
           </View>
         )}
 
-        <TouchableOpacity style={styles.enrollButton}>
+        <View style={styles.enrollButton}>
           <Text style={styles.enrollButtonText}>
-            {item.isPaid ? 'View Details' : 'Enroll Free'}
+            {item.isPaid ? 'View Details →' : 'View Course →'}
           </Text>
-        </TouchableOpacity>
+        </View>
       </View>
     </TouchableOpacity>
   );

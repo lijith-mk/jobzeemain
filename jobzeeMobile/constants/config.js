@@ -49,12 +49,30 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS: (id) => `/applications/${id}/status`,
   },
   
+  // Saved Jobs endpoints
+  SAVED_JOBS: {
+    LIST: '/saved',
+    SAVE: (jobId) => `/saved/${jobId}`,
+    UNSAVE: (jobId) => `/saved/${jobId}`,
+    CHECK: (jobId) => `/saved/check/${jobId}`,
+  },
+  
   // Internship endpoints
   INTERNSHIPS: {
     ALL: '/internships',
     BY_ID: (id) => `/internships/${id}`,
     CREATE: '/internships',
     BY_EMPLOYER: (id) => `/internships/employer/${id}`,
+    APPLY: '/internship-applications/apply',
+  },
+  
+  // Internship Application endpoints
+  INTERNSHIP_APPLICATIONS: {
+    MY_APPLICATIONS: '/internship-applications/user/my-applications',
+    BY_ID: (id) => `/internship-applications/${id}`,
+    WITHDRAW: (id) => `/internship-applications/${id}/withdraw`,
+    BY_INTERNSHIP: (internshipId) => `/internships/${internshipId}/applications`,
+    UPDATE_STATUS: (id) => `/internship-applications/${id}/status`,
   },
   
   // Learning endpoints
@@ -67,6 +85,8 @@ export const API_ENDPOINTS = {
     RATE: '/learning/courses/rate',
     LEARNING_PATHS: '/learning/learning-paths',
     LEARNING_PATH_PROGRESS: (pathId) => `/learning/learning-paths/${pathId}/progress`,
+    BOOKMARK: (courseId) => `/learning/courses/${courseId}/bookmark`,
+    BOOKMARKS: '/learning/bookmarks',
   },
   
   // Mentor endpoints

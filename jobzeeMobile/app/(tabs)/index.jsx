@@ -93,8 +93,24 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionCard}>
+            <TouchableOpacity 
+              style={styles.actionCard}
+              onPress={() => router.push('/internships')}
+            >
               <Text style={styles.actionIcon}>🎓</Text>
+              <View style={styles.actionContent}>
+                <Text style={styles.actionTitle}>Browse Internships</Text>
+                <Text style={styles.actionDescription}>
+                  Apply for internship opportunities
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.actionCard}
+              onPress={() => router.push('/certificates')}
+            >
+              <Text style={styles.actionIcon}>🏆</Text>
               <View style={styles.actionContent}>
                 <Text style={styles.actionTitle}>My Certificates</Text>
                 <Text style={styles.actionDescription}>

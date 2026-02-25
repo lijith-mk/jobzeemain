@@ -58,25 +58,55 @@ export default function ProfileScreen() {
       <View style={styles.menuContainer}>
         <Text style={styles.sectionTitle}>Account</Text>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => router.push('/edit-profile')}
+        >
           <Text style={styles.menuItemText}>Edit Profile</Text>
           <Text style={styles.menuItemIcon}>›</Text>
         </TouchableOpacity>
 
         {userType === 'user' && (
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/resume-management')}
+          >
+            <Text style={styles.menuItemText}>Resume Management</Text>
+            <Text style={styles.menuItemIcon}>›</Text>
+          </TouchableOpacity>
+        )}
+
+        {userType === 'user' && (
           <>
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/my-courses')}
+            >
               <Text style={styles.menuItemText}>My Courses</Text>
               <Text style={styles.menuItemIcon}>›</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/certificates')}
+            >
               <Text style={styles.menuItemText}>Certificates</Text>
               <Text style={styles.menuItemIcon}>›</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/saved-jobs')}
+            >
               <Text style={styles.menuItemText}>Saved Jobs</Text>
+              <Text style={styles.menuItemIcon}>›</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/bookmarked-courses')}
+            >
+              <Text style={styles.menuItemText}>Bookmarked Courses</Text>
               <Text style={styles.menuItemIcon}>›</Text>
             </TouchableOpacity>
           </>

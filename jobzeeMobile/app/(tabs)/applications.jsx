@@ -7,14 +7,18 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  ScrollView,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { api } from '../../utils/api';
 import { API_ENDPOINTS } from '../../constants/config';
 
 export default function ApplicationsScreen() {
+  const router = useRouter();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
     fetchApplications();
@@ -54,6 +58,40 @@ export default function ApplicationsScreen() {
       default:
         return '#6b7280';
     }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'pending':
+        return '⏳';
+      case 'reviewing':
+        return '👀';
+      case 'shortlisted':
+        return '⭐';
+      case 'accepted':
+        return '✅';
+      case 'rejected':
+        return '❌';
+      case 'withdrawn':
+        return '🚫';
+      default:
+        return '📋';
+    }
+  };
+
+  const filteredApplications = statusFilter === 'all' 
+    ? applications 
+    : applications.filter(app => app.status === statusFilter);
+
+  const getStatusCounts = () => {
+    return {
+      all: applications.length,
+      pending: applications.filter(app => app.status === 'pending').length,
+      reviewing: applications.filter(app => app.status === 'reviewing').length,
+      shortlisted: applications.filter(app => app.status === 'shortlisted').length,
+      accepted: applications.filter(app => app.status === 'accepted').length,
+      rejected: applications.filter(app => app.status === 'rejected').length,
+    };
   };
 
   const renderApplicationCard = ({ item }) => (
@@ -107,8 +145,84 @@ export default function ApplicationsScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Header with tab options */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>My Applications</Text>
+        <View style={styles.tabContainer}>
+          <View style={[styles.tab, styles.activeTab]}>
+            <Text style={styles.activeTabText}>Jobs</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.tab}
+            onPress={() => router.push('/internship-applications')}
+          >
+            <Text style={styles.tabText}>Internships</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Status Filter Chips */}
+      {applications.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterContainer}
+          contentContainerStyle={styles.filterContent}
+        >
+          {[
+            { key: 'all', label: 'All', icon: '📋' },
+            { key: 'pending', label: 'Pending', icon: '⏳' },
+            { key: 'reviewing', label: 'Reviewing', icon: '👀' },
+            { key: 'shortlisted', label: 'Shortlisted', icon: '⭐' },
+            { key: 'accepted', label: 'Accepted', icon: '✅' },
+            { key: 'rejected', label: 'Rejected', icon: '❌' },
+          ].map((filter) => {
+            const counts = getStatusCounts();
+            const count = counts[filter.key];
+            if (count === 0 && filter.key !== 'all') return null;
+            
+            const isActive = statusFilter === filter.key;
+            return (
+              <TouchableOpacity
+                key={filter.key}
+                style={[
+                  styles.filterChip,
+                  isActive && styles.filterChipActive,
+                ]}
+                onPress={() => setStatusFilter(filter.key)}
+              >
+                <Text style={styles.filterIcon}>{filter.icon}</Text>
+                <Text
+                  style={[
+                    styles.filterText,
+                    isActive && styles.filterTextActive,
+                  ]}
+                >
+                  {filter.label}
+                </Text>
+                <View
+                  style={[
+                    styles.countBadge,
+                    isActive && styles.countBadgeActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.countText,
+                      isActive && styles.countTextActive,
+                    ]}
+                  >
+                    {count}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
+
       <FlatList
-        data={applications}
+        data={filteredApplications}
         renderItem={renderApplicationCard}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
@@ -117,9 +231,15 @@ export default function ApplicationsScreen() {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No applications yet</Text>
+            <Text style={styles.emptyText}>
+              {statusFilter === 'all' 
+                ? 'No applications yet' 
+                : `No ${statusFilter} applications`}
+            </Text>
             <Text style={styles.emptySubtext}>
-              Start applying to jobs to see them here
+              {statusFilter === 'all'
+                ? 'Start applying to jobs to see them here'
+                : 'Try selecting a different status filter'}
             </Text>
           </View>
         }
@@ -132,6 +252,43 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  header: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+  },
+  activeTab: {
+    backgroundColor: '#2563eb',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  activeTabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
   },
   centered: {
     flex: 1,
@@ -215,5 +372,58 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
     textAlign: 'center',
+  },
+  filterContainer: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  filterContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+    marginRight: 8,
+    gap: 6,
+  },
+  filterChipActive: {
+    backgroundColor: '#2563eb',
+  },
+  filterIcon: {
+    fontSize: 14,
+  },
+  filterText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  filterTextActive: {
+    color: '#fff',
+  },
+  countBadge: {
+    backgroundColor: '#e5e7eb',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 20,
+    alignItems: 'center',
+  },
+  countBadgeActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  countText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#374151',
+  },
+  countTextActive: {
+    color: '#fff',
   },
 });
