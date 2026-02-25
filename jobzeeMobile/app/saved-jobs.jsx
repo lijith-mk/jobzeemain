@@ -29,9 +29,7 @@ export default function SavedJobsScreen() {
       setSavedJobs(response.data.savedJobs || response.data || []);
     } catch (error) {
       console.error('Error fetching saved jobs:', error);
-      if (error.response?.status !== 404) {
-        Alert.alert('Error', 'Failed to load saved jobs');
-      }
+      Alert.alert('Error', 'Failed to load saved jobs');
     } finally {
       setLoading(false);
       setRefreshing(false);

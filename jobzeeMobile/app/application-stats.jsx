@@ -1,14 +1,14 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 import { API_ENDPOINTS } from '../constants/config';
 
 const { width } = Dimensions.get('window');
 
 export default function ApplicationStats() {
-  const { token } = useContext(AuthContext);
+  const { token } = useAuth();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);

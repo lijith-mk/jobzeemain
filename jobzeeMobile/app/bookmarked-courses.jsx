@@ -18,6 +18,7 @@ export default function BookmarkedCoursesScreen() {
   const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [backendUnavailable, setBackendUnavailable] = useState(false);
 
   useEffect(() => {
     fetchBookmarks();
@@ -27,9 +28,12 @@ export default function BookmarkedCoursesScreen() {
     try {
       const response = await api.get(API_ENDPOINTS.LEARNING.BOOKMARKS);
       setBookmarks(response.data.bookmarks || response.data || []);
+      setBackendUnavailable(false);
     } catch (error) {
       console.error('Error fetching bookmarks:', error);
-      if (error.response?.status !== 404) {
+      if (error.response?.status === 404) {
+        setBackendUnavailable(true);
+      } else if (error.response?.status !== 404) {
         Alert.alert('Error', 'Failed to load bookmarked courses');
       }
     } finally {
@@ -140,6 +144,37 @@ export default function BookmarkedCoursesScreen() {
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#2563eb" />
         <Text style={styles.loadingText}>Loading bookmarks...</Text>
+      </View>
+    );
+  }
+
+  if (backendUnavailable) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Bookmarked Courses</Text>
+        </View>
+        
+        <View style={styles.centerContainer}>
+          <Text style={styles.emptyIcon}>🚧</Text>
+          <Text style={styles.emptyTitle}>Feature Coming Soon</Text>
+          <Text style={styles.emptyText}>
+            The course bookmarks feature requires backend API support.{'\n'}
+            This feature will be available once the backend is updated.
+          </Text>
+          <TouchableOpacity
+            style={styles.browseButton}
+            onPress={() => router.push('/(tabs)/courses')}
+          >
+            <Text style={styles.browseButtonText}>Browse Courses</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }

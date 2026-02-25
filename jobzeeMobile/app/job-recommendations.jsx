@@ -1,16 +1,17 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 import { API_ENDPOINTS } from '../constants/config';
 
 export default function JobRecommendations() {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [matchScores, setMatchScores] = useState({});
+  const [backendUnavailable, setBackendUnavailable] = useState(false);
 
   useEffect(() => {
     fetchRecommendations();
@@ -25,9 +26,13 @@ export default function JobRecommendations() {
         const jobs = response.data.data;
         const scored = scoreJobs(jobs);
         setRecommendations(scored);
+        setBackendUnavailable(false);
       }
     } catch (error) {
       console.error('Failed to fetch recommendations:', error);
+      if (error.response?.status === 404) {
+        setBackendUnavailable(true);
+      }
     } finally {
       setLoading(false);
     }

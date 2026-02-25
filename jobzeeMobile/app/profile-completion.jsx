@@ -1,10 +1,9 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useContext } from 'react';
 import { router } from 'expo-router';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function ProfileCompletion() {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
 
   const calculateCompletion = () => {
     const checks = [

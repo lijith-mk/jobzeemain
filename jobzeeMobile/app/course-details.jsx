@@ -70,7 +70,11 @@ export default function CourseDetailsScreen() {
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to bookmark course');
+      if (error.response?.status === 404) {
+        Alert.alert('Feature Unavailable', 'Course bookmarks feature requires backend support. This will be available soon.');
+      } else {
+        Alert.alert('Error', error.response?.data?.message || 'Failed to bookmark course');
+      }
     } finally {
       setBookmarking(false);
     }

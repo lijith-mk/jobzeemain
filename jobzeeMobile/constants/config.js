@@ -51,10 +51,10 @@ export const API_ENDPOINTS = {
   
   // Saved Jobs endpoints
   SAVED_JOBS: {
-    LIST: '/saved',
-    SAVE: (jobId) => `/saved/${jobId}`,
-    UNSAVE: (jobId) => `/saved/${jobId}`,
-    CHECK: (jobId) => `/saved/check/${jobId}`,
+    LIST: '/saved-jobs/my-jobs',
+    SAVE: (jobId) => `/saved-jobs/${jobId}/save`,
+    UNSAVE: (jobId) => `/saved-jobs/${jobId}/save`,
+    CHECK: (jobId) => `/saved-jobs/${jobId}/saved-status`,
   },
   
   // Internship endpoints
