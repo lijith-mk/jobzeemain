@@ -10,6 +10,7 @@ import {
   TextInput,
   Modal,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -17,6 +18,7 @@ import { api } from '../../utils/api';
 import { API_ENDPOINTS } from '../../constants/config';
 
 const SEARCH_HISTORY_KEY = '@job_search_history';
+const SAVED_SEARCHES_KEY = '@saved_job_searches';
 const MAX_HISTORY_ITEMS = 20;
 
 export default function JobsScreen() {
@@ -146,6 +148,45 @@ export default function JobsScreen() {
     if (filters.employmentType !== 'all') count++;
     if (filters.experienceLevel !== 'all') count++;
     return count;
+  };
+
+  const handleSaveSearch = () => {
+    if (searchQuery.trim() === '' && getActiveFilterCount() === 0) {
+      Alert.alert('No Search Criteria', 'Please add search terms or filters before saving');
+      return;
+    }
+
+    Alert.prompt(
+      'Save Search',
+      'Give this search a name:',
+      async (name) => {
+        if (name && name.trim()) {
+          try {
+            const stored = await AsyncStorage.getItem(SAVED_SEARCHES_KEY);
+            const savedSearches = stored ? JSON.parse(stored) : [];
+
+            const newSearch = {
+              id: Date.now().toString(),
+              name: name.trim(),
+              filters: {
+                searchQuery,
+                locationType: filters.locationType,
+                employmentType: filters.employmentType,
+                experienceLevel: filters.experienceLevel,
+              },
+              createdAt: new Date().toISOString(),
+            };
+
+            const updatedSearches = [newSearch, ...savedSearches];
+            await AsyncStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(updatedSearches));
+            
+            Alert.alert('Success', 'Search saved successfully!');
+          } catch (error) {
+            Alert.alert('Error', 'Failed to save search');
+          }
+        }
+      }
+    );
   };
 
   const fetchJobs = async () => {
@@ -290,6 +331,24 @@ export default function JobsScreen() {
             🔍 Filters {getActiveFilterCount() > 0 && `(${getActiveFilterCount()})`}
           </Text>
         </TouchableOpacity>
+        
+        <View style={styles.searchActions}>
+          <TouchableOpacity
+            style={styles.savedSearchesButton}
+            onPress={() => router.push('/saved-searches')}
+          >
+            <Text style={styles.savedSearchesButtonText}>🔖 Saved</Text>
+          </TouchableOpacity>
+          
+          {(searchQuery.trim() !== '' || getActiveFilterCount() > 0) && (
+            <TouchableOpacity
+              style={styles.saveSearchButton}
+              onPress={handleSaveSearch}
+            >
+              <Text style={styles.saveSearchButtonText}>💾 Save</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Recent Searches Dropdown */}
@@ -498,6 +557,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   filterButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  searchActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  savedSearchesButton: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#2563eb',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  savedSearchesButtonText: {
+    color: '#2563eb',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  saveSearchButton: {
+    flex: 1,
+    backgroundColor: '#10b981',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  saveSearchButtonText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',

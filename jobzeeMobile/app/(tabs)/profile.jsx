@@ -34,6 +34,26 @@ export default function ProfileScreen() {
 
   const profileData = userType === 'user' ? user : employer;
 
+  const calculateProfileCompletion = () => {
+    if (userType !== 'user') return 100;
+    
+    const checks = [
+      user?.name && user?.email && user?.phone,
+      user?.resume,
+      user?.skills && user.skills.length >= 3,
+      user?.experience !== undefined,
+      user?.education?.level,
+      user?.bio && user.bio.length >= 50,
+      user?.location,
+      user?.preferredLocations?.length > 0,
+    ];
+    
+    const completed = checks.filter(Boolean).length;
+    return Math.round((completed / checks.length) * 100);
+  };
+
+  const completionPercentage = calculateProfileCompletion();
+
   return (
     <ScrollView style={styles.container}>
       {/* Profile Header */}
@@ -52,6 +72,23 @@ export default function ProfileScreen() {
         {profileData?.phone && (
           <Text style={styles.phone}>{profileData.phone}</Text>
         )}
+        
+        {userType === 'user' && completionPercentage < 100 && (
+          <TouchableOpacity 
+            style={styles.completionBanner}
+            onPress={() => router.push('/profile-completion')}
+          >
+            <View style={styles.completionContent}>
+              <Text style={styles.completionText}>
+                Profile {completionPercentage}% Complete
+              </Text>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: `${completionPercentage}%` }]} />
+              </View>
+            </View>
+            <Text style={styles.completionArrow}>›</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Menu Items */}
@@ -65,6 +102,16 @@ export default function ProfileScreen() {
           <Text style={styles.menuItemText}>Edit Profile</Text>
           <Text style={styles.menuItemIcon}>›</Text>
         </TouchableOpacity>
+
+        {userType === 'user' && (
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/profile-completion')}
+          >
+            <Text style={styles.menuItemText}>📊 Profile Completion</Text>
+            <Text style={styles.menuItemIcon}>›</Text>
+          </TouchableOpacity>
+        )}
 
         {userType === 'user' && (
           <TouchableOpacity 
@@ -112,6 +159,28 @@ export default function ProfileScreen() {
           </>
         )}
       </View>
+
+      {userType === 'user' && (
+        <View style={styles.menuContainer}>
+          <Text style={styles.sectionTitle}>Recommendations</Text>
+
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/job-recommendations')}
+          >
+            <Text style={styles.menuItemText}>💡 Job Recommendations</Text>
+            <Text style={styles.menuItemIcon}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/application-stats')}
+          >
+            <Text style={styles.menuItemText}>📊 Application Statistics</Text>
+            <Text style={styles.menuItemIcon}>›</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.menuContainer}>
         <Text style={styles.sectionTitle}>Settings</Text>
@@ -241,5 +310,39 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 12,
     color: '#9ca3af',
+  },
+  completionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#dbeafe',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  completionContent: {
+    flex: 1,
+  },
+  completionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1e40af',
+    marginBottom: 6,
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: '#bfdbfe',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#2563eb',
+    borderRadius: 3,
+  },
+  completionArrow: {
+    fontSize: 24,
+    color: '#1e40af',
+    marginLeft: 8,
   },
 });
