@@ -29,7 +29,7 @@ export default function JobRecommendations() {
         setBackendUnavailable(false);
       }
     } catch (error) {
-      console.error('Failed to fetch recommendations:', error);
+      // Silently fail for 404 - backend endpoint may not exist
       if (error.response?.status === 404) {
         setBackendUnavailable(true);
       }

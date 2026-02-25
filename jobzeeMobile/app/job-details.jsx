@@ -55,6 +55,7 @@ export default function JobDetailsScreen() {
       );
       setIsSaved(isJobSaved);
     } catch (error) {
+      // Silently fail - just assume not saved
       console.error('Error checking saved status:', error);
     }
   };

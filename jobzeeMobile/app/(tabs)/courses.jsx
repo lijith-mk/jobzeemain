@@ -78,7 +78,11 @@ export default function CoursesScreen() {
               {item.level?.toUpperCase()}
             </Text>
           </View>
-          {item.isPaid && (
+          {item.isEnrolled ? (
+            <View style={styles.enrolledBadge}>
+              <Text style={styles.enrolledText}>✓ ENROLLED</Text>
+            </View>
+          ) : item.isPaid && (
             <View style={styles.priceBadge}>
               <Text style={styles.priceText}>
                 {item.currency} {item.price}
@@ -114,9 +118,23 @@ export default function CoursesScreen() {
           </View>
         )}
 
+        {item.isEnrolled && item.enrollmentProgress > 0 && (
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { width: `${item.enrollmentProgress}%` }
+                ]} 
+              />
+            </View>
+            <Text style={styles.progressText}>{Math.round(item.enrollmentProgress)}% complete</Text>
+          </View>
+        )}
+
         <View style={styles.enrollButton}>
           <Text style={styles.enrollButtonText}>
-            {item.isPaid ? 'View Details →' : 'View Course →'}
+            {item.isEnrolled ? 'Continue Learning →' : item.isPaid ? 'View Details →' : 'View Course →'}
           </Text>
         </View>
       </View>
@@ -209,6 +227,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
+  enrolledBadge: {
+    backgroundColor: '#d1fae5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  enrolledText: {
+    color: '#065f46',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
   courseTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -251,6 +280,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6b7280',
     alignSelf: 'center',
+  },
+  progressContainer: {
+    marginBottom: 12,
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: '#e5e7eb',
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#10b981',
+    borderRadius: 3,
+  },
+  progressText: {
+    fontSize: 11,
+    color: '#6b7280',
   },
   enrollButton: {
     backgroundColor: '#2563eb',

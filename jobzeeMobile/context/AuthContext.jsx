@@ -77,7 +77,12 @@ export const AuthProvider = ({ children }) => {
     try {
       const endpoint = type === 'user' ? API_ENDPOINTS.AUTH.LOGIN : API_ENDPOINTS.EMPLOYER.LOGIN;
       
-      const response = await api.post(endpoint, { email, password });
+      // Employer login uses 'companyEmail', user login uses 'email'
+      const payload = type === 'employer' 
+        ? { companyEmail: email, password }
+        : { email, password };
+      
+      const response = await api.post(endpoint, payload);
       
       const { token, user: userData, employer: employerData } = response.data;
       
@@ -99,6 +104,12 @@ export const AuthProvider = ({ children }) => {
         setUserType('employer');
       }
     } catch (error) {
+      // Handle validation errors from backend
+      if (error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        const errorMessages = Object.values(errors).join('\n');
+        throw new Error(errorMessages);
+      }
       throw new Error(error.response?.data?.message || 'Login failed');
     }
   };
@@ -129,6 +140,12 @@ export const AuthProvider = ({ children }) => {
         setUserType('employer');
       }
     } catch (error) {
+      // Handle validation errors from backend
+      if (error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        const errorMessages = Object.values(errors).join('\n');
+        throw new Error(errorMessages);
+      }
       throw new Error(error.response?.data?.message || 'Registration failed');
     }
   };

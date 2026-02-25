@@ -34,9 +34,11 @@ export default function CourseDetailsScreen() {
       const response = await api.get(API_ENDPOINTS.LEARNING.COURSE_BY_ID(id));
       const courseData = response.data.course || response.data;
       setCourse(courseData);
-      setIsEnrolled(courseData.isEnrolled || false);
+      
+      // Backend returns 'progress' object if user is enrolled
+      const enrolled = !!response.data.progress;
+      setIsEnrolled(enrolled);
     } catch (error) {
-      console.error('Error fetching course:', error);
       Alert.alert('Error', 'Failed to load course details');
     } finally {
       setLoading(false);
@@ -52,7 +54,7 @@ export default function CourseDetailsScreen() {
       );
       setIsBookmarked(isCourseBookmarked);
     } catch (error) {
-      console.error('Error checking bookmark status:', error);
+      // Silently fail - just assume not bookmarked
     }
   };
 
@@ -70,11 +72,7 @@ export default function CourseDetailsScreen() {
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
-      if (error.response?.status === 404) {
-        Alert.alert('Feature Unavailable', 'Course bookmarks feature requires backend support. This will be available soon.');
-      } else {
-        Alert.alert('Error', error.response?.data?.message || 'Failed to bookmark course');
-      }
+      Alert.alert('Feature Unavailable', 'Course bookmarks feature is not available yet.');
     } finally {
       setBookmarking(false);
     }
@@ -96,11 +94,17 @@ export default function CourseDetailsScreen() {
       setIsEnrolled(true);
       fetchCourseDetails();
     } catch (error) {
-      console.error('Error enrolling:', error);
-      Alert.alert(
-        'Enrollment Failed',
-        error.response?.data?.message || 'Failed to enroll. Please try again.'
-      );
+      // Check if already enrolled
+      if (error.response?.status === 400 && error.response?.data?.message?.includes('Already enrolled')) {
+        setIsEnrolled(true);
+        Alert.alert('Already Enrolled', 'You are already enrolled in this course!');
+        fetchCourseDetails();
+      } else {
+        Alert.alert(
+          'Enrollment Failed',
+          error.response?.data?.message || 'Failed to enroll. Please try again.'
+        );
+      }
     } finally {
       setEnrolling(false);
     }
@@ -179,7 +183,7 @@ export default function CourseDetailsScreen() {
           
           {course.instructor && (
             <Text style={styles.instructor}>
-              👤 Instructor: {course.instructor}
+              👤 Instructor: {typeof course.instructor === 'object' ? course.instructor.name : course.instructor}
             </Text>
           )}
 
