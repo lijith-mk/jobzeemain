@@ -191,8 +191,7 @@ export default function JobDetailsScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>💰 Salary</Text>
             <Text style={styles.sectionText}>
-              {job.salary.currency} {job.salary.min?.toLocaleString()} -{' '}
-              {job.salary.max?.toLocaleString()} / {job.salary.period}
+              ₹{job.salary.min?.toLocaleString()} - ₹{job.salary.max?.toLocaleString()} / {job.salary.period}
             </Text>
           </View>
         )}

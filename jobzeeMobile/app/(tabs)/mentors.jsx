@@ -11,9 +11,9 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { API_CONFIG, API_ENDPOINTS, STORAGE_KEYS } from '../../constants/config';
+import { api } from '../../utils/api';
+import { API_ENDPOINTS } from '../../constants/config';
 
 export default function MentorsScreen() {
   const [mentors, setMentors] = useState([]);
@@ -27,22 +27,20 @@ export default function MentorsScreen() {
 
   const fetchMentors = async () => {
     try {
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.MENTOR.ALL}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-      if (data.success) {
+      const response = await api.get(API_ENDPOINTS.MENTOR.ALL);
+      const data = response.data;
+      
+      // Handle direct array response from public endpoint
+      if (Array.isArray(data)) {
+        setMentors(data);
+      } else if (data.success) {
         setMentors(data.mentors || data.data || []);
       } else {
-        Alert.alert('Error', data.message || 'Failed to load mentors');
+        setMentors([]);
       }
     } catch (error) {
       console.error('Error fetching mentors:', error);
-      Alert.alert('Error', 'Failed to load mentors');
+      Alert.alert('Error', 'Failed to load mentors. Please try again.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -58,8 +56,10 @@ export default function MentorsScreen() {
     const query = searchQuery.toLowerCase();
     return (
       mentor.name?.toLowerCase().includes(query) ||
-      mentor.expertise?.some(exp => exp.toLowerCase().includes(query)) ||
-      mentor.specialization?.toLowerCase().includes(query)
+      mentor.skills?.some(skill => skill.toLowerCase().includes(query)) ||
+      mentor.role?.toLowerCase().includes(query) ||
+      mentor.company?.toLowerCase().includes(query) ||
+      mentor.industry?.toLowerCase().includes(query)
     );
   });
 
@@ -79,27 +79,31 @@ export default function MentorsScreen() {
         <View style={styles.mentorInfo}>
           <Text style={styles.mentorName}>{item.name}</Text>
           
-          {item.specialization && (
-            <Text style={styles.specialization}>{item.specialization}</Text>
+          {item.role && (
+            <Text style={styles.specialization}>{item.role}</Text>
           )}
           
           {item.company && (
             <Text style={styles.company}>🏢 {item.company}</Text>
           )}
           
-          {item.experience && (
-            <Text style={styles.experience}>📅 {item.experience} years experience</Text>
+          {item.industry && (
+            <Text style={styles.industry}>🏭 {item.industry}</Text>
           )}
           
-          {item.expertise && item.expertise.length > 0 && (
+          {item.yearsOfExperience && (
+            <Text style={styles.experience}>📅 {item.yearsOfExperience} years experience</Text>
+          )}
+          
+          {item.skills && item.skills.length > 0 && (
             <View style={styles.expertiseContainer}>
-              {item.expertise.slice(0, 3).map((exp, index) => (
+              {item.skills.slice(0, 3).map((skill, index) => (
                 <View key={index} style={styles.expertiseTag}>
-                  <Text style={styles.expertiseText}>{exp}</Text>
+                  <Text style={styles.expertiseText}>{skill}</Text>
                 </View>
               ))}
-              {item.expertise.length > 3 && (
-                <Text style={styles.moreExpertise}>+{item.expertise.length - 3} more</Text>
+              {item.skills.length > 3 && (
+                <Text style={styles.moreExpertise}>+{item.skills.length - 3} more</Text>
               )}
             </View>
           )}
@@ -108,15 +112,8 @@ export default function MentorsScreen() {
             <Text style={styles.location}>📍 {item.city}, {item.country}</Text>
           )}
           
-          {item.sessionTypes && item.sessionTypes.length > 0 && (
-            <View style={styles.sessionTypesContainer}>
-              <Text style={styles.sessionTypesLabel}>Available sessions:</Text>
-              {item.sessionTypes.map((session, index) => (
-                <Text key={index} style={styles.sessionType}>
-                  • {session.title} - {session.duration}min - ₹{session.price}
-                </Text>
-              ))}
-            </View>
+          {item.price && (
+            <Text style={styles.price}>💰 Starting from ₹{String(item.price).replace(/[$₹]/g, '')}/session</Text>
           )}
         </View>
       </View>
@@ -268,10 +265,21 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginBottom: 2,
   },
+  industry: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 2,
+  },
   experience: {
     fontSize: 14,
     color: '#6B7280',
     marginBottom: 4,
+  },
+  price: {
+    fontSize: 14,
+    color: '#10B981',
+    fontWeight: '600',
+    marginTop: 6,
   },
   expertiseContainer: {
     flexDirection: 'row',

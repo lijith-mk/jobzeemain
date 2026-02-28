@@ -147,7 +147,7 @@ export default function PostJobScreen() {
         </View>
 
         {/* Salary Range */}
-        <Text style={styles.label}>Salary Range (INR/year)</Text>
+        <Text style={styles.label}>Salary Range (₹/year)</Text>
         <View style={styles.row}>
           <TextInput
             style={[styles.input, styles.halfInput]}

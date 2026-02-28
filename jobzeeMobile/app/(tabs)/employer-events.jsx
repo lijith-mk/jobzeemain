@@ -40,7 +40,7 @@ export default function EmployerEventsScreen() {
 
   const fetchStats = async () => {
     try {
-      const response = await api.get('/employers/events-stats');
+      const response = await api.get('/api/employers/events-stats');
       setStats(response.data.stats);
     } catch (error) {
       console.error('Error fetching stats:', error);

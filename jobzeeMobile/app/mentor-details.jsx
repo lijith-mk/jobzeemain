@@ -10,9 +10,9 @@ import {
   Alert,
   Linking,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
-import { API_CONFIG, API_ENDPOINTS, STORAGE_KEYS } from '../constants/config';
+import { api } from '../utils/api';
+import { API_ENDPOINTS } from '../constants/config';
 
 export default function MentorDetailsScreen() {
   const { mentorId } = useLocalSearchParams();
@@ -26,29 +26,32 @@ export default function MentorDetailsScreen() {
 
   const fetchMentorDetails = async () => {
     try {
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
       const endpoint = typeof API_ENDPOINTS.MENTOR.BY_ID === 'function' 
         ? API_ENDPOINTS.MENTOR.BY_ID(mentorId)
         : `/mentors/${mentorId}`;
       
-      const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-      if (data.success) {
+      const response = await api.get(endpoint);
+      const data = response.data;
+      
+      // Handle direct object response from public endpoint
+      if (data._id || data.name) {
+        setMentor(data);
+        if (data.availability) {
+          setAvailability(data.availability || []);
+        }
+      } else if (data.success) {
         setMentor(data.mentor || data.data);
         if (data.mentor?.availability || data.data?.availability) {
           setAvailability(data.mentor?.availability || data.data?.availability || []);
         }
-      } else {
-        Alert.alert('Error', data.message || 'Failed to load mentor details');
+      } else if (data.message) {
+        Alert.alert('Error', data.message);
+        router.back();
       }
     } catch (error) {
       console.error('Error fetching mentor details:', error);
       Alert.alert('Error', 'Failed to load mentor details');
+      router.back();
     } finally {
       setLoading(false);
     }
@@ -194,7 +197,7 @@ export default function MentorDetailsScreen() {
             <View key={index} style={styles.sessionCard}>
               <View style={styles.sessionHeader}>
                 <Text style={styles.sessionTitle}>{sessionType.title}</Text>
-                <Text style={styles.sessionPrice}>₹{sessionType.price}</Text>
+                <Text style={styles.sessionPrice}>₹{String(sessionType.price).replace(/[$₹]/g, '')}</Text>
               </View>
               
               <View style={styles.sessionDetails}>

@@ -11,9 +11,9 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
-import { API_CONFIG, API_ENDPOINTS, STORAGE_KEYS } from '../constants/config';
+import { api } from '../utils/api';
+import { API_ENDPOINTS } from '../constants/config';
 
 export default function BookSessionScreen() {
   const {
@@ -45,17 +45,10 @@ export default function BookSessionScreen() {
 
   const fetchMentorAvailability = async () => {
     try {
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
-      const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.MENTOR.AVAILABILITY}?mentorId=${mentorId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
+      const response = await api.get(
+        `${API_ENDPOINTS.MENTOR.AVAILABILITY}?mentorId=${mentorId}`
       );
-
-      const data = await response.json();
+      const data = response.data;
       if (data.success && data.availability) {
         setAvailableDays(data.availability);
       }
@@ -66,17 +59,10 @@ export default function BookSessionScreen() {
 
   const fetchBookedSlots = async () => {
     try {
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
-      const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.SESSIONS.AVAILABILITY}?mentorId=${mentorId}&date=${selectedDate}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
+      const response = await api.get(
+        `${API_ENDPOINTS.SESSIONS.AVAILABILITY}?mentorId=${mentorId}&date=${selectedDate}`
       );
-
-      const data = await response.json();
+      const data = response.data;
       if (data.success) {
         setBookedSlots(data.bookedSlots || []);
       }
@@ -138,23 +124,15 @@ export default function BookSessionScreen() {
     setLoading(true);
 
     try {
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.SESSIONS.BOOK}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          mentorId,
-          sessionTypeId,
-          scheduledDate: selectedDate,
-          scheduledTime: selectedTime,
-          notes,
-        }),
+      const response = await api.post(API_ENDPOINTS.SESSIONS.BOOK, {
+        mentorId,
+        sessionTypeId,
+        scheduledDate: selectedDate,
+        scheduledTime: selectedTime,
+        notes,
       });
 
-      const data = await response.json();
+      const data = response.data;
 
       if (data.success) {
         Alert.alert(
@@ -210,7 +188,7 @@ export default function BookSessionScreen() {
           <View style={styles.detailsCard}>
             <Text style={styles.sessionTitle}>{sessionTitle}</Text>
             <Text style={styles.sessionInfo}>⏱ Duration: {sessionDuration} minutes</Text>
-            <Text style={styles.sessionInfo}>💰 Price: ₹{sessionPrice}</Text>
+            <Text style={styles.sessionInfo}>💰 Price: ₹{String(sessionPrice).replace(/[$₹]/g, '')}</Text>
           </View>
         </View>
 

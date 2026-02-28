@@ -254,7 +254,7 @@ export default function JobsScreen() {
 
       {item.salary && (
         <Text style={styles.salary}>
-          💰 {item.salary.currency} {item.salary.min?.toLocaleString()} - {item.salary.max?.toLocaleString()}
+          💰 ₹{item.salary.min?.toLocaleString()} - ₹{item.salary.max?.toLocaleString()}
         </Text>
       )}
 

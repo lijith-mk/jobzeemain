@@ -160,7 +160,7 @@ export default function MentorSessionsScreen() {
 
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>💰 Amount:</Text>
-            <Text style={styles.infoValue}>₹{item.amount}</Text>
+            <Text style={styles.infoValue}>₹{String(item.amount).replace(/[$₹]/g, '')}</Text>
           </View>
 
           {item.paymentStatus && (

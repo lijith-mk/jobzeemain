@@ -1,6 +1,6 @@
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: 'https://jobzeemain-zjrh.onrender.com/api',
+  BASE_URL: 'https://jobzeemain-zjrh.onrender.com',
   TIMEOUT: 30000,
   HEADERS: {
     'Content-Type': 'application/json',
@@ -11,145 +11,145 @@ export const API_CONFIG = {
 export const API_ENDPOINTS = {
   // Auth endpoints
   AUTH: {
-    REGISTER: '/auth/register',
-    LOGIN: '/auth/login',
-    FORGOT_PASSWORD: '/auth/forgot-password',
-    RESET_PASSWORD: '/auth/reset-password',
-    VERIFY_EMAIL: '/auth/verify-email',
-    GOOGLE_AUTH: '/auth/google',
+    REGISTER: '/api/auth/register',
+    LOGIN: '/api/auth/login',
+    FORGOT_PASSWORD: '/api/auth/forgot-password',
+    RESET_PASSWORD: '/api/auth/reset-password',
+    VERIFY_EMAIL: '/api/auth/verify-email',
+    GOOGLE_AUTH: '/api/auth/google',
   },
   
   // Employer endpoints
   EMPLOYER: {
-    REGISTER: '/employers/register',
-    LOGIN: '/employers/login',
-    PROFILE: '/employers/profile',
-    FORGOT_PASSWORD: '/employers/forgot-password',
-    RESET_PASSWORD: '/employers/reset-password',
+    REGISTER: '/api/employers/register',
+    LOGIN: '/api/employers/login',
+    PROFILE: '/api/employers/profile',
+    FORGOT_PASSWORD: '/api/employers/forgot-password',
+    RESET_PASSWORD: '/api/employers/reset-password',
   },
   
   // Job endpoints
   JOBS: {
-    ALL: '/jobs',
-    BY_ID: (id) => `/jobs/${id}`,
-    BY_EMPLOYER: (id) => `/employers/${id}/jobs`,
-    CREATE: '/jobs',
-    UPDATE: (id) => `/jobs/${id}`,
-    DELETE: (id) => `/jobs/${id}`,
-    SEARCH: '/jobs/search',
-    APPLY: '/applications/apply',
+    ALL: '/api/jobs',
+    BY_ID: (id) => `/api/jobs/${id}`,
+    BY_EMPLOYER: '/api/employers/jobs',
+    CREATE: '/api/employers/jobs',
+    UPDATE: (id) => `/api/employers/jobs/${id}`,
+    DELETE: (id) => `/api/employers/jobs/${id}`,
+    SEARCH: '/api/jobs/search',
+    APPLY: '/api/applications/apply',
   },
   
   // Application endpoints
   APPLICATIONS: {
-    MY_APPLICATIONS: '/applications/my-applications',
-    BY_ID: (id) => `/applications/${id}`,
-    WITHDRAW: (id) => `/applications/${id}/withdraw`,
-    JOB_APPLICATIONS: (jobId) => `/applications/job/${jobId}`,
-    UPDATE_STATUS: (id) => `/applications/${id}/status`,
+    MY_APPLICATIONS: '/api/applications/my-applications',
+    BY_ID: (id) => `/api/applications/${id}`,
+    WITHDRAW: (id) => `/api/applications/${id}/withdraw`,
+    JOB_APPLICATIONS: (jobId) => `/api/applications/job/${jobId}`,
+    UPDATE_STATUS: (id) => `/api/applications/${id}/status`,
   },
   
   // Saved Jobs endpoints
   SAVED_JOBS: {
-    LIST: '/saved-jobs/my-jobs',
-    SAVE: (jobId) => `/saved-jobs/${jobId}/save`,
-    UNSAVE: (jobId) => `/saved-jobs/${jobId}/save`,
-    CHECK: (jobId) => `/saved-jobs/${jobId}/saved-status`,
+    LIST: '/api/saved-jobs/my-jobs',
+    SAVE: (jobId) => `/api/saved-jobs/${jobId}/save`,
+    UNSAVE: (jobId) => `/api/saved-jobs/${jobId}/save`,
+    CHECK: (jobId) => `/api/saved-jobs/${jobId}/saved-status`,
   },
   
   // Internship endpoints
   INTERNSHIPS: {
-    ALL: '/internships',
-    BY_ID: (id) => `/internships/${id}`,
-    CREATE: '/internships',
-    BY_EMPLOYER: (id) => `/internships/employer/${id}`,
-    APPLY: '/internship-applications/apply',
+    ALL: '/api/internships',
+    BY_ID: (id) => `/api/internships/${id}`,
+    CREATE: '/api/internships',
+    BY_EMPLOYER: (id) => `/api/internships/employer/${id}`,
+    APPLY: '/api/internship-applications/apply',
   },
   
   // Internship Application endpoints
   INTERNSHIP_APPLICATIONS: {
-    MY_APPLICATIONS: '/internship-applications/user/my-applications',
-    BY_ID: (id) => `/internship-applications/${id}`,
-    WITHDRAW: (id) => `/internship-applications/${id}/withdraw`,
-    BY_INTERNSHIP: (internshipId) => `/internships/${internshipId}/applications`,
-    UPDATE_STATUS: (id) => `/internship-applications/${id}/status`,
+    MY_APPLICATIONS: '/api/internship-applications/user/my-applications',
+    BY_ID: (id) => `/api/internship-applications/${id}`,
+    WITHDRAW: (id) => `/api/internship-applications/${id}/withdraw`,
+    BY_INTERNSHIP: (internshipId) => `/api/internships/${internshipId}/applications`,
+    UPDATE_STATUS: (id) => `/api/internship-applications/${id}/status`,
   },
   
   // Learning endpoints
   LEARNING: {
-    COURSES: '/learning/courses',
-    COURSE_BY_ID: (id) => `/learning/courses/${id}`,
-    MY_COURSES: '/learning/my-courses',
-    ENROLL: '/learning/courses/enroll',
-    PROGRESS: '/learning/courses/progress',
-    RATE: '/learning/courses/rate',
-    LEARNING_PATHS: '/learning/learning-paths',
-    LEARNING_PATH_PROGRESS: (pathId) => `/learning/learning-paths/${pathId}/progress`,
-    BOOKMARK: (courseId) => `/learning/courses/${courseId}/bookmark`,
-    BOOKMARKS: '/learning/bookmarks',
+    COURSES: '/api/learning/courses',
+    COURSE_BY_ID: (id) => `/api/learning/courses/${id}`,
+    MY_COURSES: '/api/learning/my-courses',
+    ENROLL: '/api/learning/courses/enroll',
+    PROGRESS: '/api/learning/courses/progress',
+    RATE: '/api/learning/courses/rate',
+    LEARNING_PATHS: '/api/learning/learning-paths',
+    LEARNING_PATH_PROGRESS: (pathId) => `/api/learning/learning-paths/${pathId}/progress`,
+    BOOKMARK: (courseId) => `/api/learning/courses/${courseId}/bookmark`,
+    BOOKMARKS: '/api/learning/bookmarks',
   },
   
   // Mentor endpoints
   MENTOR: {
-    ALL: '/mentors/all',
-    BY_ID: (id) => `/mentors/${id}`,
-    REGISTER: '/mentors/register',
-    LOGIN: '/mentors/login',
-    AVAILABILITY: '/mentors/availability',
+    ALL: '/api/mentor-applications/public',
+    BY_ID: (id) => `/api/mentor-applications/public/${id}`,
+    REGISTER: '/api/mentors/register',
+    LOGIN: '/api/mentors/login',
+    AVAILABILITY: '/api/mentors/availability',
   },
 
   // Session endpoints (Mentor Session Bookings)
   SESSIONS: {
     // User/Employee endpoints
-    BOOK: '/sessions/book',
-    MY_BOOKINGS: '/sessions/my-bookings',
-    BY_ID: (id) => `/sessions/${id}`,
-    CANCEL: (id) => `/sessions/${id}/cancel`,
-    JOIN: (id) => `/sessions/${id}/join`,
-    AVAILABILITY: '/sessions/availability',
+    BOOK: '/api/sessions/book',
+    MY_BOOKINGS: '/api/sessions/my-bookings',
+    BY_ID: (id) => `/api/sessions/${id}`,
+    CANCEL: (id) => `/api/sessions/${id}/cancel`,
+    JOIN: (id) => `/api/sessions/${id}/join`,
+    AVAILABILITY: '/api/sessions/availability',
     // Mentor endpoints (if app supports mentor accounts)
-    MENTOR_SESSIONS: '/sessions/mentor/sessions',
-    MENTOR_CALENDAR: '/sessions/mentor/calendar',
-    MENTOR_SESSION_BY_ID: (id) => `/sessions/mentor/sessions/${id}`,
-    UPDATE_SESSION: (id) => `/sessions/mentor/sessions/${id}`,
-    MENTOR_JOIN: (id) => `/sessions/mentor/sessions/${id}/join`,
+    MENTOR_SESSIONS: '/api/sessions/mentor/sessions',
+    MENTOR_CALENDAR: '/api/sessions/mentor/calendar',
+    MENTOR_SESSION_BY_ID: (id) => `/api/sessions/mentor/sessions/${id}`,
+    UPDATE_SESSION: (id) => `/api/sessions/mentor/sessions/${id}`,
+    MENTOR_JOIN: (id) => `/api/sessions/mentor/sessions/${id}/join`,
   },
   
   // Events endpoints
   EVENTS: {
-    ALL: '/events',
-    BY_ID: (id) => `/events/${id}`,
-    REGISTER: (id) => `/events/${id}/register`,
-    MY_EVENTS: '/events/user/my-events',
-    USER_STATS: '/events/user/stats',
+    ALL: '/api/events',
+    BY_ID: (id) => `/api/events/${id}`,
+    REGISTER: (id) => `/api/events/${id}/register`,
+    MY_EVENTS: '/api/events/user/my-events',
+    USER_STATS: '/api/events/user/stats',
     // Employer event endpoints
-    CREATE: '/employers/events',
-    MY_EMPLOYER_EVENTS: '/employers/events',
-    UPDATE: (id) => `/employers/events/${id}`,
-    DELETE: (id) => `/employers/events/${id}`,
-    EMPLOYER_BY_ID: (id) => `/employers/events/${id}`,
+    CREATE: '/api/employers/events',
+    MY_EMPLOYER_EVENTS: '/api/employers/events',
+    UPDATE: (id) => `/api/employers/events/${id}`,
+    DELETE: (id) => `/api/employers/events/${id}`,
+    EMPLOYER_BY_ID: (id) => `/api/employers/events/${id}`,
   },
   
   // Upload endpoints
   UPLOAD: {
-    USER_PHOTO: '/upload/user/profile-photo',
-    USER_RESUME: '/upload/user/resume',
-    EMPLOYER_LOGO: '/upload/employer/logo',
+    USER_PHOTO: '/api/upload/user/profile-photo',
+    USER_RESUME: '/api/upload/user/resume',
+    EMPLOYER_LOGO: '/api/upload/employer/logo',
   },
   
   // Certificate endpoints
   CERTIFICATES: {
-    MY_CERTIFICATES: '/certificates/my-certificates',
-    VERIFY: '/certificates/verify',
-    GENERATE: '/certificates/generate',
+    MY_CERTIFICATES: '/api/certificates/my-certificates',
+    VERIFY: '/api/certificates/verify',
+    GENERATE: '/api/certificates/generate',
   },
   
   // Test endpoints
   TESTS: {
-    ALL: '/tests',
-    BY_ID: (id) => `/tests/${id}`,
-    SUBMIT: (id) => `/tests/${id}/submit`,
-    RESULTS: '/tests/results',
+    ALL: '/api/tests',
+    BY_ID: (id) => `/api/tests/${id}`,
+    SUBMIT: (id) => `/api/tests/${id}/submit`,
+    RESULTS: '/api/tests/results',
   },
 };
 

@@ -279,7 +279,7 @@ export default function MentorSessionDetailsScreen() {
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>💰 Amount:</Text>
-              <Text style={styles.detailValue}>₹{session.amount}</Text>
+              <Text style={styles.detailValue}>₹{String(session.amount).replace(/[$₹]/g, '')}</Text>
             </View>
 
             <View style={styles.detailRow}>

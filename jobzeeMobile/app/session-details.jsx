@@ -10,9 +10,9 @@ import {
   Alert,
   Linking,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
-import { API_CONFIG, API_ENDPOINTS, STORAGE_KEYS } from '../constants/config';
+import { api } from '../utils/api';
+import { API_ENDPOINTS } from '../constants/config';
 
 export default function SessionDetailsScreen() {
   const { sessionId } = useLocalSearchParams();
@@ -25,18 +25,12 @@ export default function SessionDetailsScreen() {
 
   const fetchSessionDetails = async () => {
     try {
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
       const endpoint = typeof API_ENDPOINTS.SESSIONS.BY_ID === 'function'
         ? API_ENDPOINTS.SESSIONS.BY_ID(sessionId)
         : `/sessions/${sessionId}`;
       
-      const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
+      const response = await api.get(endpoint);
+      const data = response.data;
       if (data.success) {
         setSession(data.data);
       } else {
@@ -58,16 +52,7 @@ export default function SessionDetailsScreen() {
 
     try {
       // Track join
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
-      await fetch(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.SESSIONS.JOIN(sessionId)}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      await api.patch(API_ENDPOINTS.SESSIONS.JOIN(sessionId));
       
       // Open meeting link
       Linking.openURL(session.meetingLink);
@@ -95,22 +80,11 @@ export default function SessionDetailsScreen() {
 
   const confirmCancel = async () => {
     try {
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
-      const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.SESSIONS.CANCEL(sessionId)}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            reason: 'Cancelled by user',
-          }),
-        }
+      const response = await api.patch(
+        API_ENDPOINTS.SESSIONS.CANCEL(sessionId),
+        { reason: 'Cancelled by user' }
       );
-
-      const data = await response.json();
+      const data = response.data;
       
       if (data.success) {
         Alert.alert('Success', 'Session cancelled successfully', [
@@ -274,7 +248,7 @@ export default function SessionDetailsScreen() {
         <View style={styles.paymentCard}>
           <View style={styles.paymentRow}>
             <Text style={styles.paymentLabel}>Amount:</Text>
-            <Text style={styles.paymentAmount}>₹{session.amount}</Text>
+            <Text style={styles.paymentAmount}>₹{String(session.amount).replace(/[$₹]/g, '')}</Text>
           </View>
           
           <View style={[styles.paymentStatusBadge, { backgroundColor: paymentInfo.bg }]}>

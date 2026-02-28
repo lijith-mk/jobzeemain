@@ -10,9 +10,9 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { API_CONFIG, API_ENDPOINTS, STORAGE_KEYS } from '../constants/config';
+import { api } from '../utils/api';
+import { API_ENDPOINTS } from '../constants/config';
 
 export default function MyBookingsScreen() {
   const [bookings, setBookings] = useState([]);
@@ -26,14 +26,8 @@ export default function MyBookingsScreen() {
 
   const fetchBookings = async () => {
     try {
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.SESSIONS.MY_BOOKINGS}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
+      const response = await api.get(API_ENDPOINTS.SESSIONS.MY_BOOKINGS);
+      const data = response.data;
       if (data.success) {
         setBookings(data.data || []);
       } else {
@@ -166,7 +160,7 @@ export default function MyBookingsScreen() {
 
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>💰 Amount:</Text>
-            <Text style={styles.infoValue}>₹{item.amount}</Text>
+            <Text style={styles.infoValue}>₹{String(item.amount).replace(/[$₹]/g, '')}</Text>
           </View>
 
           <View style={[styles.paymentBadge, { backgroundColor: `${paymentBadge.color}20` }]}>
@@ -230,22 +224,11 @@ export default function MyBookingsScreen() {
 
   const confirmCancel = async (booking) => {
     try {
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
-      const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.SESSIONS.CANCEL(booking._id)}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            reason: 'Cancelled by user',
-          }),
-        }
+      const response = await api.patch(
+        API_ENDPOINTS.SESSIONS.CANCEL(booking._id),
+        { reason: 'Cancelled by user' }
       );
-
-      const data = await response.json();
+      const data = response.data;
       
       if (data.success) {
         Alert.alert('Success', 'Session cancelled successfully');

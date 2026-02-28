@@ -9,9 +9,11 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../utils/api';
 import { API_ENDPOINTS } from '../../constants/config';
+import { COLORS, GRADIENTS, SHADOWS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../../constants/theme';
 
 export default function MyJobsScreen() {
   const { employer } = useAuth();
@@ -25,10 +27,8 @@ export default function MyJobsScreen() {
 
   const fetchMyJobs = async () => {
     try {
-      if (employer?._id) {
-        const response = await api.get(API_ENDPOINTS.JOBS.BY_EMPLOYER(employer._id));
-        setJobs(response.data.jobs || response.data || []);
-      }
+      const response = await api.get(API_ENDPOINTS.JOBS.BY_EMPLOYER);
+      setJobs(response.data.jobs || response.data || []);
     } catch (error) {
       console.error('Error fetching jobs:', error);
     } finally {
@@ -68,76 +68,153 @@ export default function MyJobsScreen() {
   const getStatusColor = (status) => {
     switch (status) {
       case 'active':
-        return '#10b981';
+        return ['#10B981', '#059669'];
       case 'closed':
-        return '#ef4444';
+        return ['#EF4444', '#DC2626'];
       case 'draft':
-        return '#f59e0b';
+        return ['#F59E0B', '#D97706'];
       default:
-        return '#6b7280';
+        return ['#6B7280', '#4B5563'];
     }
   };
 
+  const getStatusGradient = (status) => {
+    switch (status) {
+      case 'active':
+        return GRADIENTS.success;
+      case 'closed':
+        return ['#FEE2E2', '#FECACA'];
+      case 'draft':
+        return ['#FEF3C7', '#FDE68A'];
+      default:
+        return ['#F3F4F6', '#E5E7EB'];
+    }
+  };
+
+  const getTotalApplications = () => {
+    return jobs.reduce((sum, job) => sum + (job.applications?.length || 0), 0);
+  };
+
+  const getActiveJobsCount = () => {
+    return jobs.filter(job => job.status === 'active').length;
+  };
+
   const renderJobCard = ({ item }) => (
-    <View style={styles.jobCard}>
-      <View style={styles.jobHeader}>
-        <Text style={styles.jobTitle} numberOfLines={1}>
-          {item.title}
-        </Text>
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: getStatusColor(item.status) },
-          ]}
-        >
-          <Text style={styles.statusText}>
-            {item.status?.toUpperCase() || 'ACTIVE'}
-          </Text>
+    <TouchableOpacity style={styles.jobCard} activeOpacity={0.9}>
+      <LinearGradient
+        colors={['#FFFFFF', '#F9FAFB']}
+        style={styles.jobCardGradient}
+      >
+        <View style={styles.jobHeader}>
+          <View style={styles.jobTitleContainer}>
+            <Text style={styles.jobTitle} numberOfLines={2}>
+              {item.title}
+            </Text>
+            <Text style={styles.companyName}>{employer?.companyName}</Text>
+          </View>
+          <View style={styles.statusBadgeContainer}>
+            <LinearGradient
+              colors={getStatusColor(item.status)}
+              style={styles.statusBadge}
+            >
+              <Text style={styles.statusText}>
+                {item.status?.toUpperCase() || 'ACTIVE'}
+              </Text>
+            </LinearGradient>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.jobMeta}>
-        <Text style={styles.metaText}>📍 {item.location}</Text>
-        <Text style={styles.metaText}>💼 {item.employmentType}</Text>
-        <Text style={styles.metaText}>
-          {item.locationType?.toUpperCase()}
-        </Text>
-      </View>
-
-      {item.salary && (
-        <Text style={styles.salary}>
-          💰 {item.salary.currency} {item.salary.min?.toLocaleString()} - {item.salary.max?.toLocaleString()}
-        </Text>
-      )}
-
-      <View style={styles.statsRow}>
-        <View style={styles.stat}>
-          <Text style={styles.statNumber}>0</Text>
-          <Text style={styles.statLabel}>Applications</Text>
+        <View style={styles.jobMeta}>
+          <View style={styles.metaItem}>
+            <Text style={styles.metaIcon}>📍</Text>
+            <Text style={styles.metaText}>{item.location}</Text>
+          </View>
+          <View style={styles.metaItem}>
+            <Text style={styles.metaIcon}>💼</Text>
+            <Text style={styles.metaText}>{item.employmentType}</Text>
+          </View>
+          <View style={styles.metaItem}>
+            <Text style={styles.metaIcon}>🏢</Text>
+            <Text style={styles.metaText}>{item.locationType?.toUpperCase()}</Text>
+          </View>
         </View>
-        <View style={styles.stat}>
-          <Text style={styles.statNumber}>0</Text>
-          <Text style={styles.statLabel}>Views</Text>
-        </View>
-      </View>
 
-      <View style={styles.jobFooter}>
-        <Text style={styles.postedDate}>
-          Posted: {new Date(item.createdAt).toLocaleDateString()}
-        </Text>
-        <View style={styles.actions}>
-          <TouchableOpacity style={styles.editButton}>
-            <Text style={styles.editButtonText}>Edit</Text>
+        {item.salary && (
+          <View style={styles.salaryContainer}>
+            <LinearGradient
+              colors={['#ECFDF5', '#D1FAE5']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.salaryBadge}
+            >
+              <Text style={styles.salaryIcon}>💰</Text>
+              <Text style={styles.salary}>
+                ₹{item.salary.min?.toLocaleString()} - ₹{item.salary.max?.toLocaleString()}
+              </Text>
+            </LinearGradient>
+          </View>
+        )}
+
+        <View style={styles.statsRow}>
+          <View style={styles.stat}>
+            <LinearGradient
+              colors={['#EFF6FF', '#DBEAFE']}
+              style={styles.statGradient}
+            >
+              <Text style={styles.statNumber}>{item.applications?.length || 0}</Text>
+              <Text style={styles.statLabel}>Applications</Text>
+            </LinearGradient>
+          </View>
+          <View style={styles.stat}>
+            <LinearGradient
+              colors={['#F3E8FF', '#E9D5FF']}
+              style={styles.statGradient}
+            >
+              <Text style={styles.statNumber}>{item.views || 0}</Text>
+              <Text style={styles.statLabel}>Views</Text>
+            </LinearGradient>
+          </View>
+          <View style={styles.stat}>
+            <LinearGradient
+              colors={['#FEF3C7', '#FDE68A']}
+              style={styles.statGradient}
+            >
+              <Text style={styles.statNumber}>
+                {Math.floor((Date.now() - new Date(item.createdAt)) / (1000 * 60 * 60 * 24))}d
+              </Text>
+              <Text style={styles.statLabel}>Posted</Text>
+            </LinearGradient>
+          </View>
+        </View>
+
+        <View style={styles.jobFooter}>
+          <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
+            <LinearGradient
+              colors={['#6366F1', '#8B5CF6']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.actionButtonGradient}
+            >
+              <Text style={styles.actionButtonText}>✏️ Edit</Text>
+            </LinearGradient>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.deleteButton}
+            style={styles.actionButton}
             onPress={() => handleDelete(item._id)}
+            activeOpacity={0.7}
           >
-            <Text style={styles.deleteButtonText}>Delete</Text>
+            <LinearGradient
+              colors={['#EF4444', '#DC2626']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.actionButtonGradient}
+            >
+              <Text style={styles.actionButtonText}>🗑️ Delete</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
-      </View>
-    </View>
+      </LinearGradient>
+    </TouchableOpacity>
   );
 
   if (loading) {
@@ -150,20 +227,67 @@ export default function MyJobsScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Header Section with Stats */}
+      <LinearGradient
+        colors={GRADIENTS.twilight}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerSection}
+      >
+        <Text style={styles.headerTitle}>My Job Postings 📋</Text>
+        <View style={styles.headerStats}>
+          <View style={styles.headerStatItem}>
+            <Text style={styles.headerStatNumber}>{jobs.length}</Text>
+            <Text style={styles.headerStatLabel}>Total Jobs</Text>
+          </View>
+          <View style={styles.headerStatDivider} />
+          <View style={styles.headerStatItem}>
+            <Text style={styles.headerStatNumber}>{getActiveJobsCount()}</Text>
+            <Text style={styles.headerStatLabel}>Active</Text>
+          </View>
+          <View style={styles.headerStatDivider} />
+          <View style={styles.headerStatItem}>
+            <Text style={styles.headerStatNumber}>{getTotalApplications()}</Text>
+            <Text style={styles.headerStatLabel}>Applications</Text>
+          </View>
+        </View>
+      </LinearGradient>
+
       <FlatList
         data={jobs}
         renderItem={renderJobCard}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+            tintColor={COLORS.primary}
+            colors={[COLORS.primary]}
+          />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No job postings yet</Text>
-            <Text style={styles.emptySubtext}>
-              Post your first job to start receiving applications
-            </Text>
+            <LinearGradient
+              colors={['#EFF6FF', '#FFFFFF']}
+              style={styles.emptyGradient}
+            >
+              <Text style={styles.emptyIcon}>📝</Text>
+              <Text style={styles.emptyText}>No job postings yet</Text>
+              <Text style={styles.emptySubtext}>
+                Post your first job to start receiving applications from talented candidates
+              </Text>
+              <TouchableOpacity style={styles.emptyButton} activeOpacity={0.8}>
+                <LinearGradient
+                  colors={GRADIENTS.primary}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.emptyButtonGradient}
+                >
+                  <Text style={styles.emptyButtonText}>➕ Post a Job</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </LinearGradient>
           </View>
         }
       />
@@ -174,138 +298,225 @@ export default function MyJobsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.background,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: COLORS.background,
+  },
+  headerSection: {
+    paddingTop: SPACING.xxl + 10,
+    paddingBottom: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+  },
+  headerTitle: {
+    ...TYPOGRAPHY.h1,
+    color: COLORS.textInverse,
+    marginBottom: SPACING.md,
+  },
+  headerStats: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: BORDER_RADIUS.large,
+    padding: SPACING.md,
+    alignItems: 'center',
+  },
+  headerStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerStatNumber: {
+    ...TYPOGRAPHY.h2,
+    color: COLORS.textInverse,
+    fontWeight: 'bold',
+  },
+  headerStatLabel: {
+    ...TYPOGRAPHY.caption,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginTop: SPACING.xs,
+  },
+  headerStatDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
   listContent: {
-    padding: 16,
+    padding: SPACING.md,
+    paddingTop: SPACING.lg,
   },
   jobCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: SPACING.md,
+    borderRadius: BORDER_RADIUS.large,
+    overflow: 'hidden',
+    ...SHADOWS.large,
+  },
+  jobCardGradient: {
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.large,
   },
   jobHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: SPACING.md,
+  },
+  jobTitleContainer: {
+    flex: 1,
+    marginRight: SPACING.sm,
   },
   jobTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    flex: 1,
-    marginRight: 8,
+    ...TYPOGRAPHY.h3,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.xs,
+  },
+  companyName: {
+    ...TYPOGRAPHY.bodySmall,
+    color: COLORS.textSecondary,
+  },
+  statusBadgeContainer: {
+    borderRadius: BORDER_RADIUS.medium,
+    overflow: 'hidden',
+    ...SHADOWS.small,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.medium,
   },
   statusText: {
-    color: '#fff',
-    fontSize: 10,
+    color: COLORS.textInverse,
+    ...TYPOGRAPHY.caption,
     fontWeight: 'bold',
   },
   jobMeta: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 8,
+    marginBottom: SPACING.md,
+    gap: SPACING.sm,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.small,
+  },
+  metaIcon: {
+    fontSize: 14,
+    marginRight: 4,
   },
   metaText: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginRight: 12,
-    marginBottom: 4,
+    ...TYPOGRAPHY.bodySmall,
+    color: COLORS.textSecondary,
+  },
+  salaryContainer: {
+    marginBottom: SPACING.md,
+  },
+  salaryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.medium,
+    alignSelf: 'flex-start',
+  },
+  salaryIcon: {
+    fontSize: 16,
+    marginRight: SPACING.xs,
   },
   salary: {
-    fontSize: 14,
-    color: '#059669',
+    ...TYPOGRAPHY.body,
+    color: COLORS.success,
     fontWeight: '600',
-    marginBottom: 12,
   },
   statsRow: {
     flexDirection: 'row',
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#e5e7eb',
-    marginBottom: 12,
+    marginBottom: SPACING.md,
+    gap: SPACING.sm,
   },
   stat: {
     flex: 1,
+    borderRadius: BORDER_RADIUS.medium,
+    overflow: 'hidden',
+  },
+  statGradient: {
+    padding: SPACING.sm,
     alignItems: 'center',
+    borderRadius: BORDER_RADIUS.medium,
   },
   statNumber: {
-    fontSize: 20,
+    ...TYPOGRAPHY.h3,
+    color: COLORS.primary,
     fontWeight: 'bold',
-    color: '#2563eb',
   },
   statLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 4,
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textSecondary,
+    marginTop: SPACING.xs,
   },
   jobFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: SPACING.sm,
+  },
+  actionButton: {
+    flex: 1,
+    borderRadius: BORDER_RADIUS.medium,
+    overflow: 'hidden',
+    ...SHADOWS.medium,
+  },
+  actionButtonGradient: {
+    paddingVertical: SPACING.sm,
     alignItems: 'center',
+    borderRadius: BORDER_RADIUS.medium,
   },
-  postedDate: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
-  actions: {
-    flexDirection: 'row',
-  },
-  editButton: {
-    backgroundColor: '#dbeafe',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginLeft: 8,
-  },
-  editButtonText: {
-    color: '#1e40af',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  deleteButton: {
-    backgroundColor: '#fee2e2',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginLeft: 8,
-  },
-  deleteButtonText: {
-    color: '#991b1b',
-    fontSize: 14,
+  actionButtonText: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.textInverse,
     fontWeight: '600',
   },
   emptyContainer: {
-    padding: 40,
+    padding: SPACING.md,
+    marginTop: SPACING.xxl,
+  },
+  emptyGradient: {
+    padding: SPACING.xxl,
+    borderRadius: BORDER_RADIUS.large,
     alignItems: 'center',
+    ...SHADOWS.medium,
+  },
+  emptyIcon: {
+    fontSize: 64,
+    marginBottom: SPACING.md,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
+    ...TYPOGRAPHY.h2,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
   },
   emptySubtext: {
-    fontSize: 14,
-    color: '#6b7280',
+    ...TYPOGRAPHY.body,
+    color: COLORS.textSecondary,
     textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: SPACING.lg,
+  },
+  emptyButton: {
+    borderRadius: BORDER_RADIUS.medium,
+    overflow: 'hidden',
+    ...SHADOWS.large,
+  },
+  emptyButtonGradient: {
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.medium,
+  },
+  emptyButtonText: {
+    ...TYPOGRAPHY.h4,
+    color: COLORS.textInverse,
+    fontWeight: '600',
   },
 });
