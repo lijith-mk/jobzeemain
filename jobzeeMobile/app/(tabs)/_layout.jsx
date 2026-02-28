@@ -42,6 +42,26 @@ export default function TabLayout() {
       />
       
       <Tabs.Screen
+        name="events"
+        options={{
+          title: 'Events',
+          headerTitle: 'Events',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24 }}>🎉</Text>,
+          href: userType === 'user' ? '/(tabs)/events' : null,
+        }}
+      />
+      
+      <Tabs.Screen
+        name="mentors"
+        options={{
+          title: 'Mentors',
+          headerTitle: 'Find Mentors',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24 }}>👨‍🏫</Text>,
+          href: userType === 'user' ? '/(tabs)/mentors' : null,
+        }}
+      />
+      
+      <Tabs.Screen
         name="applications"
         options={{
           title: 'My Jobs',
@@ -68,6 +88,26 @@ export default function TabLayout() {
           headerTitle: 'Manage Jobs',
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 24 }}>📋</Text>,
           href: userType === 'employer' ? '/(tabs)/my-jobs' : null,
+        }}
+      />
+      
+      <Tabs.Screen
+        name="employer-events"
+        options={{
+          title: 'Events',
+          headerTitle: 'Manage Events',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24 }}>🎉</Text>,
+          href: userType === 'employer' ? '/(tabs)/employer-events' : null,
+        }}
+      />
+      
+      <Tabs.Screen
+        name="mentor-sessions"
+        options={{
+          title: 'Sessions',
+          headerTitle: 'My Sessions',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24 }}>👨‍🏫</Text>,
+          href: userType === 'mentor' ? '/(tabs)/mentor-sessions' : null,
         }}
       />
       

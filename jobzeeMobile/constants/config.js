@@ -92,11 +92,42 @@ export const API_ENDPOINTS = {
   // Mentor endpoints
   MENTOR: {
     ALL: '/mentors/all',
+    BY_ID: (id) => `/mentors/${id}`,
     REGISTER: '/mentors/register',
     LOGIN: '/mentors/login',
-    SESSIONS: '/mentor-sessions',
-    BOOKINGS: '/bookings',
     AVAILABILITY: '/mentors/availability',
+  },
+
+  // Session endpoints (Mentor Session Bookings)
+  SESSIONS: {
+    // User/Employee endpoints
+    BOOK: '/sessions/book',
+    MY_BOOKINGS: '/sessions/my-bookings',
+    BY_ID: (id) => `/sessions/${id}`,
+    CANCEL: (id) => `/sessions/${id}/cancel`,
+    JOIN: (id) => `/sessions/${id}/join`,
+    AVAILABILITY: '/sessions/availability',
+    // Mentor endpoints (if app supports mentor accounts)
+    MENTOR_SESSIONS: '/sessions/mentor/sessions',
+    MENTOR_CALENDAR: '/sessions/mentor/calendar',
+    MENTOR_SESSION_BY_ID: (id) => `/sessions/mentor/sessions/${id}`,
+    UPDATE_SESSION: (id) => `/sessions/mentor/sessions/${id}`,
+    MENTOR_JOIN: (id) => `/sessions/mentor/sessions/${id}/join`,
+  },
+  
+  // Events endpoints
+  EVENTS: {
+    ALL: '/events',
+    BY_ID: (id) => `/events/${id}`,
+    REGISTER: (id) => `/events/${id}/register`,
+    MY_EVENTS: '/events/user/my-events',
+    USER_STATS: '/events/user/stats',
+    // Employer event endpoints
+    CREATE: '/employers/events',
+    MY_EMPLOYER_EVENTS: '/employers/events',
+    UPDATE: (id) => `/employers/events/${id}`,
+    DELETE: (id) => `/employers/events/${id}`,
+    EMPLOYER_BY_ID: (id) => `/employers/events/${id}`,
   },
   
   // Upload endpoints
@@ -126,9 +157,11 @@ export const API_ENDPOINTS = {
 export const STORAGE_KEYS = {
   USER_TOKEN: 'userToken',
   EMPLOYER_TOKEN: 'employerToken',
+  MENTOR_TOKEN: 'mentorToken',
   USER_DATA: 'userData',
   EMPLOYER_DATA: 'employerData',
-  USER_TYPE: 'userType', // 'user' | 'employer' | 'admin'
+  MENTOR_DATA: 'mentorData',
+  USER_TYPE: 'userType', // 'user' | 'employer' | 'mentor' | 'admin'
 };
 
 // App Configuration

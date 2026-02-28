@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
+import { COLORS, GRADIENTS, SHADOWS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../../constants/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -17,145 +19,256 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Welcome Section */}
-      <View style={styles.welcomeSection}>
-        <Text style={styles.greeting}>Hello,</Text>
-        <Text style={styles.userName}>
-          {profileData?.name || profileData?.companyName || 'User'}!
-        </Text>
-        <Text style={styles.subtitle}>
-          {userType === 'user' 
-            ? 'Ready to find your dream job?' 
-            : 'Manage your job postings'}
-        </Text>
-      </View>
+      {/* Welcome Section with Gradient */}
+      <LinearGradient
+        colors={userType === 'user' ? GRADIENTS.primary : GRADIENTS.twilight}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.welcomeSection}
+      >
+        <View style={styles.welcomeContent}>
+          <Text style={styles.greeting}>Hello 👋</Text>
+          <Text style={styles.userName}>
+            {profileData?.name || profileData?.companyName || 'User'}
+          </Text>
+          <Text style={styles.subtitle}>
+            {userType === 'user'
+              ? 'Your dream career starts here. Find opportunities effortlessly.'
+              : 'Manage your job postings and find the best talent.'}
+          </Text>
+        </View>
+      </LinearGradient>
 
-      {/* Quick Stats */}
+      {/* Stats Section with Modern Cards */}
       <View style={styles.statsContainer}>
         {userType === 'user' ? (
           <>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Applications</Text>
+              <LinearGradient
+                colors={['#EFF6FF', '#DBEAFE']}
+                style={styles.statGradient}
+              >
+                <Text style={styles.statIcon}>📝</Text>
+                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statLabel}>Applications</Text>
+              </LinearGradient>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Saved Jobs</Text>
+              <LinearGradient
+                colors={['#F3E8FF', '#E9D5FF']}
+                style={styles.statGradient}
+              >
+                <Text style={styles.statIcon}>💼</Text>
+                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statLabel}>Saved Jobs</Text>
+              </LinearGradient>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Courses</Text>
+              <LinearGradient
+                colors={['#FEF3C7', '#FDE68A']}
+                style={styles.statGradient}
+              >
+                <Text style={styles.statIcon}>📚</Text>
+                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statLabel}>Courses</Text>
+              </LinearGradient>
             </View>
           </>
         ) : (
           <>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Active Jobs</Text>
+              <LinearGradient
+                colors={['#DBEAFE', '#BFDBFE']}
+                style={styles.statGradient}
+              >
+                <Text style={styles.statIcon}>📋</Text>
+                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statLabel}>Active Jobs</Text>
+              </LinearGradient>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Applications</Text>
+              <LinearGradient
+                colors={['#D1FAE5', '#A7F3D0']}
+                style={styles.statGradient}
+              >
+                <Text style={styles.statIcon}>👥</Text>
+                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statLabel}>Applications</Text>
+              </LinearGradient>
             </View>
           </>
         )}
       </View>
 
-      {/* Quick Actions */}
+      {/* Quick Actions Section */}
       <View style={styles.actionsSection}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <Text style={styles.sectionTitle}>Quick Actions ⚡</Text>
         
         {userType === 'user' ? (
           <>
             <TouchableOpacity 
               style={styles.actionCard}
               onPress={() => router.push('/(tabs)/jobs')}
+              activeOpacity={0.7}
             >
-              <Text style={styles.actionIcon}>💼</Text>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>Browse Jobs</Text>
-                <Text style={styles.actionDescription}>
-                  Find your next opportunity
-                </Text>
-              </View>
+              <LinearGradient
+                colors={['#6366F1', '#8B5CF6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.actionGradient}
+              >
+                <View style={styles.actionIconContainer}>
+                  <Text style={styles.actionIcon}>💼</Text>
+                </View>
+                <View style={styles.actionContent}>
+                  <Text style={styles.actionTitle}>Browse Jobs</Text>
+                  <Text style={styles.actionDescription}>
+                    Find your next opportunity
+                  </Text>
+                </View>
+                <Text style={styles.actionArrow}>→</Text>
+              </LinearGradient>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.actionCard}
               onPress={() => router.push('/(tabs)/courses')}
+              activeOpacity={0.7}
             >
-              <Text style={styles.actionIcon}>📚</Text>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>Explore Courses</Text>
-                <Text style={styles.actionDescription}>
-                  Upskill and learn new things
-                </Text>
-              </View>
+              <LinearGradient
+                colors={['#8B5CF6', '#EC4899']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.actionGradient}
+              >
+                <View style={styles.actionIconContainer}>
+                  <Text style={styles.actionIcon}>📚</Text>
+                </View>
+                <View style={styles.actionContent}>
+                  <Text style={styles.actionTitle}>Explore Courses</Text>
+                  <Text style={styles.actionDescription}>
+                    Upskill and learn new things
+                  </Text>
+                </View>
+                <Text style={styles.actionArrow}>→</Text>
+              </LinearGradient>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.actionCard}
               onPress={() => router.push('/internships')}
+              activeOpacity={0.7}
             >
-              <Text style={styles.actionIcon}>🎓</Text>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>Browse Internships</Text>
-                <Text style={styles.actionDescription}>
-                  Apply for internship opportunities
-                </Text>
-              </View>
+              <LinearGradient
+                colors={['#10B981', '#059669']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.actionGradient}
+              >
+                <View style={styles.actionIconContainer}>
+                  <Text style={styles.actionIcon}>🎓</Text>
+                </View>
+                <View style={styles.actionContent}>
+                  <Text style={styles.actionTitle}>Browse Internships</Text>
+                  <Text style={styles.actionDescription}>
+                    Apply for internship opportunities
+                  </Text>
+                </View>
+                <Text style={styles.actionArrow}>→</Text>
+              </LinearGradient>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.actionCard}
               onPress={() => router.push('/certificates')}
+              activeOpacity={0.7}
             >
-              <Text style={styles.actionIcon}>🏆</Text>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>My Certificates</Text>
-                <Text style={styles.actionDescription}>
-                  View your achievements
-                </Text>
-              </View>
+              <LinearGradient
+                colors={['#F59E0B', '#EF4444']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.actionGradient}
+              >
+                <View style={styles.actionIconContainer}>
+                  <Text style={styles.actionIcon}>🏆</Text>
+                </View>
+                <View style={styles.actionContent}>
+                  <Text style={styles.actionTitle}>My Certificates</Text>
+                  <Text style={styles.actionDescription}>
+                    View your achievements
+                  </Text>
+                </View>
+                <Text style={styles.actionArrow}>→</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </>
         ) : (
           <>
             <TouchableOpacity 
               style={styles.actionCard}
-              onPress={() => router.push('/(tabs)/post-job')}
+              onPress={() => router.push('/post-job')}
+              activeOpacity={0.7}
             >
-              <Text style={styles.actionIcon}>➕</Text>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>Post a Job</Text>
-                <Text style={styles.actionDescription}>
-                  Create a new job posting
-                </Text>
-              </View>
+              <LinearGradient
+                colors={['#6366F1', '#4F46E5']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.actionGradient}
+              >
+                <View style={styles.actionIconContainer}>
+                  <Text style={styles.actionIcon}>➕</Text>
+                </View>
+                <View style={styles.actionContent}>
+                  <Text style={styles.actionTitle}>Post a Job</Text>
+                  <Text style={styles.actionDescription}>
+                    Create a new job posting
+                  </Text>
+                </View>
+                <Text style={styles.actionArrow}>→</Text>
+              </LinearGradient>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.actionCard}
               onPress={() => router.push('/(tabs)/my-jobs')}
+              activeOpacity={0.7}
             >
-              <Text style={styles.actionIcon}>📋</Text>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>My Job Postings</Text>
-                <Text style={styles.actionDescription}>
-                  Manage your jobs
-                </Text>
-              </View>
+              <LinearGradient
+                colors={['#8B5CF6', '#7C3AED']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.actionGradient}
+              >
+                <View style={styles.actionIconContainer}>
+                  <Text style={styles.actionIcon}>📋</Text>
+                </View>
+                <View style={styles.actionContent}>
+                  <Text style={styles.actionTitle}>My Job Postings</Text>
+                  <Text style={styles.actionDescription}>
+                    Manage your jobs
+                  </Text>
+                </View>
+                <Text style={styles.actionArrow}>→</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </>
         )}
       </View>
 
-      {/* Info Section */}
+      {/* Info Section with Modern Design */}
       <View style={styles.infoSection}>
-        <Text style={styles.infoTitle}>📱 JobZee Mobile</Text>
-        <Text style={styles.infoText}>
-          Your complete job search and recruitment platform in your pocket.
-        </Text>
+        <LinearGradient
+          colors={['#EFF6FF', '#FFFFFF']}
+          style={styles.infoGradient}
+        >
+          <Text style={styles.infoTitle}>✨ JobZee Mobile</Text>
+          <Text style={styles.infoText}>
+            Your complete job search and recruitment platform in your pocket.
+          </Text>
+          <View style={styles.infoBadge}>
+            <Text style={styles.infoBadgeText}>🚀 Always Improving</Text>
+          </View>
+        </LinearGradient>
       </View>
     </ScrollView>
   );
@@ -164,113 +277,145 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.background,
   },
   welcomeSection: {
-    backgroundColor: '#2563eb',
-    padding: 24,
-    paddingTop: 40,
+    paddingTop: SPACING.xxl + 10,
+    paddingBottom: SPACING.xxl + 20,
+    paddingHorizontal: SPACING.lg,
+  },
+  welcomeContent: {
+    marginTop: SPACING.md,
   },
   greeting: {
-    fontSize: 18,
-    color: '#dbeafe',
+    ...TYPOGRAPHY.bodySmall,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: SPACING.xs,
   },
   userName: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    ...TYPOGRAPHY.h1,
+    color: COLORS.textInverse,
+    marginBottom: SPACING.sm,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#bfdbfe',
+    ...TYPOGRAPHY.body,
+    color: 'rgba(255, 255, 255, 0.85)',
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 16,
-    marginTop: -30,
+    paddingHorizontal: SPACING.md,
+    marginTop: -SPACING.xl - 10,
+    gap: SPACING.sm,
   },
   statCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
     flex: 1,
-    marginHorizontal: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: BORDER_RADIUS.large,
+    overflow: 'hidden',
+    ...SHADOWS.medium,
+  },
+  statGradient: {
+    padding: SPACING.md,
+    alignItems: 'center',
+    borderRadius: BORDER_RADIUS.large,
+  },
+  statIcon: {
+    fontSize: 28,
+    marginBottom: SPACING.xs,
   },
   statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2563eb',
-    marginBottom: 4,
+    ...TYPOGRAPHY.h2,
+    color: COLORS.primary,
+    marginBottom: SPACING.xs,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#6b7280',
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textSecondary,
     textAlign: 'center',
   },
   actionsSection: {
-    padding: 16,
+    padding: SPACING.md,
+    paddingTop: SPACING.lg,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 16,
+    ...TYPOGRAPHY.h3,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.md,
   },
   actionCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    marginBottom: SPACING.md,
+    borderRadius: BORDER_RADIUS.large,
+    overflow: 'hidden',
+    ...SHADOWS.large,
+  },
+  actionGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.large,
+  },
+  actionIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: BORDER_RADIUS.medium,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: SPACING.md,
   },
   actionIcon: {
-    fontSize: 40,
-    marginRight: 16,
+    fontSize: 28,
   },
   actionContent: {
     flex: 1,
   },
   actionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4,
+    ...TYPOGRAPHY.h4,
+    color: COLORS.textInverse,
+    marginBottom: SPACING.xs,
   },
   actionDescription: {
-    fontSize: 14,
-    color: '#6b7280',
+    ...TYPOGRAPHY.bodySmall,
+    color: 'rgba(255, 255, 255, 0.85)',
+  },
+  actionArrow: {
+    fontSize: 24,
+    color: COLORS.textInverse,
+    fontWeight: 'bold',
   },
   infoSection: {
-    margin: 16,
-    padding: 24,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    marginHorizontal: SPACING.md,
+    marginBottom: SPACING.lg,
+    borderRadius: BORDER_RADIUS.large,
+    overflow: 'hidden',
+    ...SHADOWS.medium,
+  },
+  infoGradient: {
+    padding: SPACING.lg,
     alignItems: 'center',
+    borderRadius: BORDER_RADIUS.large,
   },
   infoTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
+    ...TYPOGRAPHY.h3,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
   },
   infoText: {
-    fontSize: 14,
-    color: '#6b7280',
+    ...TYPOGRAPHY.bodySmall,
+    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: SPACING.md,
+  },
+  infoBadge: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  infoBadgeText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textInverse,
+    fontWeight: '600',
   },
 });
