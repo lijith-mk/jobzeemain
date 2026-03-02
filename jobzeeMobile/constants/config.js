@@ -135,6 +135,14 @@ export const API_ENDPOINTS = {
     EMPLOYER_BY_ID: (id) => `/api/employers/events/${id}`,
     EVENT_REGISTRATIONS: (id) => `/api/employers/events/${id}/registrations`,
   },
+
+  // Tickets endpoints
+  TICKETS: {
+    MY_TICKETS: '/api/tickets/user/my-tickets',
+    BY_ID: (id) => `/api/tickets/user/ticket/${id}`,
+    BY_TICKET_CODE: (code) => `/api/tickets/user/ticket-code/${code}`,
+    CANCEL: (id) => `/api/tickets/user/ticket/${id}/cancel`,
+  },
   
   // Upload endpoints
   UPLOAD: {
@@ -148,6 +156,8 @@ export const API_ENDPOINTS = {
     MY_CERTIFICATES: '/api/certificates/my-certificates',
     VERIFY: '/api/certificates/verify',
     GENERATE: '/api/certificates/generate',
+    DOWNLOAD: (certificateId) => `/api/certificates/${certificateId}/download`,
+    ELIGIBILITY: (courseId) => `/api/certificates/eligibility/${courseId}`,
   },
   
   // Test endpoints

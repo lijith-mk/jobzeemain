@@ -31,11 +31,9 @@ const CoursePayment = () => {
       // Step 1: Create payment order
       const orderResponse = await api.post(API_ENDPOINTS.LEARNING.CREATE_PAYMENT_ORDER, {
         courseId,
-        amount: parseFloat(price),
-        currency: currency,
       });
 
-      const { order } = orderResponse.data;
+      const orderData = orderResponse.data;
 
       // Step 2: Create HTML for Razorpay checkout in WebView
       const html = `
@@ -48,16 +46,16 @@ const CoursePayment = () => {
         <body>
           <script>
             var options = {
-              key: "${order.razorpayKeyId}",
-              amount: ${order.amount},
-              currency: "${order.currency}",
+              key: "${orderData.razorpayKey}",
+              amount: ${Math.round(orderData.amount * 100)},
+              currency: "${orderData.currency}",
               name: "Jobzee Learning",
               description: "Enrollment for ${decodeURIComponent(title)}",
-              order_id: "${order.razorpayOrderId}",
+              order_id: "${orderData.orderId}",
               prefill: {
-                email: "${order.userEmail || ''}",
-                contact: "${order.userPhone || ''}",
-                name: "${order.userName || ''}"
+                email: "",
+                contact: "",
+                name: ""
               },
               theme: {
                 color: "#6366F1"
@@ -113,9 +111,9 @@ const CoursePayment = () => {
     try {
       const verifyResponse = await api.post(API_ENDPOINTS.LEARNING.VERIFY_PAYMENT, {
         courseId,
-        razorpay_order_id: razorpayResponse.razorpay_order_id,
-        razorpay_payment_id: razorpayResponse.razorpay_payment_id,
-        razorpay_signature: razorpayResponse.razorpay_signature,
+        razorpayOrderId: razorpayResponse.razorpay_order_id,
+        razorpayPaymentId: razorpayResponse.razorpay_payment_id,
+        razorpaySignature: razorpayResponse.razorpay_signature,
       });
 
       setLoading(false);

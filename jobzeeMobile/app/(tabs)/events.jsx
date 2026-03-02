@@ -9,10 +9,13 @@ import {
   RefreshControl,
   Image,
   TextInput,
+  Modal,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { api } from '../../utils/api';
 import { API_ENDPOINTS } from '../../constants/config';
+import EventSidebar from '../../components/EventSidebar';
 
 export default function EventsScreen() {
   const router = useRouter();
@@ -25,6 +28,7 @@ export default function EventsScreen() {
     date: 'upcoming', // upcoming, past
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [sidebarVisible, setSidebarVisible] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -150,6 +154,41 @@ export default function EventsScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Sidebar Modal */}
+      <Modal
+        visible={sidebarVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setSidebarVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity 
+            style={styles.modalBackground} 
+            activeOpacity={1}
+            onPress={() => setSidebarVisible(false)}
+          />
+          <View style={styles.sidebarContainer}>
+            <EventSidebar onClose={() => setSidebarVisible(false)} />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Header with Menu Button */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.menuButton}
+          onPress={() => setSidebarVisible(true)}
+        >
+          <View style={styles.menuIcon}>
+            <View style={styles.menuLine} />
+            <View style={styles.menuLine} />
+            <View style={styles.menuLine} />
+          </View>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Events</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <TextInput
@@ -263,6 +302,58 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  sidebarContainer: {
+    width: '80%',
+    maxWidth: 320,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: -2, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  menuButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuIcon: {
+    width: 20,
+    height: 16,
+    justifyContent: 'space-between',
+  },
+  menuLine: {
+    height: 2,
+    backgroundColor: '#1F2937',
+    borderRadius: 1,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
   },
   searchContainer: {
     padding: 16,

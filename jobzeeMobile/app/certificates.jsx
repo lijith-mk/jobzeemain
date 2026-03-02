@@ -10,8 +10,11 @@ import {
   Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../utils/api';
-import { API_ENDPOINTS } from '../constants/config';
+import { API_ENDPOINTS, API_CONFIG } from '../constants/config';
 
 export default function CertificatesScreen() {
   const router = useRouter();
@@ -41,28 +44,108 @@ export default function CertificatesScreen() {
   };
 
   const handleDownloadCertificate = async (certificate) => {
-    if (certificate.pdfUrl) {
-      try {
-        await Linking.openURL(certificate.pdfUrl);
-      } catch (error) {
-        Alert.alert('Error', 'Unable to open certificate');
+    try {
+      console.log('Initiating certificate download for:', certificate.certificateId);
+      console.log('Certificate URL:', certificate.certificateUrl);
+      
+      // Show loading alert
+      Alert.alert('Downloading', 'Please wait while we download your certificate...');
+      
+      // Get the auth token
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        Alert.alert('Error', 'Authentication required. Please log in again.');
+        return;
       }
-    } else {
-      Alert.alert('Info', 'Certificate PDF not available');
+
+      // Determine download URL
+      let downloadUrl;
+      if (certificate.certificateUrl) {
+        // If it's a relative path, prepend the base URL
+        downloadUrl = certificate.certificateUrl.startsWith('http') 
+          ? certificate.certificateUrl 
+          : `${API_CONFIG.BASE_URL}${certificate.certificateUrl}`;
+      } else {
+        // Use the download endpoint
+        downloadUrl = `${API_CONFIG.BASE_URL}${API_ENDPOINTS.CERTIFICATES.DOWNLOAD(certificate.certificateId)}`;
+      }
+      
+      console.log('Downloading from:', downloadUrl);
+      
+      // Create a local file path
+      const fileName = `certificate_${certificate.certificateId}.pdf`;
+      const fileUri = FileSystem.documentDirectory + fileName;
+      
+      // Download the file with authentication headers
+      const downloadResult = await FileSystem.downloadAsync(
+        downloadUrl,
+        fileUri,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      
+      console.log('Download completed:', downloadResult.status);
+      
+      if (downloadResult.status === 200) {
+        // Check if sharing is available
+        const isAvailable = await Sharing.isAvailableAsync();
+        if (isAvailable) {
+          // Share/open the file
+          await Sharing.shareAsync(downloadResult.uri, {
+            mimeType: 'application/pdf',
+            dialogTitle: 'Certificate',
+            UTI: 'com.adobe.pdf',
+          });
+        } else {
+          Alert.alert(
+            'Success',
+            'Certificate downloaded successfully!',
+            [{ text: 'OK' }]
+          );
+        }
+      } else {
+        throw new Error(`Download failed with status: ${downloadResult.status}`);
+      }
+      
+    } catch (error) {
+      console.error('Certificate download error:', error);
+      Alert.alert(
+        'Download Failed',
+        'Unable to download the certificate. Please check your internet connection and try again.',
+        [
+          { text: 'OK' },
+          { 
+            text: 'Retry', 
+            onPress: () => handleDownloadCertificate(certificate) 
+          }
+        ]
+      );
     }
   };
 
   const handleVerifyCertificate = async (certificate) => {
-    if (certificate.certificateId) {
-      Alert.alert(
-        'Certificate Details',
-        `Certificate ID: ${certificate.certificateId}\n` +
-        `Course: ${certificate.courseName}\n` +
-        `Issued: ${new Date(certificate.issuedDate || certificate.createdAt).toLocaleDateString()}\n` +
-        `Status: Verified ✓`,
-        [{ text: 'OK' }]
-      );
+    let message = `Certificate ID: ${certificate.certificateId}\n`;
+    message += `Course: ${certificate.courseName}\n`;
+    message += `Issued: ${new Date(certificate.issuedDate || certificate.createdAt).toLocaleDateString()}\n`;
+    
+    if (certificate.blockchainTxHash) {
+      message += `\n🔗 Blockchain Verified\n`;
+      message += `Network: ${certificate.blockchainNetwork || 'Polygon'}\n`;
+      message += `Tx Hash: ${certificate.blockchainTxHash.substring(0, 10)}...${certificate.blockchainTxHash.substring(certificate.blockchainTxHash.length - 8)}\n`;
+      message += `\nThis certificate is permanently recorded on the blockchain and can be independently verified.`;
+    } else {
+      message += `\n✓ Certificate Verified\n`;
+      message += `Hash: ${certificate.certificateHash?.substring(0, 16) || 'N/A'}...`;
     }
+    
+    Alert.alert(
+      'Certificate Details',
+      message,
+      [{ text: 'OK' }]
+    );
   };
 
   const formatDate = (dateString) => {
@@ -77,7 +160,7 @@ export default function CertificatesScreen() {
 
   const renderCertificateCard = (certificate) => {
     return (
-      <View key={certificate._id || certificate.id} style={styles.certificateCard}>
+      <View style={styles.certificateCard}>
         <View style={styles.certificateHeader}>
           <View style={styles.iconContainer}>
             <Text style={styles.icon}>🏆</Text>
@@ -93,6 +176,11 @@ export default function CertificatesScreen() {
               <Text style={styles.certificateId}>
                 ID: {certificate.certificateId}
               </Text>
+            )}
+            {certificate.blockchainTxHash && (
+              <View style={styles.blockchainBadge}>
+                <Text style={styles.blockchainText}>🔗 Blockchain Verified</Text>
+              </View>
             )}
           </View>
         </View>
@@ -166,7 +254,11 @@ export default function CertificatesScreen() {
           <Text style={styles.count}>
             {certificates.length} {certificates.length === 1 ? 'Certificate' : 'Certificates'}
           </Text>
-          {certificates.map(renderCertificateCard)}
+          {certificates.map((cert, index) => (
+            <View key={cert._id || cert.certificateId || index}>
+              {renderCertificateCard(cert)}
+            </View>
+          ))}
         </View>
       )}
 
@@ -274,6 +366,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9ca3af',
     fontFamily: 'monospace',
+  },
+  blockchainBadge: {
+    backgroundColor: '#dbeafe',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 6,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  blockchainText: {
+    fontSize: 11,
+    color: '#1e40af',
+    fontWeight: '600',
   },
   instructorSection: {
     flexDirection: 'row',

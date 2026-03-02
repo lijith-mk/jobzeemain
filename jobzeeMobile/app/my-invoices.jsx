@@ -29,11 +29,24 @@ const MyInvoices = () => {
 
   const fetchInvoices = async () => {
     try {
+      console.log('Fetching invoices from:', API_ENDPOINTS.LEARNING.INVOICES);
       const response = await api.get(API_ENDPOINTS.LEARNING.INVOICES);
+      console.log('Invoice response:', response.data);
+      console.log('Number of invoices:', response.data.invoices?.length || 0);
       setInvoices(response.data.invoices || []);
     } catch (error) {
-      Alert.alert('Error', 'Failed to load invoices');
       console.error('Error fetching invoices:', error);
+      console.error('Error response:', error.response?.data);
+      
+      if (error.response?.status === 404) {
+        // No invoices found - this is okay
+        setInvoices([]);
+      } else {
+        Alert.alert(
+          'Error', 
+          error.response?.data?.message || 'Failed to load invoices'
+        );
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);

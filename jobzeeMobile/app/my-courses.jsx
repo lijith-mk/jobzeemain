@@ -26,7 +26,18 @@ export default function MyCoursesScreen() {
   const fetchMyCourses = async () => {
     try {
       const response = await api.get(API_ENDPOINTS.LEARNING.MY_COURSES);
-      setCourses(response.data.courses || response.data || []);
+      // Backend returns { progress } - array of CourseProgress with populated courseId
+      const progressData = response.data.progress || [];
+      // Extract courses and merge with progress info
+      const coursesWithProgress = progressData.map(prog => ({
+        ...prog.courseId,
+        progress: prog.progressPercentage || 0,
+        completedLessonsCount: prog.completedLessons?.length || 0,
+        currentLessonId: prog.currentLessonId,
+        enrolledAt: prog.enrolledAt,
+        status: prog.status
+      }));
+      setCourses(coursesWithProgress);
     } catch (error) {
       console.error('Error fetching my courses:', error);
       if (error.response?.status !== 404) {
@@ -44,23 +55,14 @@ export default function MyCoursesScreen() {
   };
 
   const calculateProgress = (course) => {
-    if (!course.lessons || course.lessons.length === 0) return 0;
-    
-    const completedLessons = course.lessons.filter(
-      lesson => lesson.completed || lesson.isCompleted
-    ).length;
-    
-    return Math.round((completedLessons / course.lessons.length) * 100);
+    // Use progress from CourseProgress model
+    return course.progress || 0;
   };
 
   const getNextLesson = (course) => {
-    if (!course.lessons || course.lessons.length === 0) return null;
-    
-    const nextLesson = course.lessons.find(
-      lesson => !lesson.completed && !lesson.isCompleted
-    );
-    
-    return nextLesson || course.lessons[0];
+    // Since lessons aren't included in my-courses response,
+    // we'll use currentLessonId or navigate to course details
+    return course.currentLessonId ? { _id: course.currentLessonId } : null;
   };
 
   const renderProgressBar = (progress) => {
@@ -96,13 +98,13 @@ export default function MyCoursesScreen() {
             <View style={styles.metaItem}>
               <Text style={styles.metaIcon}>📚</Text>
               <Text style={styles.metaText}>
-                {item.lessons?.length || 0} lessons
+                {item.status || 'enrolled'}
               </Text>
             </View>
             <View style={styles.metaItem}>
               <Text style={styles.metaIcon}>⏱️</Text>
               <Text style={styles.metaText}>
-                {item.duration || 'Self-paced'}
+                {item.duration ? `${item.duration}h` : 'Self-paced'}
               </Text>
             </View>
             {isCompleted && (

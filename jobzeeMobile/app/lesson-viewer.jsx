@@ -19,6 +19,7 @@ export default function LessonViewerScreen() {
   
   const [lesson, setLesson] = useState(null);
   const [course, setCourse] = useState(null);
+  const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
 
@@ -31,10 +32,13 @@ export default function LessonViewerScreen() {
       // Fetch course details which includes lessons
       const response = await api.get(API_ENDPOINTS.LEARNING.COURSE_BY_ID(courseId));
       const courseData = response.data.course || response.data;
+      const lessonsData = response.data.lessons || [];
+      
       setCourse(courseData);
+      setLessons(lessonsData);
       
       // Find the specific lesson
-      const lessonData = courseData.lessons?.find(l => l._id === lessonId);
+      const lessonData = lessonsData.find(l => l._id === lessonId);
       if (lessonData) {
         setLesson(lessonData);
       } else {
@@ -51,10 +55,10 @@ export default function LessonViewerScreen() {
   const handleMarkComplete = async () => {
     setCompleting(true);
     try {
-      await api.post(API_ENDPOINTS.LEARNING.PROGRESS, {
+      await api.put(API_ENDPOINTS.LEARNING.PROGRESS, {
         courseId: courseId,
         lessonId: lessonId,
-        completed: true,
+        forceComplete: true,
       });
       
       Alert.alert('Success', 'Lesson marked as complete!');
@@ -69,11 +73,11 @@ export default function LessonViewerScreen() {
   };
 
   const handleNextLesson = () => {
-    if (!course || !course.lessons) return;
+    if (!lessons || lessons.length === 0) return;
     
-    const currentIndex = course.lessons.findIndex(l => l._id === lessonId);
-    if (currentIndex < course.lessons.length - 1) {
-      const nextLesson = course.lessons[currentIndex + 1];
+    const currentIndex = lessons.findIndex(l => l._id === lessonId);
+    if (currentIndex < lessons.length - 1) {
+      const nextLesson = lessons[currentIndex + 1];
       router.replace(`/lesson-viewer?lessonId=${nextLesson._id}&courseId=${courseId}`);
     } else {
       Alert.alert(
@@ -94,11 +98,11 @@ export default function LessonViewerScreen() {
   };
 
   const handlePreviousLesson = () => {
-    if (!course || !course.lessons) return;
+    if (!lessons || lessons.length === 0) return;
     
-    const currentIndex = course.lessons.findIndex(l => l._id === lessonId);
+    const currentIndex = lessons.findIndex(l => l._id === lessonId);
     if (currentIndex > 0) {
-      const prevLesson = course.lessons[currentIndex - 1];
+      const prevLesson = lessons[currentIndex - 1];
       router.replace(`/lesson-viewer?lessonId=${prevLesson._id}&courseId=${courseId}`);
     }
   };
@@ -133,9 +137,9 @@ export default function LessonViewerScreen() {
     );
   }
 
-  const currentIndex = course?.lessons?.findIndex(l => l._id === lessonId) ?? -1;
+  const currentIndex = lessons.findIndex(l => l._id === lessonId);
   const isFirstLesson = currentIndex === 0;
-  const isLastLesson = currentIndex === (course?.lessons?.length || 0) - 1;
+  const isLastLesson = currentIndex === lessons.length - 1;
 
   return (
     <View style={styles.container}>
@@ -145,7 +149,7 @@ export default function LessonViewerScreen() {
           {course?.title || 'Course'}
         </Text>
         <Text style={styles.lessonProgress}>
-          Lesson {currentIndex + 1} of {course?.lessons?.length || 0}
+          Lesson {currentIndex + 1} of {lessons.length}
         </Text>
       </View>
 
