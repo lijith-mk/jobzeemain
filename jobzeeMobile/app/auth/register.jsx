@@ -44,6 +44,8 @@ export default function RegisterScreen() {
     website: '',
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleRegister = async () => {
     // Validation
@@ -383,16 +385,24 @@ export default function RegisterScreen() {
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Password *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder={userType === 'employer' 
-                ? "Min 8 chars (uppercase, lowercase, number, special)" 
-                : "Create a password (min 6 characters)"}
-              value={formData.password}
-              onChangeText={(text) => setFormData({ ...formData, password: text })}
-              secureTextEntry
-              autoComplete="password-new"
-            />
+            <View style={styles.passwordInputContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder={userType === 'employer' 
+                  ? "Min 8 chars (uppercase, lowercase, number, special)" 
+                  : "Create a password (min 6 characters)"}
+                value={formData.password}
+                onChangeText={(text) => setFormData({ ...formData, password: text })}
+                secureTextEntry={!showPassword}
+                autoComplete="password-new"
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Text style={styles.eyeIconText}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+              </TouchableOpacity>
+            </View>
             {userType === 'employer' && (
               <Text style={styles.helperText}>
                 Must include uppercase, lowercase, number, and special character (@$!%*?&)
@@ -402,13 +412,21 @@ export default function RegisterScreen() {
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Confirm Password *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm your password"
-              value={formData.confirmPassword}
-              onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
-              secureTextEntry
-            />
+            <View style={styles.passwordInputContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Confirm your password"
+                value={formData.confirmPassword}
+                onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
+                secureTextEntry={!showConfirmPassword}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                <Text style={styles.eyeIconText}>{showConfirmPassword ? '👁️' : '👁️‍🗨️'}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <TouchableOpacity
@@ -516,6 +534,26 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     backgroundColor: '#f9fafb',
+  },
+  passwordInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    backgroundColor: '#f9fafb',
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: 'transparent',
+  },
+  eyeIcon: {
+    padding: 12,
+  },
+  eyeIconText: {
+    fontSize: 20,
   },
   helperText: {
     fontSize: 12,
