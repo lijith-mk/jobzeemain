@@ -81,6 +81,10 @@ export const API_ENDPOINTS = {
     COURSE_BY_ID: (id) => `/api/learning/courses/${id}`,
     MY_COURSES: '/api/learning/my-courses',
     ENROLL: '/api/learning/courses/enroll',
+    CREATE_PAYMENT_ORDER: '/api/learning/courses/create-payment-order',
+    VERIFY_PAYMENT: '/api/learning/courses/verify-payment',
+    INVOICES: '/api/learning/invoices',
+    INVOICE_BY_ID: (id) => `/api/learning/invoices/${id}`,
     PROGRESS: '/api/learning/courses/progress',
     RATE: '/api/learning/courses/rate',
     LEARNING_PATHS: '/api/learning/learning-paths',
@@ -122,12 +126,14 @@ export const API_ENDPOINTS = {
     REGISTER: (id) => `/api/events/${id}/register`,
     MY_EVENTS: '/api/events/user/my-events',
     USER_STATS: '/api/events/user/stats',
+    USER_PAYMENTS: '/api/events/user/payments',
     // Employer event endpoints
     CREATE: '/api/employers/events',
     MY_EMPLOYER_EVENTS: '/api/employers/events',
     UPDATE: (id) => `/api/employers/events/${id}`,
     DELETE: (id) => `/api/employers/events/${id}`,
     EMPLOYER_BY_ID: (id) => `/api/employers/events/${id}`,
+    EVENT_REGISTRATIONS: (id) => `/api/employers/events/${id}/registrations`,
   },
   
   // Upload endpoints

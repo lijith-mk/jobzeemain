@@ -79,11 +79,13 @@ export default function CourseDetailsScreen() {
   };
 
   const handleEnroll = async () => {
-    if (course.isPaid && !course.price) {
-      Alert.alert('Coming Soon', 'Payment integration coming soon!');
+    // For paid courses, redirect to payment page
+    if (course.isPaid && course.price > 0) {
+      router.push(`/course-payment?courseId=${id}&title=${encodeURIComponent(course.title)}&price=${course.price}&currency=${course.currency || 'INR'}`);
       return;
     }
 
+    // For free courses, enroll directly
     setEnrolling(true);
     try {
       await api.post(API_ENDPOINTS.LEARNING.ENROLL, {
@@ -94,7 +96,6 @@ export default function CourseDetailsScreen() {
       setIsEnrolled(true);
       fetchCourseDetails();
     } catch (error) {
-      // Check if already enrolled
       if (error.response?.status === 400 && error.response?.data?.message?.includes('Already enrolled')) {
         setIsEnrolled(true);
         Alert.alert('Already Enrolled', 'You are already enrolled in this course!');

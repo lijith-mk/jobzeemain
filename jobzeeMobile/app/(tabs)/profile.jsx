@@ -182,6 +182,28 @@ export default function ProfileScreen() {
         </View>
       )}
 
+      {userType === 'user' && (
+        <View style={styles.menuContainer}>
+          <Text style={styles.sectionTitle}>Payments & History</Text>
+
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/my-invoices')}
+          >
+            <Text style={styles.menuItemText}>📄 Course Invoices</Text>
+            <Text style={styles.menuItemIcon}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/event-payments')}
+          >
+            <Text style={styles.menuItemText}>💳 Event Payments</Text>
+            <Text style={styles.menuItemIcon}>›</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.menuContainer}>
         <Text style={styles.sectionTitle}>Settings</Text>
 

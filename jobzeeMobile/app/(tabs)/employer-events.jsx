@@ -146,6 +146,13 @@ export default function EmployerEventsScreen() {
               <Text style={styles.actionButtonText}>View</Text>
             </TouchableOpacity>
             
+            <TouchableOpacity
+              style={[styles.actionButton, styles.registrationsButton]}
+              onPress={() => router.push(`/employer-event-registrations?id=${item._id}&title=${encodeURIComponent(item.title)}`)}
+            >
+              <Text style={styles.actionButtonText}>👥 {item.attendeesCount || 0}</Text>
+            </TouchableOpacity>
+            
             {item.status !== 'rejected' && (
               <TouchableOpacity
                 style={[styles.actionButton, styles.editButton]}
@@ -369,6 +376,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 6,
     alignItems: 'center',
+  },
+  registrationsButton: {
+    backgroundColor: '#10b981',
+    flex: 0.8,
   },
   editButton: {
     backgroundColor: '#059669',

@@ -41,11 +41,13 @@ export default function EventDetailsScreen() {
   };
 
   const handleRegister = async () => {
-    if (event.type === 'paid') {
-      Alert.alert('Payment Required', 'Payment for paid events is coming soon!');
+    // For paid events, redirect to payment page
+    if (event.type === 'paid' && event.price > 0) {
+      router.push(`/event-payment?eventId=${id}&title=${encodeURIComponent(event.title)}&price=${event.price}&currency=INR`);
       return;
     }
 
+    // For free events, register directly
     setRegistering(true);
     try {
       const response = await api.post(API_ENDPOINTS.EVENTS.REGISTER(id));
