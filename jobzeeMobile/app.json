@@ -8,6 +8,10 @@
     "scheme": "jobzeemobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "googleWebClientId": "208881569846-p9i39fk7s3ht2iqo9rpl3r81jns2dpav.apps.googleusercontent.com",
+      "apiUrl": "https://jobzeemain-zjrh.onrender.com"
+    },
     "ios": {
       "supportsTablet": true
     },

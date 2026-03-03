@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,16 +13,23 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
+import { configureGoogleSignIn, signInWithGoogle, authenticateWithGoogle } from '../../utils/googleSignIn';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, updateUser, updateEmployer, loading: authLoading } = useAuth();
   
   const [userType, setUserType] = useState('user');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    // Configure Google Sign-In on mount
+    configureGoogleSignIn();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -38,6 +45,52 @@ export default function LoginScreen() {
       Alert.alert('Login Failed', error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      console.log('Starting Google Sign-In as:', userType); // <-- Debug log
+      
+      // Sign in with Google
+      const { userInfo, idToken } = await signInWithGoogle();
+      console.log('Google Sign-In successful:', userInfo?.email || 'Email not available');
+
+      // Authenticate with backend and store data
+      const response = await authenticateWithGoogle(idToken, userType);
+      console.log('Backend authentication successful for userType:', userType);
+
+      // Update AuthContext state to trigger navigation
+      if (userType === 'user') {
+        console.log('Updating user state with:', response.user?.name);
+        await updateUser(response.user);
+      } else {
+        console.log('Updating employer state with:', response.employer?.companyName);
+        await updateEmployer(response.employer);
+      }
+
+      // Navigate immediately without alert
+      console.log('Navigating to home...');
+      router.replace('/(tabs)');
+    } catch (error) {
+      console.error('Google Sign-In error:', error);
+      
+      let errorMessage = 'Google sign-in failed. Please try again.';
+      
+      if (error.message?.includes('SIGN_IN_CANCELLED')) {
+        errorMessage = 'Sign-in cancelled';
+      } else if (error.message?.includes('IN_PROGRESS')) {
+        errorMessage = 'Sign-in already in progress';
+      } else if (error.message?.includes('PLAY_SERVICES_NOT_AVAILABLE')) {
+        errorMessage = 'Google Play Services not available';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Google Sign-In Failed', errorMessage);
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -142,6 +195,34 @@ export default function LoginScreen() {
               <Text style={styles.loginButtonText}>Sign In</Text>
             )}
           </TouchableOpacity>
+
+          {/* Google Sign-In - Only for Job Seekers */}
+          {userType === 'user' && (
+            <>
+              {/* Divider */}
+              <View style={styles.dividerContainer}>
+                <View style={styles.divider} />
+                <Text style={styles.dividerText}>Or continue with</Text>
+                <View style={styles.divider} />
+              </View>
+
+              {/* Google Sign-In Button */}
+              <TouchableOpacity
+                style={[styles.googleButton, googleLoading && styles.googleButtonDisabled]}
+                onPress={handleGoogleSignIn}
+                disabled={googleLoading || loading}
+              >
+                {googleLoading ? (
+                  <ActivityIndicator color="#4285F4" />
+                ) : (
+                  <>
+                    <Text style={styles.googleIcon}>G</Text>
+                    <Text style={styles.googleButtonText}>Sign in with Google</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
 
           <View style={styles.registerContainer}>
             <Text style={styles.registerText}>Don't have an account? </Text>
@@ -286,6 +367,51 @@ const styles = StyleSheet.create({
   registerLink: {
     color: '#2563eb',
     fontSize: 14,
+    fontWeight: '600',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e5e7eb',
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    color: '#9ca3af',
+    fontSize: 14,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  googleButtonDisabled: {
+    opacity: 0.6,
+  },
+  googleIcon: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4285F4',
+    marginRight: 8,
+  },
+  googleButtonText: {
+    color: '#374151',
+    fontSize: 16,
     fontWeight: '600',
   },
 });

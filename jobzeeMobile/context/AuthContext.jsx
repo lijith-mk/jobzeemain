@@ -171,6 +171,8 @@ export const AuthProvider = ({ children }) => {
     try {
       await storage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(data));
       setUser(data);
+      setEmployer(null); // Clear employer when setting user
+      setUserType('user');
     } catch (error) {
       console.error('Error updating user:', error);
     }
@@ -180,6 +182,8 @@ export const AuthProvider = ({ children }) => {
     try {
       await storage.setItem(STORAGE_KEYS.EMPLOYER_DATA, JSON.stringify(data));
       setEmployer(data);
+      setUser(null); // Clear user when setting employer
+      setUserType('employer');
     } catch (error) {
       console.error('Error updating employer:', error);
     }
