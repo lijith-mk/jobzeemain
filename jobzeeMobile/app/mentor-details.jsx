@@ -19,9 +19,11 @@ export default function MentorDetailsScreen() {
   const [mentor, setMentor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [availability, setAvailability] = useState([]);
+  const [sessionTypes, setSessionTypes] = useState([]);
 
   useEffect(() => {
     fetchMentorDetails();
+    fetchSessionTypes();
   }, [mentorId]);
 
   const fetchMentorDetails = async () => {
@@ -57,7 +59,24 @@ export default function MentorDetailsScreen() {
     }
   };
 
+  const fetchSessionTypes = async () => {
+    try {
+      const response = await api.get(`/api/mentor-sessions/public/${mentorId}`);
+      const data = response.data;
+      
+      if (data.success) {
+        setSessionTypes(data.data || []);
+      } else if (Array.isArray(data)) {
+        setSessionTypes(data);
+      }
+    } catch (error) {
+      console.error('Error fetching session types:', error);
+      // Silently fail - session types are optional
+    }
+  };
+
   const handleBookSession = (sessionType) => {
+    // Navigate to booking screen with session details
     router.push({
       pathname: '/book-session',
       params: {
@@ -67,18 +86,15 @@ export default function MentorDetailsScreen() {
         sessionTitle: sessionType.title,
         sessionDuration: sessionType.duration,
         sessionPrice: sessionType.price,
+        sessionDescription: sessionType.description || '',
       }
     });
   };
 
-  const handleEmail = () => {
-    if (mentor?.email) {
-      Linking.openURL(`mailto:${mentor.email}`);
-    }
-  };
-
   const handleLinkedIn = () => {
-    if (mentor?.linkedIn) {
+    if (mentor?.linkedinUrl) {
+      Linking.openURL(mentor.linkedinUrl);
+    } else if (mentor?.linkedIn) {
       Linking.openURL(mentor.linkedIn);
     }
   };
@@ -121,18 +137,16 @@ export default function MentorDetailsScreen() {
         {mentor.company && (
           <Text style={styles.company}>🏢 {mentor.company}</Text>
         )}
-        {mentor.experience && (
-          <Text style={styles.experience}>📅 {mentor.experience} years of experience</Text>
+        {(mentor.city && mentor.country) && (
+          <Text style={styles.location}>📍 {mentor.city}, {mentor.country}</Text>
+        )}
+        {mentor.yearsOfExperience && (
+          <Text style={styles.experience}>📅 {mentor.yearsOfExperience} years of experience</Text>
         )}
         
         {/* Contact Buttons */}
         <View style={styles.contactButtons}>
-          {mentor.email && (
-            <TouchableOpacity style={styles.contactButton} onPress={handleEmail}>
-              <Text style={styles.contactButtonText}>✉️ Email</Text>
-            </TouchableOpacity>
-          )}
-          {mentor.linkedIn && (
+          {(mentor.linkedinUrl || mentor.linkedIn) && (
             <TouchableOpacity style={styles.contactButton} onPress={handleLinkedIn}>
               <Text style={styles.contactButtonText}>🔗 LinkedIn</Text>
             </TouchableOpacity>
@@ -141,19 +155,19 @@ export default function MentorDetailsScreen() {
       </View>
 
       {/* About Section */}
-      {mentor.bio && (
+      {(mentor.bio || mentor.motivation) && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About</Text>
-          <Text style={styles.bioText}>{mentor.bio}</Text>
+          <Text style={styles.bioText}>{mentor.motivation || mentor.bio}</Text>
         </View>
       )}
 
-      {/* Expertise Section */}
-      {mentor.expertise && mentor.expertise.length > 0 && (
+      {/* Skills/Expertise Section */}
+      {((mentor.skills && mentor.skills.length > 0) || (mentor.expertise && mentor.expertise.length > 0)) && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Expertise</Text>
           <View style={styles.expertiseContainer}>
-            {mentor.expertise.map((exp, index) => (
+            {(mentor.skills || mentor.expertise || []).map((exp, index) => (
               <View key={index} style={styles.expertiseTag}>
                 <Text style={styles.expertiseText}>{exp}</Text>
               </View>
@@ -162,42 +176,21 @@ export default function MentorDetailsScreen() {
         </View>
       )}
 
-      {/* Location */}
-      {mentor.city && mentor.country && (
+      {/* Session Types & Pricing */}
+      {sessionTypes.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Location</Text>
-          <Text style={styles.locationText}>📍 {mentor.city}, {mentor.country}</Text>
-        </View>
-      )}
-
-      {/* Availability Schedule */}
-      {availability.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Weekly Availability</Text>
-          {availability.map((avail, index) => (
-            <View key={index} style={styles.availabilityItem}>
-              <Text style={styles.dayText}>{avail.day}</Text>
-              <View style={styles.slotsContainer}>
-                {avail.slots && avail.slots.map((slot, slotIndex) => (
-                  <View key={slotIndex} style={styles.slotTag}>
-                    <Text style={styles.slotText}>{slot}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Session Types */}
-      {mentor.sessionTypes && mentor.sessionTypes.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Available Sessions</Text>
-          {mentor.sessionTypes.map((sessionType, index) => (
+          <Text style={styles.sectionTitle}>📚 Available Sessions & Pricing</Text>
+          {sessionTypes.map((sessionType, index) => (
             <View key={index} style={styles.sessionCard}>
               <View style={styles.sessionHeader}>
                 <Text style={styles.sessionTitle}>{sessionType.title}</Text>
-                <Text style={styles.sessionPrice}>₹{String(sessionType.price).replace(/[$₹]/g, '')}</Text>
+                {sessionType.price === 0 ? (
+                  <View style={styles.freeBadge}>
+                    <Text style={styles.freeBadgeText}>FREE</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.sessionPrice}>₹{String(sessionType.price).replace(/[$₹]/g, '')}</Text>
+                )}
               </View>
               
               <View style={styles.sessionDetails}>
@@ -219,12 +212,42 @@ export default function MentorDetailsScreen() {
         </View>
       )}
 
+      {/* Availability Schedule */}
+      {availability.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📅 Weekly Availability</Text>
+          <Text style={styles.helperText}>Showing available time slots per week</Text>
+          {availability.map((avail, index) => (
+            <View key={index} style={styles.availabilityItem}>
+              <Text style={styles.dayText}>{avail.day}</Text>
+              <View style={styles.slotsContainer}>
+                {avail.slots && avail.slots.length > 0 ? (
+                  avail.slots.map((slot, slotIndex) => (
+                    <View key={slotIndex} style={styles.slotTag}>
+                      <Text style={styles.slotText}>{slot}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.noSlotsText}>No slots available</Text>
+                )}
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+
       {/* Empty state if no sessions */}
-      {(!mentor.sessionTypes || mentor.sessionTypes.length === 0) && (
+      {sessionTypes.length === 0 && (
         <View style={styles.section}>
           <Text style={styles.noSessionsText}>
             No sessions available for booking at the moment.
           </Text>
+          <TouchableOpacity
+            style={styles.backToMentorsButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backToMentorsText}>← Browse Other Mentors</Text>
+          </TouchableOpacity>
         </View>
       )}
     </ScrollView>
@@ -293,6 +316,11 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginBottom: 4,
   },
+  location: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
   experience: {
     fontSize: 14,
     color: '#6B7280',
@@ -323,6 +351,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1F2937',
     marginBottom: 12,
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 8,
   },
   bioText: {
     fontSize: 14,
@@ -364,14 +397,22 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   slotTag: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#DBEAFE',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#93C5FD',
   },
   slotText: {
     fontSize: 12,
-    color: '#4B5563',
+    color: '#1E40AF',
+    fontWeight: '500',
+  },
+  noSlotsText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
   },
   sessionCard: {
     backgroundColor: '#F9FAFB',
@@ -389,7 +430,20 @@ const styles = StyleSheet.create({
   },
   sessionTitle: {
     fontSize: 16,
+    
+  freeBadge: {
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#10B981',
+  },
+  freeBadgeText: {
+    color: '#047857',
+    fontSize: 12,
     fontWeight: 'bold',
+  },fontWeight: 'bold',
     color: '#1F2937',
     flex: 1,
   },
@@ -406,6 +460,19 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   sessionDescription: {
+    marginBottom: 16,
+  },
+  backToMentorsButton: {
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 8,
+  },
+  backToMentorsText: {
+    color: '#3B82F6',
+    fontSize: 14,
+    fontWeight: '600',
     fontSize: 14,
     color: '#4B5563',
     marginBottom: 12,

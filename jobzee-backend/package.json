@@ -10,7 +10,8 @@
     "init-admin": "node scripts/initAdmin.js",
     "init-dashboard-assets": "node scripts/initializeDashboardAssets.js",
     "test-upload": "node scripts/testUpload.js",
-    "cleanup-user-signins": "node scripts/cleanup-user-signins.js"
+    "cleanup-user-signins": "node scripts/cleanup-user-signins.js",
+    "seed-employer-jobs": "node scripts/seedEmployerJobs.js"
   },
   "keywords": [],
   "author": "",

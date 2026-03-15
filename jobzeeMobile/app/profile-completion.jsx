@@ -152,7 +152,7 @@ export default function ProfileCompletion() {
         <View style={styles.benefitsContent}>
           <Text style={styles.benefitsTitle}>Why Complete Your Profile?</Text>
           <Text style={styles.benefitsText}>
-            • Get better job recommendations{'\n'}
+            • Increase relevant job visibility{'\n'}
             • Increase visibility to employers{'\n'}
             • Stand out from other candidates{'\n'}
             • Unlock advanced features

@@ -4,8 +4,17 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import 'react-native-reanimated';
+import { LogBox } from 'react-native';
 
 import { AuthProvider, useAuth } from '../context/AuthContext';
+
+// Suppress non-critical development warnings
+if (__DEV__) {
+  LogBox.ignoreLogs([
+    'Unable to activate keep awake',
+    'Uncaught (in promise',
+  ]);
+}
 
 export const unstable_settings = {
   anchor: '(tabs)',

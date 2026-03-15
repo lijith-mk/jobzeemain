@@ -301,6 +301,7 @@ certificateSchema.methods.getPublicData = function() {
     courseLevel: this.courseLevel,
     issuedAt: this.issuedAt,
     certificateHash: this.certificateHash,
+    certificateUrl: this.certificateUrl,
     verificationStatus: this.verificationStatus,
     isRevoked: this.isRevoked,
     blockchainTxHash: this.blockchainTxHash,

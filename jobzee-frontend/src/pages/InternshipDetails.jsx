@@ -14,8 +14,6 @@ const InternshipDetails = () => {
   const [applying, setApplying] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [checkingApplication, setCheckingApplication] = useState(false);
-  const [similarInternships, setSimilarInternships] = useState([]);
-  const [loadingSimilar, setLoadingSimilar] = useState(false);
   const userType = sessionManager.getUserType();
   const isEmployer = userType === 'employer';
 
@@ -25,12 +23,6 @@ const InternshipDetails = () => {
       checkApplicationStatus();
     }
   }, [id, internshipId]);
-
-  useEffect(() => {
-    if (internship && internship._id) {
-      fetchSimilarInternships();
-    }
-  }, [internship]);
 
   const fetchInternshipDetails = async () => {
     try {
@@ -75,23 +67,6 @@ const InternshipDetails = () => {
       console.error('Error checking application status:', error);
     } finally {
       setCheckingApplication(false);
-    }
-  };
-
-  const fetchSimilarInternships = async () => {
-    try {
-      setLoadingSimilar(true);
-      const currentId = id || internshipId;
-      const response = await fetch(`${API_BASE_URL}/api/recommendations/internships/${currentId}/similar?limit=4`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setSimilarInternships(data.recommendations || []);
-      }
-    } catch (error) {
-      console.error('Error fetching similar internships:', error);
-    } finally {
-      setLoadingSimilar(false);
     }
   };
 
@@ -496,83 +471,6 @@ const InternshipDetails = () => {
             </div>
           </div>
         </div>
-
-        {/* Similar Internships */}
-        {similarInternships.length > 0 && (
-          <div className="mt-12">
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Similar Internships</h2>
-                  <p className="text-gray-600 text-sm mt-1">Based on AI-powered recommendations</p>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
-                    🤖 KNN Algorithm
-                  </span>
-                </div>
-              </div>
-              
-              {loadingSimilar ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {similarInternships.map((similar) => (
-                    <div 
-                      key={similar._id}
-                      onClick={() => navigate(`/internships/${similar._id}`)}
-                      className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer group"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                          {similar.title}
-                        </h3>
-                        {similar.similarityScore && (
-                          <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                            {similar.similarityScore}% Match
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">
-                        {similar.companyName || similar.employer?.companyName}
-                      </p>
-                      <div className="flex flex-wrap gap-3 text-sm text-gray-600 mb-4">
-                        <div className="flex items-center">
-                          <FaMapMarkerAlt className="mr-1" />
-                          {similar.location}
-                        </div>
-                        <div className="flex items-center">
-                          <FaClock className="mr-1" />
-                          {similar.duration} months
-                        </div>
-                        <div className="flex items-center">
-                          <FaRupeeSign className="mr-1" />
-                          {formatStipend(similar.stipend, similar.isUnpaid)}
-                        </div>
-                      </div>
-                      {similar.skills && similar.skills.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {similar.skills.slice(0, 3).map((skill, idx) => (
-                            <span key={idx} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
-                              {skill}
-                            </span>
-                          ))}
-                          {similar.skills.length > 3 && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                              +{similar.skills.length - 3} more
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

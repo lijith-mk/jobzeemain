@@ -162,15 +162,29 @@ export default function ProfileScreen() {
 
       {userType === 'user' && (
         <View style={styles.menuContainer}>
-          <Text style={styles.sectionTitle}>Recommendations</Text>
+          <Text style={styles.sectionTitle}>Mentorship</Text>
 
           <TouchableOpacity 
             style={styles.menuItem}
-            onPress={() => router.push('/job-recommendations')}
+            onPress={() => router.push('/my-sessions')}
           >
-            <Text style={styles.menuItemText}>💡 Job Recommendations</Text>
+            <Text style={styles.menuItemText}>📅 My Sessions</Text>
             <Text style={styles.menuItemIcon}>›</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/(tabs)/mentors')}
+          >
+            <Text style={styles.menuItemText}>👨‍🏫 Browse Mentors</Text>
+            <Text style={styles.menuItemIcon}>›</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {userType === 'user' && (
+        <View style={styles.menuContainer}>
+          <Text style={styles.sectionTitle}>Applications</Text>
 
           <TouchableOpacity 
             style={styles.menuItem}
@@ -191,6 +205,14 @@ export default function ProfileScreen() {
             onPress={() => router.push('/my-invoices')}
           >
             <Text style={styles.menuItemText}>📄 Course Invoices</Text>
+            <Text style={styles.menuItemIcon}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/my-sessions')}
+          >
+            <Text style={styles.menuItemText}>💳 Session Payments</Text>
             <Text style={styles.menuItemIcon}>›</Text>
           </TouchableOpacity>
         </View>

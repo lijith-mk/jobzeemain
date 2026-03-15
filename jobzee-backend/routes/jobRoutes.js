@@ -41,9 +41,12 @@ router.get('/', async (req, res) => {
       query.location = { $regex: location, $options: 'i' };
     }
 
-    if (jobType || category) {
-      // Support either explicit jobType or a category alias coming from frontend
-      query.jobType = jobType || category;
+    if (jobType) {
+      query.jobType = jobType;
+    }
+
+    if (category) {
+      query.category = category;
     }
 
     if (experienceLevel) {
@@ -90,6 +93,7 @@ router.get('/', async (req, res) => {
       company: job.company,
       location: job.location,
       jobType: job.jobType,
+      category: job.category,
       experienceLevel: job.experienceLevel,
       salary: job.salary,
       requirements: job.requirements,

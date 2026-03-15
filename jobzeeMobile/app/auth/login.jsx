@@ -13,7 +13,18 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
-import { configureGoogleSignIn, signInWithGoogle, authenticateWithGoogle } from '../../utils/googleSignIn';
+import Constants from 'expo-constants';
+
+// Only import Google Sign-In for custom builds (not Expo Go)
+const isExpoGo = Constants.appOwnership === 'expo';
+let configureGoogleSignIn, signInWithGoogle, authenticateWithGoogle;
+
+if (!isExpoGo) {
+  const googleSignIn = require('../../utils/googleSignIn');
+  configureGoogleSignIn = googleSignIn.configureGoogleSignIn;
+  signInWithGoogle = googleSignIn.signInWithGoogle;
+  authenticateWithGoogle = googleSignIn.authenticateWithGoogle;
+}
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -27,8 +38,10 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    // Configure Google Sign-In on mount
-    configureGoogleSignIn();
+    // Configure Google Sign-In on mount (only in custom builds)
+    if (!isExpoGo && configureGoogleSignIn) {
+      configureGoogleSignIn();
+    }
   }, []);
 
   const handleLogin = async () => {
@@ -196,8 +209,8 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          {/* Google Sign-In - Only for Job Seekers */}
-          {userType === 'user' && (
+          {/* Google Sign-In - Only for Job Seekers and Custom Builds (not Expo Go) */}
+          {userType === 'user' && !isExpoGo && (
             <>
               {/* Divider */}
               <View style={styles.dividerContainer}>

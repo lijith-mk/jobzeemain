@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { getDashboardAssets, getDashboardBackgrounds, handleImageErrorEnhanced } from '../services/dashboardAssets';
 import JobDetailsModal from '../components/JobDetailsModal';
-import RecommendedInternships from '../components/RecommendedInternships';
 
 import API_BASE_URL from '../config/api';
 const Dashboard = () => {
@@ -855,7 +854,7 @@ const Dashboard = () => {
 
                 <div className="max-w-2xl mx-auto lg:mx-0">
                   <p className="text-xl text-blue-50 mb-8 leading-relaxed">
-                    Explore personalized job recommendations, track your applications, and connect with top employers.
+                    Track your applications, explore open roles, and connect with top employers.
                   </p>
                   <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
                     <Link
@@ -1552,8 +1551,6 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Recommended Internships Section */}
-        <RecommendedInternships />
       </div>
 
       {/* Logout Confirmation Modal */}

@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const mentorController = require("../controllers/mentorController");
-const recommendationController = require("../controllers/recommendationController");
 const { uploadSingle } = require("../middleware/upload");
 const { adminAuth } = require("../middleware/adminAuth");
 const { mentorAuth } = require("../middleware/mentorAuth");
@@ -10,10 +9,6 @@ const { userAuth } = require("../middleware/userAuth");
 // Public routes
 router.post("/register", uploadSingle, mentorController.registerMentor);
 router.post("/login", mentorController.loginMentor);
-
-// AI Recommendation routes (Protected - requires user auth)
-router.get("/recommended", userAuth, recommendationController.getRecommendedMentors);
-router.get("/recommended/:mentorId/explanation", userAuth, recommendationController.getRecommendationExplanation);
 
 // Protected mentor routes
 router.get("/profile", mentorAuth, mentorController.getMentorProfile);

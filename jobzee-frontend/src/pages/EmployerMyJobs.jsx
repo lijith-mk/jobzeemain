@@ -11,8 +11,10 @@ const EmployerMyJobs = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [jobToDelete, setJobToDelete] = useState(null);
+  const JOBS_PER_PAGE = 10;
 
   useEffect(() => {
     const employerData = localStorage.getItem('employer');
@@ -30,7 +32,7 @@ const EmployerMyJobs = () => {
   const fetchJobs = async (token) => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE_URL}/api/employers/jobs`, {
+      const res = await fetch(`${API_BASE_URL}/api/employers/jobs?page=1&limit=500`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -118,6 +120,32 @@ const EmployerMyJobs = () => {
                          job.company.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / JOBS_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * JOBS_PER_PAGE;
+  const endIndex = startIndex + JOBS_PER_PAGE;
+  const paginatedJobs = filteredJobs.slice(startIndex, endIndex);
+
+  const getVisiblePages = () => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (safeCurrentPage <= 3) {
+      return [1, 2, 3, 4, 5];
+    }
+
+    if (safeCurrentPage >= totalPages - 2) {
+      return [totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+
+    return [safeCurrentPage - 2, safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1, safeCurrentPage + 2];
+  };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -322,7 +350,7 @@ const EmployerMyJobs = () => {
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
-              {filteredJobs.map((job) => (
+              {paginatedJobs.map((job) => (
                 <div key={job._id} className={`p-6 transition-all hover:bg-slate-50 ${getStatusAccent(job.status)}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -425,6 +453,46 @@ const EmployerMyJobs = () => {
             </div>
           )}
         </div>
+
+        {filteredJobs.length > JOBS_PER_PAGE && (
+          <div className="mt-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-white rounded-xl border border-gray-100 px-4 py-3 shadow-sm">
+            <p className="text-sm text-gray-600">
+              Showing {startIndex + 1}-{Math.min(endIndex, filteredJobs.length)} of {filteredJobs.length} jobs
+            </p>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, safeCurrentPage - 1))}
+                disabled={safeCurrentPage === 1}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+
+              {getVisiblePages().map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+                    safeCurrentPage === page
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, safeCurrentPage + 1))}
+                disabled={safeCurrentPage === totalPages}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}

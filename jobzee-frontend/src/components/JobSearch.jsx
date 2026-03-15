@@ -25,6 +25,8 @@ const JobSearch = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [showJobModal, setShowJobModal] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
+  const [currentPage, setCurrentPage] = useState(1);
+  const JOBS_PER_PAGE = 12;
 
   // Build current filters object (memoized)
   const currentFilters = useMemo(() => ({
@@ -154,6 +156,8 @@ const JobSearch = () => {
       setLoading(true);
       const filters = filtersArg || currentFilters;
       const params = new URLSearchParams();
+      params.set('page', '1');
+      params.set('limit', '500');
       if (filters.search) params.set('search', filters.search);
       if (filters.location) params.set('location', filters.location);
       if (filters.category) params.set('category', filters.category);
@@ -374,10 +378,7 @@ const JobSearch = () => {
     { id: "marketing", name: "Marketing", icon: "📈", color: "from-green-500 to-green-600" },
     { id: "sales", name: "Sales", icon: "💰", color: "from-yellow-500 to-yellow-600" },
     { id: "hr", name: "Human Resources", icon: "👥", color: "from-pink-500 to-pink-600" },
-    { id: "finance", name: "Finance", icon: "📊", color: "from-indigo-500 to-indigo-600" },
-    { id: "operations", name: "Operations", icon: "⚙️", color: "from-orange-500 to-orange-600" },
-    { id: "consulting", name: "Consulting", icon: "💼", color: "from-teal-500 to-teal-600" },
-    { id: "customer-service", name: "Customer Service", icon: "🎧", color: "from-cyan-500 to-cyan-600" },
+    { id: "operations", name: "Operations", icon: "⚙️", color: "from-orange-500 to-orange-600" }
   ];
 
   // After backend-side filtering, we generally receive matching jobs already
@@ -423,6 +424,32 @@ const JobSearch = () => {
         return jobsToSort;
     }
   }, [filteredJobs, sortBy]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, location, selectedCategory, skills, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedJobs.length / JOBS_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * JOBS_PER_PAGE;
+  const endIndex = startIndex + JOBS_PER_PAGE;
+  const paginatedJobs = sortedJobs.slice(startIndex, endIndex);
+
+  const getVisiblePages = () => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (safeCurrentPage <= 3) {
+      return [1, 2, 3, 4, 5];
+    }
+
+    if (safeCurrentPage >= totalPages - 2) {
+      return [totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+
+    return [safeCurrentPage - 2, safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1, safeCurrentPage + 2];
+  };
 
   const formatSalary = (salary) => {
     if (!salary || (!salary.min && !salary.max)) return 'Salary not specified';
@@ -628,8 +655,9 @@ const JobSearch = () => {
           )}
 
           {!loading && !error && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {sortedJobs.map((job, index) => (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {paginatedJobs.map((job, index) => (
                 <div
                   key={job._id}
                   onClick={() => handleViewJob(job._id)}
@@ -776,9 +804,50 @@ const JobSearch = () => {
                       )}
                     </div>
                   </div>
+                  </div>
+                ))}
+              </div>
+
+              {sortedJobs.length > JOBS_PER_PAGE && (
+                <div className="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border border-white/40 bg-white/80 backdrop-blur-xl shadow-lg px-4 py-3">
+                  <p className="text-sm text-gray-600">
+                    Showing {startIndex + 1}-{Math.min(endIndex, sortedJobs.length)} of {sortedJobs.length} jobs
+                  </p>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage(Math.max(1, safeCurrentPage - 1))}
+                      disabled={safeCurrentPage === 1}
+                      className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+
+                    {getVisiblePages().map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+                          safeCurrentPage === page
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => setCurrentPage(Math.min(totalPages, safeCurrentPage + 1))}
+                      disabled={safeCurrentPage === totalPages}
+                      className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
 
           {!loading && !error && sortedJobs.length === 0 && (
