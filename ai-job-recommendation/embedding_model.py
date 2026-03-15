@@ -1,10 +1,20 @@
 import numpy as np
 from sentence_transformers import SentenceTransformer
+from threading import Lock
 
 MODEL_NAME = "all-MiniLM-L6-v2"
 
-# Model is loaded once at startup and reused for all requests
-_model = SentenceTransformer(MODEL_NAME)
+_model = None
+_model_lock = Lock()
+
+
+def _get_model() -> SentenceTransformer:
+    global _model
+    if _model is None:
+        with _model_lock:
+            if _model is None:
+                _model = SentenceTransformer(MODEL_NAME)
+    return _model
 
 
 def generate_embedding(text: str) -> np.ndarray:
@@ -19,7 +29,8 @@ def generate_embedding(text: str) -> np.ndarray:
     if not text or not text.strip():
         raise ValueError("Text input must not be empty")
 
-    embedding: np.ndarray = _model.encode(text, convert_to_numpy=True)
+    model = _get_model()
+    embedding: np.ndarray = model.encode(text, convert_to_numpy=True)
     return embedding
 
 
@@ -35,5 +46,6 @@ def generate_embeddings(texts: list[str]) -> np.ndarray:
     if not texts:
         raise ValueError("Texts list must not be empty")
 
-    embeddings: np.ndarray = _model.encode(texts, convert_to_numpy=True)
+    model = _get_model()
+    embeddings: np.ndarray = model.encode(texts, convert_to_numpy=True)
     return embeddings
