@@ -764,6 +764,12 @@ const Dashboard = () => {
                         </svg>
                         <span>Saved Jobs</span>
                       </Link>
+                      <Link to="/recommended-jobs" className="flex items-center space-x-3 w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L6 20.75V4a1 1 0 011-1h10a1 1 0 011 1v16.75L14.25 17h-4.5z" />
+                        </svg>
+                        <span>Recommended Jobs</span>
+                      </Link>
                       <Link to="/certificates" className="flex items-center space-x-3 w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
                         <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
@@ -865,6 +871,15 @@ const Dashboard = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                       <span>Search Jobs</span>
+                    </Link>
+                    <Link
+                      to="/recommended-jobs"
+                      className="bg-blue-800/80 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2 border border-blue-300/40"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L6 20.75V4a1 1 0 011-1h10a1 1 0 011 1v16.75L14.25 17h-4.5z" />
+                      </svg>
+                      <span>Recommended Jobs</span>
                     </Link>
                   </div>
                 </div>

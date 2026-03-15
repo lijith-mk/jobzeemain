@@ -13,6 +13,7 @@ import Contact from "./pages/Contact";
 import PageNotFound from "./pages/PageNotFound";
 import Dashboard from "./pages/Dashboard";
 import SavedJobs from "./pages/SavedJobs";
+import RecommendedJobs from "./components/RecommendedJobs";
 
 import Register from "./components/Register";
 import Login from "./components/Login";
@@ -160,6 +161,7 @@ function App() {
             <Route path="/my-events" element={<MyEvents />} />
             <Route path="/ticket/:ticketId" element={<TicketDisplay />} />
             <Route path="/saved-jobs" element={<SavedJobs />} />
+            <Route path="/recommended-jobs" element={<RecommendedJobs />} />
             {/* Tests Routes */}
             <Route path="/tests" element={<Tests />} />
             <Route path="/tests/:testId/take" element={<TakeTest />} />

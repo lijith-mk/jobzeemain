@@ -4,6 +4,7 @@ const Job = require('../models/Job');
 const Employer = require('../models/Employer');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const { getAIRecommendedJobs } = require('../services/aiJobRecommendation');
 
 // Public route to get all active jobs for users
 router.get('/', async (req, res) => {
@@ -727,6 +728,53 @@ router.get('/my-applications', auth, async (req, res) => {
       success: false,
       message: 'Failed to fetch user applications',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/jobs/recommendations/:userId
+// AI-powered resume-based job recommendations
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/recommendations/:userId', auth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Only allow users to fetch their own recommendations
+    if (req.user.id !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: you can only fetch your own recommendations',
+      });
+    }
+
+    // Steps 1-5 handled inside the service
+    const recommended = await getAIRecommendedJobs(userId);
+
+    // Return lean title + score shape as requested
+    const response = recommended.map((job) => ({
+      _id: job._id,
+      title: job.title,
+      company: job.company,
+      location: job.location,
+      jobType: job.jobType,
+      skills: job.skills,
+      salary: job.salary,
+      score: job.matchScore,
+    }));
+
+    return res.status(200).json(response);
+  } catch (error) {
+    const isClientError =
+      error.message.includes('No resume') ||
+      error.message.includes('User not found') ||
+      error.message.includes('No active jobs');
+
+    console.error('[AI Recommendations Route] Error:', error.message);
+
+    return res.status(isClientError ? 400 : 500).json({
+      success: false,
+      message: error.message || 'Failed to get AI job recommendations',
     });
   }
 });
