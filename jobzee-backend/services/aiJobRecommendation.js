@@ -31,6 +31,28 @@ function _isRetryableError(error) {
 }
 
 /**
+ * Wake up the Render free-tier AI service before sending the heavy inference request.
+ * Render spins down idle free services; the first request after idle can take 1-3 minutes.
+ * This polls /health until the service responds, absorbing the cold-start wait.
+ */
+async function _wakeUpAIService() {
+  const MAX_ATTEMPTS = 18;   // 18 × 10 s = 3 min max
+  const POLL_MS = 10000;
+
+  for (let i = 1; i <= MAX_ATTEMPTS; i++) {
+    try {
+      await axios.get(`${AI_SERVICE_URL}/health`, { timeout: 8000 });
+      // If we had to wait (service was asleep), give the model a moment to finish loading
+      if (i > 1) await _sleep(4000);
+      return; // service is alive
+    } catch {
+      if (i < MAX_ATTEMPTS) await _sleep(POLL_MS);
+    }
+  }
+  throw new Error('AI service did not become available in time. Please try again in a minute.');
+}
+
+/**
  * Download a remote file and return it as a Buffer.
  * Using responseType: 'arraybuffer' avoids buffering issues with streams.
  */
@@ -125,7 +147,8 @@ async function getAIRecommendedJobs(userId) {
     throw new Error('No live jobs found in the database');
   }
 
-  // Step 4 – send to Python AI service → get scored job titles
+  // Step 4 – wake up AI service (handles Render free-tier cold starts), then call
+  await _wakeUpAIService();
   const aiResults = await _callAIService(resumeBuffer, jobs);
 
   // Step 5 – enrich AI results with full job data from the DB

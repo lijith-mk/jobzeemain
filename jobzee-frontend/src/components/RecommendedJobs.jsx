@@ -145,6 +145,7 @@ const RecommendedJobs = () => {
 
   const [jobs, setJobs]         = useState([]);
   const [loading, setLoading]   = useState(true);
+  const [loadingMsg, setLoadingMsg] = useState('Analysing your resume and finding best matches…');
   const [error, setError]       = useState(null);
   const [appliedJobs, setAppliedJobs]   = useState(new Set());
   const [applyingJobs, setApplyingJobs] = useState(new Set());
@@ -192,6 +193,17 @@ const RecommendedJobs = () => {
   useEffect(() => {
     fetchRecommendations();
   }, [fetchRecommendations]);
+
+  // Show a helpful message after 8 s so users know the AI service is warming up
+  useEffect(() => {
+    if (!loading) {
+      setLoadingMsg('Analysing your resume and finding best matches…');
+      return;
+    }
+    const t1 = setTimeout(() => setLoadingMsg('AI service is warming up — this can take up to 2 minutes on first load…'), 8000);
+    const t2 = setTimeout(() => setLoadingMsg('Almost there, please keep waiting…'), 60000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [loading]);
 
   // ── quick apply ──────────────────────────────────────────────────────────
   const handleApply = async (jobId) => {
@@ -241,7 +253,7 @@ const RecommendedJobs = () => {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4 text-gray-500">
         <FaSpinner className="animate-spin text-indigo-600" size={32} />
-        <p className="text-sm">Analysing your resume and finding best matches…</p>
+        <p className="text-sm text-center max-w-xs">{loadingMsg}</p>
       </div>
     );
   }
