@@ -17,6 +17,18 @@ const Job = require('../models/Job');
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8001';
 const TOP_K = 10;
+const AI_REQUEST_TIMEOUT_MS = 180000;
+const AI_MAX_RETRIES = 3;
+
+function _sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function _isRetryableError(error) {
+  const status = error.response?.status;
+  if (!status) return true;
+  return status >= 500 || status === 429;
+}
 
 /**
  * Download a remote file and return it as a Buffer.
@@ -55,21 +67,31 @@ async function _callAIService(resumeBuffer, jobs) {
   form.append('job_list', JSON.stringify(jobList));
   form.append('top_k', String(TOP_K));
 
-  try {
-    const response = await axios.post(
-      `${AI_SERVICE_URL}/recommend-jobs`,
-      form,
-      {
-        headers: form.getHeaders(),
-        timeout: 60000,
-      }
-    );
+  let lastError;
+  for (let attempt = 1; attempt <= AI_MAX_RETRIES; attempt += 1) {
+    try {
+      const response = await axios.post(
+        `${AI_SERVICE_URL}/recommend-jobs`,
+        form,
+        {
+          headers: form.getHeaders(),
+          timeout: AI_REQUEST_TIMEOUT_MS,
+        }
+      );
 
-    return response.data.recommended_jobs; // [{ title, score }, ...]
-  } catch (error) {
-    const message = error.response?.data?.detail || error.message;
-    throw new Error(`AI recommendation service failed: ${message}`);
+      return response.data.recommended_jobs; // [{ title, score }, ...]
+    } catch (error) {
+      lastError = error;
+      if (attempt < AI_MAX_RETRIES && _isRetryableError(error)) {
+        await _sleep(1200 * attempt);
+        continue;
+      }
+      break;
+    }
   }
+
+  const message = lastError?.response?.data?.detail || lastError?.message || 'Unknown error';
+  throw new Error(`AI recommendation service failed: ${message}`);
 }
 
 /**
