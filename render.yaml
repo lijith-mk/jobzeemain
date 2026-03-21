@@ -6,7 +6,9 @@ services:
     region: oregon
     plan: free
     rootDir: ai-service
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      pip install -r requirements.txt
+      python -m spacy download en_core_web_sm
     startCommand: python -m uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /fraud-model-health
     envVars:

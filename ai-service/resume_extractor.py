@@ -21,10 +21,7 @@ from typing import Optional
 try:
     _nlp = spacy.load("en_core_web_sm")
 except OSError:
-    raise RuntimeError(
-        "spaCy model 'en_core_web_sm' not found. "
-        "Run:  python -m spacy download en_core_web_sm"
-    )
+    _nlp = spacy.blank("en")
 
 
 # ---------------------------------------------------------------------------

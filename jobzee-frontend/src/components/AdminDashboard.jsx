@@ -21,6 +21,9 @@ const AdminDashboard = () => {
   const [queryTotalPages, setQueryTotalPages] = useState(1);
   const [querySearch, setQuerySearch] = useState("");
   const [queryStatus, setQueryStatus] = useState("");
+  const [fraudCertificateId, setFraudCertificateId] = useState("");
+  const [fraudScoreLoading, setFraudScoreLoading] = useState(false);
+  const [fraudResult, setFraudResult] = useState(null);
   const [users, setUsers] = useState([]);
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [showEditUser, setShowEditUser] = useState(false);
@@ -2282,6 +2285,44 @@ const AdminDashboard = () => {
     } else if (tab === "queries") fetchQueries();
   };
 
+  const fetchCertificateFraudScore = async (e) => {
+    e.preventDefault();
+
+    const certificateId = fraudCertificateId.trim();
+    if (!certificateId) {
+      toast.error("Please enter a certificate ID");
+      return;
+    }
+
+    try {
+      setFraudScoreLoading(true);
+      const token = localStorage.getItem("adminToken");
+      const response = await fetch(
+        `${API_BASE_URL}/api/certificates/admin/${encodeURIComponent(certificateId)}/fraud-score`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setFraudResult(data);
+        toast.success("Fraud score loaded");
+      } else {
+        setFraudResult(null);
+        toast.error(data.message || "Failed to fetch fraud score");
+      }
+    } catch (error) {
+      console.error("Fraud score fetch error:", error);
+      setFraudResult(null);
+      toast.error("Network error occurred");
+    } finally {
+      setFraudScoreLoading(false);
+    }
+  };
+
   const fetchQueries = async (page = 1, search = "", status = "") => {
     try {
       const token = localStorage.getItem("adminToken");
@@ -3923,6 +3964,106 @@ const AdminDashboard = () => {
               )}
             </div>
           )}
+
+          {activeTab === "fraud-monitor" && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Certificate Fraud Monitor</h2>
+                <p className="text-sm text-gray-600 mb-4">
+                  Enter a certificate ID to fetch AI fraud score, risk level, and feature signals.
+                </p>
+
+                <form onSubmit={fetchCertificateFraudScore} className="flex flex-col md:flex-row gap-3">
+                  <input
+                    type="text"
+                    value={fraudCertificateId}
+                    onChange={(e) => setFraudCertificateId(e.target.value)}
+                    placeholder="e.g. CERT-123456"
+                    className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={fraudScoreLoading}
+                    className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-60"
+                  >
+                    {fraudScoreLoading ? "Checking..." : "Check Fraud Score"}
+                  </button>
+                </form>
+              </div>
+
+              {fraudResult && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-lg shadow-sm p-4">
+                      <div className="text-sm text-gray-600">Certificate ID</div>
+                      <div className="font-semibold text-gray-900 break-all">{fraudResult.certificateId}</div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm p-4">
+                      <div className="text-sm text-gray-600">Risk Level</div>
+                      <div
+                        className={`font-bold text-lg ${
+                          fraudResult.riskLevel === "high"
+                            ? "text-red-600"
+                            : fraudResult.riskLevel === "medium"
+                              ? "text-orange-600"
+                              : "text-green-600"
+                        }`}
+                      >
+                        {String(fraudResult.riskLevel || "unknown").toUpperCase()}
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm p-4">
+                      <div className="text-sm text-gray-600">Fraud Score</div>
+                      <div className="font-bold text-lg text-gray-900">
+                        {typeof fraudResult.fraudScore === "number"
+                          ? `${(fraudResult.fraudScore * 100).toFixed(2)}%`
+                          : "N/A"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-lg shadow-sm p-4">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-3">Top Signals</h3>
+                      {fraudResult.topSignals && Object.keys(fraudResult.topSignals).length > 0 ? (
+                        <div className="space-y-2">
+                          {Object.entries(fraudResult.topSignals).map(([key, value]) => (
+                            <div key={key} className="flex justify-between text-sm border-b border-gray-100 pb-2">
+                              <span className="text-gray-700 capitalize">{key.replace(/_/g, " ")}</span>
+                              <span className="font-medium text-gray-900">
+                                {typeof value === "number" ? value.toFixed(4) : String(value)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">No top signals available.</p>
+                      )}
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-sm p-4">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-3">Feature Snapshot</h3>
+                      {fraudResult.features && Object.keys(fraudResult.features).length > 0 ? (
+                        <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
+                          {Object.entries(fraudResult.features).map(([key, value]) => (
+                            <div key={key} className="flex justify-between text-sm border-b border-gray-100 pb-2">
+                              <span className="text-gray-700 capitalize">{key.replace(/_/g, " ")}</span>
+                              <span className="font-medium text-gray-900">
+                                {typeof value === "number" ? value.toFixed(4) : String(value)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">No feature values available.</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           {activeTab === "events" && <AdminEventsModeration />}
 
           {/* Tests Management */}
