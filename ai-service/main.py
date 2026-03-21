@@ -125,7 +125,7 @@ class FraudScoreResponse(BaseModel):
     risk_level: str
     model_loaded: bool
     used_fallback: bool
-    top_signals: dict
+    top_signals: list
 
 
 async def _read_and_extract(file: UploadFile) -> tuple[str, str]:
@@ -187,15 +187,7 @@ def fraud_model_health():
 
 @app.post("/fraud-score", response_model=FraudScoreResponse)
 def fraud_score(payload: FraudScoreRequest):
-    score, risk_level, sanitized, used_fallback = fraud_model.score(payload.features)
-
-    ranked_signals = dict(
-        sorted(
-            sanitized.items(),
-            key=lambda item: abs(item[1]),
-            reverse=True,
-        )[:5]
-    )
+    score, risk_level, top_signals, used_fallback = fraud_model.score(payload.features)
 
     return FraudScoreResponse(
         certificate_id=payload.certificate_id,
@@ -203,7 +195,7 @@ def fraud_score(payload: FraudScoreRequest):
         risk_level=risk_level,
         model_loaded=fraud_model.loaded,
         used_fallback=used_fallback,
-        top_signals=ranked_signals,
+        top_signals=top_signals,
     )
 
 

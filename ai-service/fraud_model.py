@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import math
 import pickle
-from typing import Dict, Tuple, Any
+from typing import Dict, Tuple, Any, List
 
 import numpy as np
 
@@ -97,7 +97,72 @@ class FraudModel:
         )
         return float(self._sigmoid(logit))
 
-    def score(self, feature_payload: Dict[str, float]) -> Tuple[float, str, Dict[str, float], bool]:
+    def _shap_signals(self, vector: np.ndarray, sanitized: Dict[str, float]) -> List[Dict]:
+        """
+        Compute SHAP values for the prediction and return top 5 signals.
+        Each signal shows how much that feature pushed the fraud score up or down.
+        Falls back to coefficient-based signals if SHAP fails.
+        """
+        try:
+            import shap
+            explainer = shap.TreeExplainer(self.model)
+            shap_values = explainer.shap_values(vector)
+
+            # shap_values shape: (1, n_features) for binary classification
+            # For XGBoost binary, shap_values is a 2D array
+            if isinstance(shap_values, list):
+                # Some versions return [neg_class, pos_class]
+                values = shap_values[1][0]
+            else:
+                values = shap_values[0]
+
+            signals = []
+            for i, name in enumerate(self.feature_names):
+                sv = float(values[i])
+                signals.append({
+                    "feature": name,
+                    "shap_value": round(sv, 6),
+                    "raw_value": sanitized[name],
+                    "direction": "increases_fraud" if sv > 0 else "decreases_fraud",
+                })
+
+            # Sort by absolute SHAP value, return top 5
+            signals.sort(key=lambda x: abs(x["shap_value"]), reverse=True)
+            return signals[:5]
+
+        except Exception:
+            # Fallback: use logit coefficients as proxy importance weights
+            return self._fallback_signals(sanitized)
+
+    def _fallback_signals(self, sanitized: Dict[str, float]) -> List[Dict]:
+        """
+        When model is not loaded or SHAP fails, use the hand-crafted
+        logit coefficients as proxy signal weights.
+        """
+        coefficients = {
+            "is_revoked": 2.5,
+            "suspicious_attempts": 0.9,
+            "failed_verifications": 0.5,   # derived via failure_ratio * 2.2
+            "total_verifications": -0.1,    # more verifications = slightly less suspicious
+            "unique_verifier_ips": 0.12,
+            "max_suspicious_score": 0.035,
+        }
+
+        signals = []
+        for feature, coeff in coefficients.items():
+            raw = sanitized.get(feature, 0.0)
+            weighted = coeff * raw
+            signals.append({
+                "feature": feature,
+                "shap_value": round(weighted, 6),
+                "raw_value": raw,
+                "direction": "increases_fraud" if weighted > 0 else "decreases_fraud",
+            })
+
+        signals.sort(key=lambda x: abs(x["shap_value"]), reverse=True)
+        return signals[:5]
+
+    def score(self, feature_payload: Dict[str, float]) -> Tuple[float, str, List[Dict], bool]:
         sanitized = {}
         for name in self.feature_names:
             value = feature_payload.get(name, 0)
@@ -108,9 +173,11 @@ class FraudModel:
         if self.loaded and self.model is not None:
             vector = np.array([[sanitized[name] for name in self.feature_names]], dtype=np.float64)
             probability = float(self.model.predict_proba(vector)[0][1])
+            top_signals = self._shap_signals(vector, sanitized)
             used_fallback = False
         else:
             probability = self._fallback_score(sanitized)
+            top_signals = self._fallback_signals(sanitized)
             used_fallback = True
 
         if probability >= 0.75:
@@ -120,4 +187,4 @@ class FraudModel:
         else:
             risk_level = "low"
 
-        return probability, risk_level, sanitized, used_fallback
+        return probability, risk_level, top_signals, used_fallback
