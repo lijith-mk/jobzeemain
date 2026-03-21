@@ -67,6 +67,10 @@ Desktop.ini
 temp/
 tmp/
 
+# AI research outputs — generated locally, not needed in repo
+ai-service/reports/
+jobzee-backend/data/ml/*.csv
+
 # Uploads and user generated content
 uploads/
 **/uploads/

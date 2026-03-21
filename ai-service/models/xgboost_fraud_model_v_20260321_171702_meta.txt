@@ -1,0 +1,11 @@
+Trained     : 2026-03-21T17:17:02.795340
+CSV source  : ..\jobzee-backend\data\ml\fraud_dataset_1774093558820.csv
+AUC         : 1.0000
+F1          : 1.0000
+Precision   : 1.0000
+Recall      : 1.0000
+CM_TN       : 170
+CM_FP       : 0
+CM_FN       : 0
+CM_TP       : 30
+Features    : [np.str_('is_revoked'), np.str_('has_blockchain_tx'), np.str_('has_wallet_address'), np.str_('wallet_reuse_count'), np.str_('honors'), np.str_('grade_numeric'), np.str_('completion_percentage'), np.str_('total_lessons'), np.str_('completed_lessons'), np.str_('total_quizzes'), np.str_('passed_quizzes'), np.str_('average_quiz_score'), np.str_('total_time_spent_min'), np.str_('certificate_age_hours'), np.str_('blockchain_delay_minutes'), np.str_('total_verifications'), np.str_('successful_verifications'), np.str_('failed_verifications'), np.str_('suspicious_attempts'), np.str_('unique_verifier_ips'), np.str_('unique_user_agents'), np.str_('avg_response_time_ms'), np.str_('max_suspicious_score'), np.str_('verification_window_hours')]
