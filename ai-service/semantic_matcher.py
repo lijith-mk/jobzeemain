@@ -13,19 +13,19 @@ from __future__ import annotations
 import math
 from functools import lru_cache
 
-from sentence_transformers import SentenceTransformer
-
-# ---------------------------------------------------------------------------
-# Model — loaded once at startup
-# ---------------------------------------------------------------------------
-_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-
 try:
-    _model = SentenceTransformer(_MODEL_NAME)
-except Exception as exc:
-    raise RuntimeError(
-        f"Failed to load sentence-transformer model '{_MODEL_NAME}': {exc}"
-    )
+    from sentence_transformers import SentenceTransformer
+    _MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+    try:
+        _model = SentenceTransformer(_MODEL_NAME)
+    except Exception as exc:
+        raise RuntimeError(
+            f"Failed to load sentence-transformer model '{_MODEL_NAME}': {exc}"
+        )
+except ImportError:
+    # sentence-transformers not installed — semantic matching disabled
+    SentenceTransformer = None
+    _model = None
 
 
 # ---------------------------------------------------------------------------

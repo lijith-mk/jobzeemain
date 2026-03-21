@@ -7,12 +7,8 @@ services:
     plan: free
     rootDir: ai-service
     buildCommand: |
-      pip install --upgrade pip
-      pip install fastapi "uvicorn[standard]" python-multipart PyMuPDF docx2txt pandas "numpy<2.0.0" scikit-learn xgboost "shap>=0.45.0" matplotlib
-      pip install "spacy>=3.7.0,<3.9.0"
+      pip install -r requirements.txt
       python -m spacy download en_core_web_sm
-      pip install "sentence-transformers>=3.0.0,<4.0.0" --no-deps
-      pip install transformers tokenizers huggingface-hub safetensors tqdm
     startCommand: python -m uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /fraud-model-health
     envVars:
