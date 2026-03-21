@@ -226,6 +226,37 @@ const certificateSchema = new mongoose.Schema({
     default: null
   },
   
+  // Fraud detection cache
+  fraudScore: {
+    type: Number,
+    default: null
+  },
+
+  riskLevel: {
+    type: String,
+    enum: ['low', 'medium', 'high', 'unknown', null],
+    default: null
+  },
+
+  fraudScoreCachedAt: {
+    type: Date,
+    default: null
+  },
+
+  // How many verification logs existed when score was last computed
+  // Used to detect when a recompute is needed
+  fraudScoreLogCount: {
+    type: Number,
+    default: null
+  },
+
+  fraudAnalysisResult: {
+    modelLoaded: { type: Boolean, default: null },
+    usedFallback: { type: Boolean, default: null },
+    topSignals: { type: mongoose.Schema.Types.Mixed, default: null },
+    timestamp: { type: Date, default: null }
+  },
+
   // Metadata
   ipAddress: {
     type: String,
@@ -317,7 +348,9 @@ certificateSchema.methods.getPublicData = function() {
     completionMetrics: this.completionMetrics,
     skillsAchieved: this.skillsAchieved,
     grade: this.grade,
-    honors: this.honors
+    honors: this.honors,
+    fraudScore: this.fraudScore ?? null,
+    riskLevel: this.riskLevel ?? null,
   };
 };
 

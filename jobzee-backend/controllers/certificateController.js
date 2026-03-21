@@ -895,6 +895,80 @@ exports.getCertificateStatistics = async (req, res) => {
 };
 
 /**
+ * Get fraud model performance metrics (admin)
+ * Reads the latest _meta.txt file written by retrain.py
+ * GET /api/certificates/admin/model-metrics
+ */
+exports.getModelMetrics = async (req, res) => {
+  try {
+    const path = require('path');
+    const fs = require('fs');
+
+    const modelsDir = path.join(__dirname, '..', '..', 'ai-service', 'models');
+
+    if (!fs.existsSync(modelsDir)) {
+      return res.json({
+        success: true,
+        available: false,
+        message: 'No model metrics found. Run retraining first.',
+      });
+    }
+
+    // Find the latest meta file
+    const files = fs.readdirSync(modelsDir);
+    const metaFiles = files
+      .filter(f => f.startsWith('xgboost_fraud_model_v_') && f.endsWith('_meta.txt'))
+      .sort()
+      .reverse();
+
+    if (metaFiles.length === 0) {
+      return res.json({
+        success: true,
+        available: false,
+        message: 'No model metrics found. Run retraining first.',
+      });
+    }
+
+    const latestMeta = fs.readFileSync(path.join(modelsDir, metaFiles[0]), 'utf8');
+
+    // Parse key: value lines
+    const metrics = {};
+    latestMeta.split('\n').forEach(line => {
+      const colonIdx = line.indexOf(':');
+      if (colonIdx === -1) return;
+      const key = line.slice(0, colonIdx).trim().toLowerCase().replace(/\s+/g, '_');
+      const value = line.slice(colonIdx + 1).trim();
+      metrics[key] = value;
+    });
+
+    // List all versioned models
+    const versions = files
+      .filter(f => f.startsWith('xgboost_fraud_model_v_') && f.endsWith('.pkl'))
+      .sort()
+      .reverse()
+      .map(f => {
+        const ts = f.replace('xgboost_fraud_model_v_', '').replace('.pkl', '');
+        return ts;
+      });
+
+    return res.json({
+      success: true,
+      available: true,
+      latestVersion: metaFiles[0].replace('_meta.txt', ''),
+      metrics,
+      versions,
+    });
+  } catch (error) {
+    console.error('Get model metrics error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to read model metrics',
+      error: error.message,
+    });
+  }
+};
+
+/**
  * Get AI fraud score for a certificate (admin)
  * GET /api/certificates/admin/:certificateId/fraud-score
  */

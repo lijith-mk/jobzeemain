@@ -179,6 +179,8 @@ app.post("/api/debug", (req, res) => {
 // Health check endpoint
 app.get("/api/health", async (req, res) => {
   try {
+    const { getCircuitBreakerStatus } = require("./services/certificateFraudScoringService");
+
     // Check database connection
     const dbState = mongoose.connection.readyState;
     const dbStates = {
@@ -206,6 +208,7 @@ app.get("/api/health", async (req, res) => {
         connected: dbState === 1,
         ping: dbPing,
       },
+      aiService: getCircuitBreakerStatus(),
       server: {
         uptime: process.uptime(),
         memory: process.memoryUsage(),

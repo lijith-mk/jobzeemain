@@ -139,6 +139,17 @@ router.get(
 );
 
 /**
+ * Get fraud model performance metrics (AUC, F1, confusion matrix data)
+ * GET /api/certificates/admin/model-metrics
+ * Protected: Admin only
+ */
+router.get(
+  '/admin/model-metrics',
+  adminAuth,
+  certificateController.getModelMetrics
+);
+
+/**
  * Get AI fraud score for a certificate
  * GET /api/certificates/admin/:certificateId/fraud-score
  * Protected: Admin only

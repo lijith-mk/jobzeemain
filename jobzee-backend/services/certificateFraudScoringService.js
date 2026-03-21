@@ -4,6 +4,57 @@ const CertificateVerificationLog = require('../models/CertificateVerificationLog
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8001';
 
+// ─────────────────────────────────────────────
+// Circuit Breaker — in-memory AI service health
+// ─────────────────────────────────────────────
+const circuitBreaker = {
+  isUp: null,          // null = unknown, true = up, false = down
+  lastChecked: 0,
+  checkInterval: 60 * 1000,   // re-probe every 60 seconds
+  failureCount: 0,
+  failureThreshold: 2,         // mark down after 2 consecutive failures
+
+  // Returns true if we should attempt the AI call
+  shouldAttempt() {
+    const now = Date.now();
+    // Unknown state — try it
+    if (this.isUp === null) return true;
+    // Known up — try it
+    if (this.isUp === true) return true;
+    // Known down — only retry after checkInterval
+    if (this.isUp === false && (now - this.lastChecked) > this.checkInterval) {
+      console.log('[FraudCircuitBreaker] Retrying AI service after cooldown...');
+      return true;
+    }
+    return false;
+  },
+
+  recordSuccess() {
+    this.isUp = true;
+    this.failureCount = 0;
+    this.lastChecked = Date.now();
+  },
+
+  recordFailure() {
+    this.failureCount += 1;
+    this.lastChecked = Date.now();
+    if (this.failureCount >= this.failureThreshold) {
+      if (this.isUp !== false) {
+        console.warn('[FraudCircuitBreaker] AI service is DOWN — switching to fallback scoring');
+      }
+      this.isUp = false;
+    }
+  },
+
+  status() {
+    return {
+      isUp: this.isUp,
+      failureCount: this.failureCount,
+      lastChecked: this.lastChecked ? new Date(this.lastChecked).toISOString() : null,
+    };
+  }
+};
+
 function gradeToNumeric(grade) {
   const map = {
     'A+': 7,
@@ -86,30 +137,113 @@ async function buildFraudFeatures(certificateId) {
 }
 
 async function scoreCertificateFraud(certificateId) {
+  // ── Step 1: Get current log count ──────────────────────────────
+  const currentLogCount = await CertificateVerificationLog.countDocuments({ certificateId });
+
+  // ── Step 2: Check cache on Certificate document ────────────────
+  const cert = await Certificate.findOne({ certificateId })
+    .select('fraudScore riskLevel fraudScoreCachedAt fraudScoreLogCount fraudAnalysisResult')
+    .lean();
+
+  const hasCachedScore = cert &&
+    cert.fraudScore !== undefined &&
+    cert.fraudScore !== null &&
+    cert.fraudScoreLogCount === currentLogCount;
+
+  if (hasCachedScore) {
+    // Return cached result — no AI call needed
+    return {
+      certificateId,
+      features: null,
+      aiResponse: {
+        fraud_score: cert.fraudScore,
+        risk_level: cert.riskLevel,
+        model_loaded: true,
+        used_fallback: false,
+        top_signals: cert.fraudAnalysisResult?.topSignals || [],
+        from_cache: true,
+      }
+    };
+  }
+
+  // ── Step 3: Build features ─────────────────────────────────────
   const features = await buildFraudFeatures(certificateId);
 
-  const response = await axios.post(
-    `${AI_SERVICE_URL}/fraud-score`,
-    {
-      certificate_id: certificateId,
-      features
-    },
-    {
-      timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json'
+  // ── Step 4: Circuit breaker check ─────────────────────────────
+  if (!circuitBreaker.shouldAttempt()) {
+    console.warn(`[FraudCircuitBreaker] AI service is down — using fallback for ${certificateId}`);
+    return {
+      certificateId,
+      features,
+      aiResponse: {
+        fraud_score: null,
+        risk_level: 'unknown',
+        model_loaded: false,
+        used_fallback: true,
+        top_signals: [],
+        ai_service_down: true,
       }
-    }
-  );
+    };
+  }
 
-  return {
-    certificateId,
-    features,
-    aiResponse: response.data
-  };
+  // ── Step 5: Call AI service ────────────────────────────────────
+  try {
+    const response = await axios.post(
+      `${AI_SERVICE_URL}/fraud-score`,
+      { certificate_id: certificateId, features },
+      { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
+    );
+
+    circuitBreaker.recordSuccess();
+
+    const aiResponse = response.data;
+
+    // ── Step 6: Persist score to Certificate (cache) ───────────
+    await Certificate.findOneAndUpdate(
+      { certificateId },
+      {
+        $set: {
+          fraudScore: aiResponse.fraud_score,
+          riskLevel: aiResponse.risk_level,
+          fraudScoreCachedAt: new Date(),
+          fraudScoreLogCount: currentLogCount,
+          'fraudAnalysisResult.topSignals': aiResponse.top_signals,
+          'fraudAnalysisResult.modelLoaded': aiResponse.model_loaded,
+          'fraudAnalysisResult.usedFallback': aiResponse.used_fallback,
+          'fraudAnalysisResult.timestamp': new Date(),
+        }
+      }
+    );
+
+    return { certificateId, features, aiResponse };
+
+  } catch (err) {
+    circuitBreaker.recordFailure();
+    console.error(`[FraudScoring] AI service call failed for ${certificateId}:`, err.message);
+
+    // Return fallback — don't throw, fraud scoring is non-blocking
+    return {
+      certificateId,
+      features,
+      aiResponse: {
+        fraud_score: null,
+        risk_level: 'unknown',
+        model_loaded: false,
+        used_fallback: true,
+        top_signals: [],
+        ai_service_down: true,
+      }
+    };
+  }
+}
+
+// Export circuit breaker status for health check endpoint
+function getCircuitBreakerStatus() {
+  return circuitBreaker.status();
 }
 
 module.exports = {
   buildFraudFeatures,
-  scoreCertificateFraud
+  scoreCertificateFraud,
+  getCircuitBreakerStatus,
 };

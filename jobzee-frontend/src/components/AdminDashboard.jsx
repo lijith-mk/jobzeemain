@@ -24,6 +24,8 @@ const AdminDashboard = () => {
   const [fraudCertificateId, setFraudCertificateId] = useState("");
   const [fraudScoreLoading, setFraudScoreLoading] = useState(false);
   const [fraudResult, setFraudResult] = useState(null);
+  const [modelMetrics, setModelMetrics] = useState(null);
+  const [modelMetricsLoading, setModelMetricsLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [showEditUser, setShowEditUser] = useState(false);
@@ -2323,6 +2325,28 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchModelMetrics = async () => {
+    try {
+      setModelMetricsLoading(true);
+      const token = localStorage.getItem("adminToken");
+      const response = await fetch(
+        `${API_BASE_URL}/api/certificates/admin/model-metrics`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setModelMetrics(data);
+      } else {
+        toast.error(data.message || "Failed to load model metrics");
+      }
+    } catch (error) {
+      console.error("Model metrics fetch error:", error);
+      toast.error("Network error");
+    } finally {
+      setModelMetricsLoading(false);
+    }
+  };
+
   const fetchQueries = async (page = 1, search = "", status = "") => {
     try {
       const token = localStorage.getItem("adminToken");
@@ -3967,18 +3991,18 @@ const AdminDashboard = () => {
 
           {activeTab === "fraud-monitor" && (
             <div className="space-y-6">
+              {/* Certificate Fraud Score Lookup */}
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Certificate Fraud Monitor</h2>
                 <p className="text-sm text-gray-600 mb-4">
-                  Enter a certificate ID to fetch AI fraud score, risk level, and feature signals.
+                  Enter a certificate ID to fetch AI fraud score, risk level, and SHAP feature signals.
                 </p>
-
                 <form onSubmit={fetchCertificateFraudScore} className="flex flex-col md:flex-row gap-3">
                   <input
                     type="text"
                     value={fraudCertificateId}
                     onChange={(e) => setFraudCertificateId(e.target.value)}
-                    placeholder="e.g. CERT-123456"
+                    placeholder="e.g. CERT-2026-ABC123"
                     className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <button
@@ -4000,15 +4024,11 @@ const AdminDashboard = () => {
                     </div>
                     <div className="bg-white rounded-lg shadow-sm p-4">
                       <div className="text-sm text-gray-600">Risk Level</div>
-                      <div
-                        className={`font-bold text-lg ${
-                          fraudResult.riskLevel === "high"
-                            ? "text-red-600"
-                            : fraudResult.riskLevel === "medium"
-                              ? "text-orange-600"
-                              : "text-green-600"
-                        }`}
-                      >
+                      <div className={`font-bold text-lg ${
+                        fraudResult.riskLevel === "high" ? "text-red-600"
+                        : fraudResult.riskLevel === "medium" ? "text-orange-600"
+                        : "text-green-600"
+                      }`}>
                         {String(fraudResult.riskLevel || "unknown").toUpperCase()}
                       </div>
                     </div>
@@ -4023,24 +4043,43 @@ const AdminDashboard = () => {
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* SHAP Top Signals */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-3">Top Signals</h3>
-                      {fraudResult.topSignals && Object.keys(fraudResult.topSignals).length > 0 ? (
-                        <div className="space-y-2">
-                          {Object.entries(fraudResult.topSignals).map(([key, value]) => (
-                            <div key={key} className="flex justify-between text-sm border-b border-gray-100 pb-2">
-                              <span className="text-gray-700 capitalize">{key.replace(/_/g, " ")}</span>
-                              <span className="font-medium text-gray-900">
-                                {typeof value === "number" ? value.toFixed(4) : String(value)}
-                              </span>
-                            </div>
-                          ))}
+                      <h3 className="text-lg font-semibold text-gray-800 mb-3">Top SHAP Signals</h3>
+                      {Array.isArray(fraudResult.topSignals) && fraudResult.topSignals.length > 0 ? (
+                        <div className="space-y-3">
+                          {fraudResult.topSignals.map((sig, i) => {
+                            const isIncrease = sig.direction === "increases_fraud";
+                            const barWidth = Math.min(Math.abs(sig.shap_value) * 400, 100);
+                            return (
+                              <div key={i}>
+                                <div className="flex justify-between text-sm mb-1">
+                                  <span className="text-gray-700 capitalize">{String(sig.feature).replace(/_/g, " ")}</span>
+                                  <span className={`font-medium text-xs px-2 py-0.5 rounded-full ${isIncrease ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+                                    {isIncrease ? "▲ fraud" : "▼ fraud"}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 bg-gray-100 rounded-full h-2">
+                                    <div
+                                      className={`h-2 rounded-full ${isIncrease ? "bg-red-400" : "bg-green-400"}`}
+                                      style={{ width: `${barWidth}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-gray-500 w-16 text-right">
+                                    val: {typeof sig.raw_value === "number" ? sig.raw_value.toFixed(2) : sig.raw_value}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-500">No top signals available.</p>
+                        <p className="text-sm text-gray-500">No SHAP signals available.</p>
                       )}
                     </div>
 
+                    {/* Feature Snapshot */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
                       <h3 className="text-lg font-semibold text-gray-800 mb-3">Feature Snapshot</h3>
                       {fraudResult.features && Object.keys(fraudResult.features).length > 0 ? (
@@ -4061,6 +4100,144 @@ const AdminDashboard = () => {
                   </div>
                 </>
               )}
+
+              {/* Model Performance Section */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800">Model Performance</h3>
+                    <p className="text-sm text-gray-500 mt-0.5">Metrics from the last retraining run</p>
+                  </div>
+                  <button
+                    onClick={fetchModelMetrics}
+                    disabled={modelMetricsLoading}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-60 text-sm"
+                  >
+                    {modelMetricsLoading ? "Loading..." : "Load Metrics"}
+                  </button>
+                </div>
+
+                {modelMetrics && !modelMetrics.available && (
+                  <div className="text-sm text-gray-500 bg-gray-50 rounded-lg p-4">
+                    {modelMetrics.message}
+                  </div>
+                )}
+
+                {modelMetrics && modelMetrics.available && (() => {
+                  const m = modelMetrics.metrics;
+                  const auc   = parseFloat(m.auc)   || null;
+                  const f1    = parseFloat(m.f1)    || null;
+                  const prec  = parseFloat(m.precision) || null;
+                  const rec   = parseFloat(m.recall) || null;
+
+                  return (
+                    <div className="space-y-6">
+                      {/* Version info */}
+                      <div className="text-xs text-gray-500">
+                        <span className="font-medium">Version:</span> {modelMetrics.latestVersion} &nbsp;|&nbsp;
+                        <span className="font-medium">Trained:</span> {m.trained || "unknown"} &nbsp;|&nbsp;
+                        <span className="font-medium">All versions:</span> {modelMetrics.versions.length}
+                      </div>
+
+                      {/* Metric cards */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[
+                          { label: "AUC", value: auc, tip: "1.0 = perfect, 0.5 = random", good: 0.75 },
+                          { label: "F1 Score", value: f1, tip: "Balance of precision & recall", good: 0.65 },
+                          { label: "Precision", value: prec, tip: "Of flagged fraud, how many are real", good: 0.65 },
+                          { label: "Recall", value: rec, tip: "Of real fraud, how many we caught", good: 0.65 },
+                        ].map(({ label, value, tip, good }) => (
+                          <div key={label} className="bg-gray-50 rounded-lg p-4 text-center">
+                            <div className="text-xs text-gray-500 mb-1">{label}</div>
+                            <div className={`text-2xl font-bold ${
+                              value === null ? "text-gray-400"
+                              : value >= good ? "text-green-600"
+                              : value >= good - 0.15 ? "text-orange-500"
+                              : "text-red-500"
+                            }`}>
+                              {value !== null ? (value * 100).toFixed(1) + "%" : "—"}
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">{tip}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Confusion Matrix */}
+                      {m.features && (
+                        <div>
+                          <div className="text-sm font-semibold text-gray-700 mb-3">Confusion Matrix (test set)</div>
+                          {(m.cm_tn || m.cm_fp || m.cm_fn || m.cm_tp) ? (
+                            <div className="inline-block">
+                              <table className="text-sm border-collapse">
+                                <thead>
+                                  <tr>
+                                    <th className="p-2"></th>
+                                    <th className="p-2 text-center text-gray-600 font-medium">Predicted Normal</th>
+                                    <th className="p-2 text-center text-gray-600 font-medium">Predicted Fraud</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr>
+                                    <td className="p-2 text-gray-600 font-medium pr-4">Actual Normal</td>
+                                    <td className="p-2 text-center">
+                                      <div className="w-20 h-20 flex flex-col items-center justify-center rounded-lg bg-green-100 text-green-800 mx-auto">
+                                        <span className="font-bold text-xl">{m.cm_tn}</span>
+                                        <span className="text-xs font-medium">TN</span>
+                                      </div>
+                                    </td>
+                                    <td className="p-2 text-center">
+                                      <div className="w-20 h-20 flex flex-col items-center justify-center rounded-lg bg-red-100 text-red-700 mx-auto">
+                                        <span className="font-bold text-xl">{m.cm_fp}</span>
+                                        <span className="text-xs font-medium">FP</span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td className="p-2 text-gray-600 font-medium pr-4">Actual Fraud</td>
+                                    <td className="p-2 text-center">
+                                      <div className="w-20 h-20 flex flex-col items-center justify-center rounded-lg bg-orange-100 text-orange-700 mx-auto">
+                                        <span className="font-bold text-xl">{m.cm_fn}</span>
+                                        <span className="text-xs font-medium">FN</span>
+                                      </div>
+                                    </td>
+                                    <td className="p-2 text-center">
+                                      <div className="w-20 h-20 flex flex-col items-center justify-center rounded-lg bg-green-100 text-green-800 mx-auto">
+                                        <span className="font-bold text-xl">{m.cm_tp}</span>
+                                        <span className="text-xs font-medium">TP</span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                              <div className="mt-3 text-xs text-gray-500 space-y-1">
+                                <div><span className="font-medium text-green-700">TP</span> = Correctly flagged fraud &nbsp; <span className="font-medium text-green-700">TN</span> = Correctly cleared normal</div>
+                                <div><span className="font-medium text-red-600">FP</span> = Normal flagged as fraud &nbsp; <span className="font-medium text-orange-600">FN</span> = Fraud missed</div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-gray-400 bg-gray-50 rounded p-3">
+                              Confusion matrix numbers not available. Retrain the model to generate them.
+                              <br />Run <code className="bg-gray-100 px-1 rounded">python retrain.py --csv ...</code> to update.
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Feature list */}
+                      {m.features && (
+                        <div>
+                          <div className="text-sm font-semibold text-gray-700 mb-2">Features used ({m.features.split(",").length})</div>
+                          <div className="flex flex-wrap gap-2">
+                            {m.features.replace(/[\[\]']/g, "").split(",").map(f => f.trim()).filter(Boolean).map(f => (
+                              <span key={f} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">{f}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           )}
 

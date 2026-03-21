@@ -64,12 +64,28 @@ async function buildFeatureRow(certificate, walletUsageMap) {
   const walletAddress = certificate.blockchainWalletAddress || null;
   const walletReuseCount = walletAddress ? (walletUsageMap.get(walletAddress) || 0) : 0;
 
-  const likelyFraudLabel = (
-    certificate.isRevoked ||
-    suspiciousAttempts > 0 ||
-    maxSuspiciousScore >= 40 ||
-    failedVerifications > successfulVerifications
-  ) ? 1 : 0;
+  const likelyFraudLabel = (() => {
+    // Require multiple signals before labeling as fraud
+    // A single failed verification or suspicious attempt is NOT enough
+    let fraudSignals = 0;
+
+    // Strong signals (each worth 2 points)
+    if (certificate.isRevoked) fraudSignals += 2;
+    if (maxSuspiciousScore >= 70) fraudSignals += 2;
+    if (failedVerifications > 0 && successfulVerifications === 0 && totalVerifications >= 3) fraudSignals += 2;
+
+    // Medium signals (each worth 1 point)
+    if (suspiciousAttempts >= 3) fraudSignals += 1;
+    if (maxSuspiciousScore >= 40 && maxSuspiciousScore < 70) fraudSignals += 1;
+    if (totalVerifications > 0 && failedVerifications / totalVerifications > 0.6) fraudSignals += 1;
+    if (ipSet.size > 20) fraudSignals += 1;
+
+    // Weak signals (each worth 0.5 points)
+    if (suspiciousAttempts >= 1 && suspiciousAttempts < 3) fraudSignals += 0.5;
+
+    // Need at least 2 points to be labeled fraud
+    return fraudSignals >= 2 ? 1 : 0;
+  })();
 
   return {
     certificate_id: certificate.certificateId,
@@ -166,7 +182,27 @@ async function main() {
   console.log(`Likely normal rows: ${normalCount}`);
   console.log(`CSV output: ${outputPath}`);
   console.log('');
-  console.log('Next step: Use this CSV in Python for EDA + XGBoost training.');
+
+  // Data quality check — tell user if they have enough to retrain
+  const fraudRate = fraudCount / rows.length;
+  console.log('='.repeat(80));
+  console.log('📊 DATA QUALITY REPORT');
+  console.log('='.repeat(80));
+  if (rows.length < 200) {
+    console.log(`⚠️  Only ${rows.length} rows — need at least 200 to retrain reliably.`);
+    console.log('   Keep collecting real data. Run this export again later.');
+  } else if (fraudRate < 0.05) {
+    console.log(`⚠️  Fraud rate is very low (${(fraudRate * 100).toFixed(1)}%).`);
+    console.log('   Model may struggle to learn fraud patterns. Consider generating more synthetic fraud cases.');
+  } else if (fraudRate > 0.5) {
+    console.log(`⚠️  Fraud rate is very high (${(fraudRate * 100).toFixed(1)}%).`);
+    console.log('   Check your labeling logic — real fraud rate should be 5-20%.');
+  } else {
+    console.log(`✅ Dataset looks good! ${rows.length} rows, ${(fraudRate * 100).toFixed(1)}% fraud rate.`);
+    console.log('   Ready to retrain. Run:');
+    console.log(`   cd ai-service && python retrain.py --csv ${outputPath}`);
+  }
+  console.log('');
 
   await mongoose.disconnect();
 }

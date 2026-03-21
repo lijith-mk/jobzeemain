@@ -128,18 +128,14 @@ async function checkCertificateEligibility(userId, courseId) {
       };
     }
 
-    // 5. Check mandatory quizzes (only for separate lesson structure)
+    // 5. Check mandatory quizzes
     let quizEligibility;
     if (lessonsToCheck[0]?.isEmbedded) {
-      // Skip quiz check for embedded lessons (old structure doesn't use microQuizzes)
-      quizEligibility = {
-        eligible: true,
-        details: {
-          totalMandatoryQuizzes: 0,
-          passedMandatoryQuizzes: 0,
-          averageQuizScore: 0
-        }
-      };
+      // Old embedded structure: check quizScores stored on CourseProgress
+      quizEligibility = await checkEmbeddedQuizEligibility(userId, courseId, course, progress);
+      if (!quizEligibility.eligible) {
+        return quizEligibility;
+      }
     } else {
       quizEligibility = await checkQuizEligibility(userId, courseId, lessons);
       if (!quizEligibility.eligible) {
@@ -168,6 +164,102 @@ async function checkCertificateEligibility(userId, courseId) {
       eligible: false,
       message: 'Error checking eligibility',
       error: error.message
+    };
+  }
+}
+
+/**
+ * Check quiz eligibility for old embedded lesson structure
+ * Uses quizScores stored on CourseProgress (set when user completes a quiz in the old structure)
+ * @param {String} userId
+ * @param {String} courseId
+ * @param {Object} course - Course document
+ * @param {Object} progress - CourseProgress document
+ * @returns {Object} - { eligible, message, details }
+ */
+async function checkEmbeddedQuizEligibility(userId, courseId, course, progress) {
+  try {
+    // Collect all quiz-type lessons from embedded modules
+    const quizLessons = [];
+    if (course.modules && course.modules.length > 0) {
+      course.modules.forEach((module, moduleIndex) => {
+        if (module.lessons && module.lessons.length > 0) {
+          module.lessons.forEach((lesson, lessonIndex) => {
+            if (lesson.type === 'quiz' && lesson.isRequired !== false) {
+              quizLessons.push({
+                id: `${moduleIndex}-${lessonIndex}`,
+                title: lesson.title,
+                moduleIndex,
+                lessonIndex
+              });
+            }
+          });
+        }
+      });
+    }
+
+    // No quizzes in this course — pass through
+    if (quizLessons.length === 0) {
+      return {
+        eligible: true,
+        message: 'No mandatory quizzes in this course',
+        details: {
+          totalMandatoryQuizzes: 0,
+          passedMandatoryQuizzes: 0,
+          averageQuizScore: 0
+        }
+      };
+    }
+
+    // Check which quizzes have been scored in CourseProgress.quizScores
+    const quizScores = progress.quizScores || [];
+    const scoredIds = new Set(quizScores.map(q => q.lessonId));
+
+    const notAttempted = quizLessons.filter(q => !scoredIds.has(q.id));
+
+    if (notAttempted.length > 0) {
+      return {
+        eligible: false,
+        message: 'Not all quizzes are completed',
+        details: {
+          totalMandatoryQuizzes: quizLessons.length,
+          passedMandatoryQuizzes: quizLessons.length - notAttempted.length,
+          averageQuizScore: 0,
+          remainingQuizzes: notAttempted.map(q => q.title)
+        }
+      };
+    }
+
+    // All quizzes attempted — calculate average score
+    const relevantScores = quizScores.filter(q => quizLessons.some(ql => ql.id === q.lessonId));
+    const avgScore = relevantScores.length > 0
+      ? Math.round(relevantScores.reduce((sum, q) => {
+          const pct = q.totalQuestions > 0 ? (q.score / q.totalQuestions) * 100 : 0;
+          return sum + pct;
+        }, 0) / relevantScores.length)
+      : 0;
+
+    return {
+      eligible: true,
+      message: 'All quizzes completed',
+      details: {
+        totalMandatoryQuizzes: quizLessons.length,
+        passedMandatoryQuizzes: quizLessons.length,
+        averageQuizScore: avgScore
+      }
+    };
+
+  } catch (error) {
+    console.error('Embedded quiz eligibility check error:', error);
+    // Safe fallback — don't block certificate if check itself errors
+    return {
+      eligible: true,
+      message: 'Quiz check skipped due to error',
+      details: {
+        totalMandatoryQuizzes: 0,
+        passedMandatoryQuizzes: 0,
+        averageQuizScore: 0
+      }
     };
   }
 }
@@ -425,6 +517,7 @@ async function validateCertificateGeneration(userId, courseId) {
 
 module.exports = {
   checkCertificateEligibility,
+  checkEmbeddedQuizEligibility,
   checkQuizEligibility,
   getCertificateMetrics,
   calculateCertificateGrade,

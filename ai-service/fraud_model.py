@@ -46,13 +46,30 @@ class FraudModel:
         self._load()
 
     def _load(self) -> None:
-        if not os.path.exists(self.model_path):
-            self.load_error = f"Model file not found: {self.model_path}"
-            self.loaded = False
-            return
+        # First try the configured/active model path
+        target_path = self.model_path
+
+        # If active model not found, fall back to latest versioned model
+        if not os.path.exists(target_path):
+            models_dir = os.path.dirname(target_path)
+            versioned = sorted(
+                [
+                    f for f in os.listdir(models_dir)
+                    if f.startswith("xgboost_fraud_model_v_") and f.endswith(".pkl")
+                ],
+                reverse=True
+            ) if os.path.isdir(models_dir) else []
+
+            if versioned:
+                target_path = os.path.join(models_dir, versioned[0])
+                print(f"ℹ️  Active model not found, loading latest version: {versioned[0]}")
+            else:
+                self.load_error = f"Model file not found: {self.model_path}"
+                self.loaded = False
+                return
 
         try:
-            with open(self.model_path, "rb") as f:
+            with open(target_path, "rb") as f:
                 self.model = pickle.load(f)
 
             if hasattr(self.model, "feature_names_in_"):

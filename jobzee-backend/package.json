@@ -13,7 +13,8 @@
     "cleanup-user-signins": "node scripts/cleanup-user-signins.js",
     "seed-employer-jobs": "node scripts/seedEmployerJobs.js",
     "ml:generate-synthetic": "node scripts/generateSyntheticCertificateData.js",
-    "ml:export-dataset": "node scripts/exportFraudDataset.js"
+    "ml:export-dataset": "node scripts/exportFraudDataset.js",
+    "ml:retrain": "node scripts/exportFraudDataset.js && echo 'Dataset exported. Now run: cd ../ai-service && python retrain.py --csv data/ml/$(ls -t data/ml/*.csv | head -1)'"
   },
   "keywords": [],
   "author": "",
