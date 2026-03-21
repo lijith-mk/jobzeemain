@@ -138,6 +138,13 @@ const certificateVerificationLogSchema = new mongoose.Schema({
     default: null
   },
 
+  blockchainWalletAddress: {
+    type: String,
+    default: null,
+    index: true,
+    sparse: true
+  },
+
   // Metadata
   timestamp: {
     type: Date,
@@ -172,7 +179,8 @@ certificateVerificationLogSchema.statics.logVerification = async function({
   requestReferer = null,
   responseTime = null,
   blockchainVerified = false,
-  blockchainNetwork = null
+  blockchainNetwork = null,
+  blockchainWalletAddress = null
 }) {
   try {
     // Get attempt count for this certificate
@@ -246,6 +254,7 @@ certificateVerificationLogSchema.statics.logVerification = async function({
       responseTime,
       blockchainVerified,
       blockchainNetwork,
+      blockchainWalletAddress,
       isSuspicious,
       suspiciousReason,
       suspiciousScore,

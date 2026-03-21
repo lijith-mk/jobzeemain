@@ -137,6 +137,7 @@ async function registerCertificateOnBlockchain(certificateId, certificateHash) {
       blockNumber: receipt.blockNumber,
       gasUsed: receipt.gasUsed.toString(),
       blockchainTimestamp,
+      walletAddress: wallet.address,
       network: 'sepolia',
       explorer: `https://sepolia.etherscan.io/tx/${tx.hash}`
     };

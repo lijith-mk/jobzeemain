@@ -56,6 +56,8 @@ export const API_ENDPOINTS = {
   PREDICTIONS: `${API_BASE_URL}/api/predictions`,
   // AI Screening
   SCREENING: `${API_BASE_URL}/api/screening`,
+  // Resume ATS
+  RESUME_ATS: `${API_BASE_URL}/api/resume-ats`,
 };
 
 export default API_BASE_URL;

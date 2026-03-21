@@ -20,6 +20,7 @@ const {
   generateAndSaveSimpleCertificate
 } = require('../utils/simpleCertificateGenerator');
 const { registerCertificateOnBlockchain, isBlockchainConfigured } = require('../services/blockchainService');
+const { scoreCertificateFraud } = require('../services/certificateFraudScoringService');
 
 /**
  * Certificate Controller
@@ -201,6 +202,7 @@ exports.generateCertificate = async (req, res) => {
           // Update certificate with blockchain data
           certificate.blockchainTxHash = blockchainResult.transactionHash;
           certificate.blockchainNetwork = blockchainResult.network;
+          certificate.blockchainWalletAddress = blockchainResult.walletAddress || null;
           certificate.blockchainTimestamp = blockchainResult.blockchainTimestamp 
             ? new Date(blockchainResult.blockchainTimestamp * 1000) 
             : null;
@@ -275,7 +277,7 @@ exports.checkEligibility = async (req, res) => {
 exports.getMyCertificates = async (req, res) => {
   try {
     const userId = req.user?._id || req.user?.id;
-    const { page = 1, limit = 10, sortBy = '-issuedAt' } = req.query;
+    const { page = 1, limit = 10, sortBy = '-issuedAt', includeFraudScores = 'false' } = req.query;
 
     const certificates = await Certificate.find({ userId, isRevoked: false })
       .populate('courseId', 'title thumbnail category level')
@@ -285,9 +287,33 @@ exports.getMyCertificates = async (req, res) => {
 
     const total = await Certificate.countDocuments({ userId, isRevoked: false });
 
+    const includeFraud = String(includeFraudScores).toLowerCase() === 'true';
+
+    let certificatePayload = certificates.map(cert => cert.getPublicData());
+    if (includeFraud) {
+      certificatePayload = await Promise.all(
+        certificates.map(async (cert) => {
+          const publicData = cert.getPublicData();
+          try {
+            const fraudResult = await scoreCertificateFraud(cert.certificateId);
+            publicData.fraudAnalysis = {
+              fraudScore: fraudResult.aiResponse.fraud_score,
+              riskLevel: fraudResult.aiResponse.risk_level,
+              modelLoaded: fraudResult.aiResponse.model_loaded,
+              usedFallback: fraudResult.aiResponse.used_fallback,
+              topSignals: fraudResult.aiResponse.top_signals
+            };
+          } catch (error) {
+            publicData.fraudAnalysis = null;
+          }
+          return publicData;
+        })
+      );
+    }
+
     res.json({
       success: true,
-      certificates: certificates.map(cert => cert.getPublicData()),
+      certificates: certificatePayload,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -510,9 +536,26 @@ exports.verifyCertificate = async (req, res) => {
     // Use verification service with logging
     const verification = await verifyCertificateById(certificateId, requestContext);
 
+    let fraudAnalysis = null;
+    if (verification.valid) {
+      try {
+        const fraudResult = await scoreCertificateFraud(certificateId);
+        fraudAnalysis = {
+          fraudScore: fraudResult.aiResponse.fraud_score,
+          riskLevel: fraudResult.aiResponse.risk_level,
+          modelLoaded: fraudResult.aiResponse.model_loaded,
+          usedFallback: fraudResult.aiResponse.used_fallback,
+          topSignals: fraudResult.aiResponse.top_signals
+        };
+      } catch (fraudError) {
+        console.warn('Fraud scoring unavailable:', fraudError.message);
+      }
+    }
+
     res.json({
       success: verification.valid,
-      ...verification
+      ...verification,
+      fraudAnalysis
     });
 
   } catch (error) {
@@ -554,9 +597,26 @@ exports.verifyCertificateByHash = async (req, res) => {
     // Use verification service with logging
     const verification = await verifyCertificateByHash(certificateHash, requestContext);
 
+    let fraudAnalysis = null;
+    if (verification.valid && verification.certificateId) {
+      try {
+        const fraudResult = await scoreCertificateFraud(verification.certificateId);
+        fraudAnalysis = {
+          fraudScore: fraudResult.aiResponse.fraud_score,
+          riskLevel: fraudResult.aiResponse.risk_level,
+          modelLoaded: fraudResult.aiResponse.model_loaded,
+          usedFallback: fraudResult.aiResponse.used_fallback,
+          topSignals: fraudResult.aiResponse.top_signals
+        };
+      } catch (fraudError) {
+        console.warn('Fraud scoring unavailable:', fraudError.message);
+      }
+    }
+
     res.json({
       success: verification.valid,
-      ...verification
+      ...verification,
+      fraudAnalysis
     });
 
   } catch (error) {
@@ -762,6 +822,43 @@ exports.getCertificateStatistics = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching statistics',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get AI fraud score for a certificate (admin)
+ * GET /api/certificates/admin/:certificateId/fraud-score
+ */
+exports.getCertificateFraudScore = async (req, res) => {
+  try {
+    const { certificateId } = req.params;
+
+    if (!certificateId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Certificate ID is required'
+      });
+    }
+
+    const result = await scoreCertificateFraud(certificateId);
+
+    return res.json({
+      success: true,
+      certificateId: result.certificateId,
+      fraudScore: result.aiResponse.fraud_score,
+      riskLevel: result.aiResponse.risk_level,
+      modelLoaded: result.aiResponse.model_loaded,
+      usedFallback: result.aiResponse.used_fallback,
+      topSignals: result.aiResponse.top_signals,
+      features: result.features
+    });
+  } catch (error) {
+    console.error('Get certificate fraud score error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to calculate fraud score',
       error: error.message
     });
   }

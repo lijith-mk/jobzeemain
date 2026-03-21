@@ -1,4 +1,18 @@
 services:
+  # AI Service (Fraud + Resume Intelligence)
+  - type: web
+    name: jobzee-ai-service
+    runtime: python
+    region: oregon
+    plan: free
+    rootDir: ai-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /fraud-model-health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+
   # Backend API Service
   - type: web
     name: jobzee-backend
@@ -63,6 +77,11 @@ services:
         sync: false
       - key: CONTRACT_ADDRESS
         sync: false
+      - key: AI_SERVICE_URL
+        fromService:
+          type: web
+          name: jobzee-ai-service
+          property: url
 
   # Frontend Static Site
   - type: web

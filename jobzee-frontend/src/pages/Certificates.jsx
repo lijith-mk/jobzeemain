@@ -29,7 +29,7 @@ const Certificates = () => {
       }
 
       const { data } = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/certificates/my-certificates`,
+        `${process.env.REACT_APP_API_URL}/api/certificates/my-certificates?includeFraudScores=true`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -285,6 +285,26 @@ const Certificates = () => {
                       })}
                     </span>
                   </div>
+                  {cert.fraudAnalysis && (
+                    <div className="detail-row">
+                      <span className="detail-label">AI Risk:</span>
+                      <span
+                        className="detail-value"
+                        style={{
+                          textTransform: 'uppercase',
+                          color:
+                            cert.fraudAnalysis.riskLevel === 'high'
+                              ? '#dc2626'
+                              : cert.fraudAnalysis.riskLevel === 'medium'
+                                ? '#d97706'
+                                : '#16a34a',
+                          fontWeight: 700
+                        }}
+                      >
+                        {cert.fraudAnalysis.riskLevel} ({(cert.fraudAnalysis.fraudScore * 100).toFixed(1)}%)
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Skills */}

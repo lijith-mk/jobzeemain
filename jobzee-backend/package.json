@@ -11,7 +11,9 @@
     "init-dashboard-assets": "node scripts/initializeDashboardAssets.js",
     "test-upload": "node scripts/testUpload.js",
     "cleanup-user-signins": "node scripts/cleanup-user-signins.js",
-    "seed-employer-jobs": "node scripts/seedEmployerJobs.js"
+    "seed-employer-jobs": "node scripts/seedEmployerJobs.js",
+    "ml:generate-synthetic": "node scripts/generateSyntheticCertificateData.js",
+    "ml:export-dataset": "node scripts/exportFraudDataset.js"
   },
   "keywords": [],
   "author": "",

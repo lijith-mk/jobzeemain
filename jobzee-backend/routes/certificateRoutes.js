@@ -139,6 +139,17 @@ router.get(
 );
 
 /**
+ * Get AI fraud score for a certificate
+ * GET /api/certificates/admin/:certificateId/fraud-score
+ * Protected: Admin only
+ */
+router.get(
+  '/admin/:certificateId/fraud-score',
+  adminAuth,
+  certificateController.getCertificateFraudScore
+);
+
+/**
  * Revoke a certificate
  * POST /api/certificates/admin/:certificateId/revoke
  * Protected: Admin only

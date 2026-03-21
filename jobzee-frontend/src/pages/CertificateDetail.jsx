@@ -296,6 +296,19 @@ const CertificateDetail = () => {
                 </div>
                 <p>This certificate has been verified and is authentic</p>
               </div>
+              {verificationInfo.fraudAnalysis && (
+                <div style={{ marginBottom: '14px', padding: '12px', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <strong>🧠 AI Fraud Risk</strong>
+                    <span className="network-badge" style={{ textTransform: 'uppercase' }}>
+                      {verificationInfo.fraudAnalysis.riskLevel}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#334155' }}>
+                    Score: {(verificationInfo.fraudAnalysis.fraudScore * 100).toFixed(2)}%
+                  </div>
+                </div>
+              )}
               <div className="verification-details">
                 <div className="verification-row">
                   <span>Verification Hash:</span>

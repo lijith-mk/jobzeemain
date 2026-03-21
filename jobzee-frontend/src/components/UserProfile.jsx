@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { validateEmail, validatePhone, FormValidator } from '../utils/validationUtils';
 import SalaryPrediction from './SalaryPrediction';
@@ -1015,6 +1016,26 @@ const UserProfile = () => {
                   className="hidden"
                 />
                 <p className="text-xs text-gray-500 mt-2">Supported formats: PDF, DOC, DOCX (Max: 10MB)</p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <div className="rounded-xl bg-gradient-to-r from-slate-900 via-indigo-900 to-emerald-700 p-5 text-white shadow-xl ring-1 ring-black/10">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-200">Separate ATS section</p>
+                    <h3 className="mt-2 text-lg font-bold">Analyze a custom ATS resume</h3>
+                    <p className="mt-2 max-w-2xl text-sm text-slate-200">
+                      This is independent from your main profile resume. Upload a dedicated resume, compare it against a job description, and store ATS scores with suggestions.
+                    </p>
+                  </div>
+                  <Link
+                    to="/resume-ats"
+                    className="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:scale-[1.02] hover:bg-slate-100"
+                  >
+                    Open ATS Analyzer
+                  </Link>
+                </div>
               </div>
             </div>
 

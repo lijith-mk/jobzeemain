@@ -50,7 +50,8 @@ async function verifyCertificateById(certificateId, requestContext = {}) {
         verificationMethod: requestContext.method || 'web',
         requestUrl: requestContext.url || null,
         requestReferer: requestContext.referer || null,
-        responseTime: Date.now() - startTime
+        responseTime: Date.now() - startTime,
+        blockchainWalletAddress: certificate.blockchainWalletAddress || null
       });
 
       return {
@@ -78,7 +79,8 @@ async function verifyCertificateById(certificateId, requestContext = {}) {
         verificationMethod: requestContext.method || 'web',
         requestUrl: requestContext.url || null,
         requestReferer: requestContext.referer || null,
-        responseTime: Date.now() - startTime
+        responseTime: Date.now() - startTime,
+        blockchainWalletAddress: certificate.blockchainWalletAddress || null
       });
 
       return {
@@ -175,7 +177,8 @@ async function verifyCertificateById(certificateId, requestContext = {}) {
       requestReferer: requestContext.referer || null,
       responseTime: Date.now() - startTime,
       blockchainVerified: !!certificate.blockchainTxHash,
-      blockchainNetwork: certificate.blockchainNetwork || null
+      blockchainNetwork: certificate.blockchainNetwork || null,
+      blockchainWalletAddress: certificate.blockchainWalletAddress || null
     });
 
     // Step 6: Return successful verification
@@ -214,7 +217,8 @@ async function verifyCertificateById(certificateId, requestContext = {}) {
       verificationMethod: requestContext.method || 'web',
       requestUrl: requestContext.url || null,
       requestReferer: requestContext.referer || null,
-      responseTime: Date.now() - startTime
+      responseTime: Date.now() - startTime,
+      blockchainWalletAddress: null
     }).catch(err => console.error('Failed to log error:', err));
 
     throw new Error(`Verification failed: ${error.message}`);
@@ -346,7 +350,8 @@ async function verifyCertificateByHash(certificateHash, requestContext = {}) {
       requestReferer: requestContext.referer || null,
       responseTime: Date.now() - startTime,
       blockchainVerified: !!certificate.blockchainTxHash,
-      blockchainNetwork: certificate.blockchainNetwork || null
+      blockchainNetwork: certificate.blockchainNetwork || null,
+      blockchainWalletAddress: certificate.blockchainWalletAddress || null
     });
 
     return {

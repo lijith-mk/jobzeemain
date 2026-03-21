@@ -102,6 +102,13 @@ const certificateSchema = new mongoose.Schema({
     enum: ['ethereum', 'polygon', 'binance', 'sepolia', null],
     default: null
   },
+
+  blockchainWalletAddress: {
+    type: String,
+    default: null,
+    index: true,
+    sparse: true
+  },
   
   blockchainTimestamp: {
     type: Date,
@@ -306,6 +313,7 @@ certificateSchema.methods.getPublicData = function() {
     isRevoked: this.isRevoked,
     blockchainTxHash: this.blockchainTxHash,
     blockchainNetwork: this.blockchainNetwork,
+    blockchainWalletAddress: this.blockchainWalletAddress,
     completionMetrics: this.completionMetrics,
     skillsAchieved: this.skillsAchieved,
     grade: this.grade,

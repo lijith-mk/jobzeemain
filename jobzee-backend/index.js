@@ -106,6 +106,7 @@ const learningPathRoutes = require("./routes/learningPathRoutes");
 const microQuizRoutes = require("./routes/microQuizRoutes");
 const certificateRoutes = require("./routes/certificateRoutes");
 const aiJobRecommendationRoutes = require("./routes/aiJobRecommendationRoutes");
+const resumeATSAnalysisRoutes = require("./routes/resumeATSAnalysisRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/employers", employerRoutes);
@@ -142,6 +143,7 @@ app.use("/api/session-payments", sessionPaymentRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/calendar-notes", calendarNoteRoutes);
 app.use("/api/ai-recommendations", aiJobRecommendationRoutes);
+app.use("/api/resume-ats", resumeATSAnalysisRoutes);
 app.use("/api/tests", testRoutes);
 app.use("/api/employer-tests", employerTestRoutes);
 app.use("/api/employer-questions", employerQuestionBankRoutes);

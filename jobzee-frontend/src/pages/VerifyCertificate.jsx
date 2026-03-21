@@ -282,6 +282,37 @@ const VerifyCertificate = () => {
                       )}
                     </div>
                   )}
+                  {verificationResult.fraudAnalysis && (
+                    <div className="security-item" style={{ alignItems: 'flex-start' }}>
+                      <span className="label">AI Fraud Analysis:</span>
+                      <div>
+                        <div
+                          className="status-badge"
+                          style={{
+                            marginBottom: '6px',
+                            backgroundColor:
+                              verificationResult.fraudAnalysis.riskLevel === 'high'
+                                ? '#fee2e2'
+                                : verificationResult.fraudAnalysis.riskLevel === 'medium'
+                                  ? '#fef3c7'
+                                  : '#dcfce7',
+                            color:
+                              verificationResult.fraudAnalysis.riskLevel === 'high'
+                                ? '#991b1b'
+                                : verificationResult.fraudAnalysis.riskLevel === 'medium'
+                                  ? '#92400e'
+                                  : '#166534',
+                            border: '1px solid rgba(0,0,0,0.08)'
+                          }}
+                        >
+                          {verificationResult.fraudAnalysis.riskLevel.toUpperCase()} RISK
+                        </div>
+                        <div className="blockchain-date">
+                          Score: {(verificationResult.fraudAnalysis.fraudScore * 100).toFixed(2)}%
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <p className="security-note">
                   ✓ This certificate has been cryptographically verified using SHA-256 hashing

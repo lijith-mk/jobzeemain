@@ -101,6 +101,7 @@ import QuizAttempts from "./pages/QuizAttempts";
 import Certificates from "./pages/Certificates";
 import CertificateDetail from "./pages/CertificateDetail";
 import VerifyCertificate from "./pages/VerifyCertificate";
+import ResumeATSAnalyzer from "./pages/ResumeATSAnalyzer";
 
 function App() {
   // Initialize session manager and handle auto-logout
@@ -197,6 +198,7 @@ function App() {
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/user-profile" element={<UserProfile />} />
+            <Route path="/resume-ats" element={<ResumeATSAnalyzer />} />
 
             {/* User Password Reset Routes */}
             <Route path="/forgot-password" element={<ForgotPassword />} />

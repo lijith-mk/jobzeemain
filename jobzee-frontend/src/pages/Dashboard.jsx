@@ -1141,6 +1141,23 @@ const Dashboard = () => {
                 </svg>
               </Link>
 
+              <Link
+                to="/resume-ats"
+                className="group flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-emerald-50 rounded-xl hover:from-slate-100 hover:to-emerald-100 transition-all duration-300 border border-emerald-100"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-emerald-600 rounded-lg group-hover:bg-emerald-700 transition-colors">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-6m3 6V7m3 10v-3m6 7H3a2 2 0 01-2-2V5a2 2 0 012-2h18a2 2 0 012 2v14a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <span className="font-medium text-gray-900">ATS Analyzer</span>
+                </div>
+                <svg className="w-5 h-5 text-gray-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+
             </div>
           </div>
 

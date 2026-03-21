@@ -8,7 +8,7 @@ const Layout = ({ children }) => {
 
   // Hide global navbar/footer on admin and app dashboards
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const hiddenNavbarRoutes = ['/dashboard', '/employer/dashboard', '/participate', '/profile', '/user-profile', '/payments', '/my-tickets', '/my-events', '/mentor/dashboard', '/mentor/calendar', '/mentor/sessions', '/mentor/availability', '/messages', '/mentor/messages'];
+  const hiddenNavbarRoutes = ['/dashboard', '/employer/dashboard', '/participate', '/profile', '/user-profile', '/resume-ats', '/payments', '/my-tickets', '/my-events', '/mentor/dashboard', '/mentor/calendar', '/mentor/sessions', '/mentor/availability', '/messages', '/mentor/messages'];
   const isEventDetailsRoute = location.pathname.startsWith('/events/') && location.pathname !== '/events';
   const shouldHideNavbar = isAdminRoute || hiddenNavbarRoutes.includes(location.pathname) || isEventDetailsRoute;
 

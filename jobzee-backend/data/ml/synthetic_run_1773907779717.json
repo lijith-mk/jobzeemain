@@ -1,0 +1,17 @@
+{
+  "runTag": "SYNTH-1773907779404",
+  "args": {
+    "count": 100,
+    "onchain": false,
+    "logsPerCertMin": 2,
+    "logsPerCertMax": 8
+  },
+  "summary": {
+    "created": 0,
+    "onchainSuccess": 0,
+    "onchainFailed": 0,
+    "logsCreated": 0,
+    "failedRecords": 100
+  },
+  "createdIds": []
+}
