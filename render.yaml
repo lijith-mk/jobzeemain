@@ -14,6 +14,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
+      - key: ENABLE_SEMANTIC_MATCH
+        value: "false"
 
   # Backend API Service
   - type: web

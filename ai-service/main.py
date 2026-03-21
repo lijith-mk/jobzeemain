@@ -10,6 +10,7 @@ Endpoints:
 This service is separate from the user profile resume upload flow.
 """
 
+import os
 from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -19,7 +20,6 @@ from pydantic import BaseModel
 from ats_scorer import compute_ats_score
 from resume_extractor import extract_structured_info
 from resume_parser import extract_text
-from semantic_matcher import compute_semantic_match
 from suggestion_engine import generate_resume_suggestions
 from fraud_model import FraudModel
 
@@ -231,11 +231,19 @@ async def parse_resume(file: UploadFile = File(...)):
 
 @app.post("/match-resume", response_model=SemanticMatchResponse)
 async def match_resume(file: UploadFile = File(...), job_description: str = Form(...)):
+    if os.getenv("ENABLE_SEMANTIC_MATCH", "false").lower() != "true":
+        raise HTTPException(
+            status_code=503,
+            detail="Semantic matching is disabled in this deployment.",
+        )
+
     if not job_description.strip():
         raise HTTPException(status_code=400, detail="job_description must not be empty.")
 
     filename, text = await _read_and_extract(file)
     try:
+        from semantic_matcher import compute_semantic_match
+
         structured = extract_structured_info(text)
         match = compute_semantic_match(
             resume_text=text,
