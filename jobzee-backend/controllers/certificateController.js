@@ -602,19 +602,19 @@ exports.verifyCertificate = async (req, res) => {
           riskLevel: fraudResult.aiResponse.risk_level,
           modelLoaded: fraudResult.aiResponse.model_loaded,
           usedFallback: fraudResult.aiResponse.used_fallback,
-          topSignals: fraudResult.aiResponse.top_signals
+          topSignals: fraudResult.aiResponse.top_signals,
+          timestamp: new Date().toISOString()
         };
       } catch (fraudError) {
-        console.warn('⚠️  Fraud scoring failed - using fallback:', fraudError.message);
-        // Provide fallback fraud analysis so frontend always shows something
+        console.warn('⚠️  Fraud scoring unavailable:', fraudError.message);
         fraudAnalysis = {
           fraudScore: 0.08,
           riskLevel: 'low',
           modelLoaded: false,
           usedFallback: true,
-          topSignals: [
-            { feature: 'blockchain_verified', value: true, impact: -0.08 }
-          ]
+          topSignals: [],
+          timestamp: new Date().toISOString(),
+          error: 'AI service temporarily unavailable'
         };
       }
     }

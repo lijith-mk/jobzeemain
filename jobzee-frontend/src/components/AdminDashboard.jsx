@@ -24,6 +24,15 @@ const AdminDashboard = () => {
   const [fraudCertificateId, setFraudCertificateId] = useState("");
   const [fraudScoreLoading, setFraudScoreLoading] = useState(false);
   const [fraudResult, setFraudResult] = useState(null);
+  const [highRiskCerts, setHighRiskCerts] = useState([]);
+  const [fraudAnalytics, setFraudAnalytics] = useState({
+    totalCertificates: 0,
+    highRiskCount: 0,
+    mediumRiskCount: 0,
+    lowRiskCount: 0,
+    avgFraudScore: 0,
+    riskDistribution: []
+  });
   const [modelMetrics, setModelMetrics] = useState(null);
   const [modelMetricsLoading, setModelMetricsLoading] = useState(false);
   const [users, setUsers] = useState([]);
@@ -2325,6 +2334,70 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchFraudAnalytics = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      // Fetch certificates with fraud scores (simulated analytics)
+      const response = await fetch(
+        `${API_BASE_URL}/api/certificates/verify?includeFraudScores=true&limit=100`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const certs = data.certificates || [];
+        
+        // Calculate fraud analytics
+        let highRisk = 0, mediumRisk = 0, lowRisk = 0;
+        let totalScore = 0;
+        const highRiskList = [];
+
+        certs.forEach(cert => {
+          const score = cert.fraudAnalysis?.fraudScore || 0;
+          totalScore += score;
+
+          if (score >= 0.75) {
+            highRisk++;
+            if (highRiskList.length < 10) {
+              highRiskList.push({
+                certificateId: cert.certificateId,
+                userName: cert.userName,
+                fraudScore: score,
+                riskLevel: 'HIGH',
+                issuedAt: cert.issuedAt
+              });
+            }
+          } else if (score >= 0.45) {
+            mediumRisk++;
+          } else {
+            lowRisk++;
+          }
+        });
+
+        setHighRiskCerts(highRiskList);
+        setFraudAnalytics({
+          totalCertificates: certs.length,
+          highRiskCount: highRisk,
+          mediumRiskCount: mediumRisk,
+          lowRiskCount: lowRisk,
+          avgFraudScore: certs.length > 0 ? (totalScore / certs.length) : 0,
+          riskDistribution: [
+            { name: 'LOW', value: lowRisk, color: '#10b981' },
+            { name: 'MEDIUM', value: mediumRisk, color: '#f59e0b' },
+            { name: 'HIGH', value: highRisk, color: '#ef4444' }
+          ]
+        });
+      }
+    } catch (error) {
+      console.error("Fraud analytics fetch error:", error);
+      toast.error("Failed to load fraud analytics");
+    }
+  };
+
   const fetchModelMetrics = async () => {
     try {
       setModelMetricsLoading(true);
@@ -4012,8 +4085,98 @@ const AdminDashboard = () => {
                   >
                     {fraudScoreLoading ? "Checking..." : "Check Fraud Score"}
                   </button>
+                  <button
+                    type="button"
+                    onClick={fetchFraudAnalytics}
+                    className="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700"
+                  >
+                    📊 Load Analytics
+                  </button>
                 </form>
               </div>
+
+              {/* Fraud Analytics Dashboard */}
+              {fraudAnalytics.totalCertificates > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800">Platform-wide Fraud Analytics</h3>
+                  
+                  {/* Risk Statistics Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-white rounded-lg shadow-sm p-4">
+                      <div className="text-sm text-gray-600">Total Certificates</div>
+                      <div className="text-2xl font-bold text-gray-900">{fraudAnalytics.totalCertificates}</div>
+                      <div className="text-xs text-gray-400 mt-1">Analyzed</div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm p-4">
+                      <div className="text-sm text-gray-600">🔴 High Risk</div>
+                      <div className="text-2xl font-bold text-red-600">{fraudAnalytics.highRiskCount}</div>
+                      <div className="text-xs text-gray-400 mt-1">{fraudAnalytics.totalCertificates > 0 ? ((fraudAnalytics.highRiskCount / fraudAnalytics.totalCertificates) * 100).toFixed(1) : 0}%</div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm p-4">
+                      <div className="text-sm text-gray-600">🟡 Medium Risk</div>
+                      <div className="text-2xl font-bold text-orange-600">{fraudAnalytics.mediumRiskCount}</div>
+                      <div className="text-xs text-gray-400 mt-1">{fraudAnalytics.totalCertificates > 0 ? ((fraudAnalytics.mediumRiskCount / fraudAnalytics.totalCertificates) * 100).toFixed(1) : 0}%</div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm p-4">
+                      <div className="text-sm text-gray-600">Avg Fraud Score</div>
+                      <div className="text-2xl font-bold text-gray-900">{(fraudAnalytics.avgFraudScore * 100).toFixed(2)}%</div>
+                      <div className="text-xs text-gray-400 mt-1">Platform average</div>
+                    </div>
+                  </div>
+
+                  {/* Risk Distribution Chart and High Risk Certs */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Risk Distribution */}
+                    <div className="bg-white rounded-lg shadow-sm p-4">
+                      <div className="text-sm font-semibold text-gray-800 mb-3">Risk Distribution</div>
+                      <div className="space-y-3">
+                        {fraudAnalytics.riskDistribution.map(risk => {
+                          const percent = fraudAnalytics.totalCertificates > 0 ? ((risk.value / fraudAnalytics.totalCertificates) * 100) : 0;
+                          return (
+                            <div key={risk.name}>
+                              <div className="flex justify-between text-sm mb-1">
+                                <span className="text-gray-700">{risk.name}</span>
+                                <span className="font-medium">{risk.value} ({percent.toFixed(1)}%)</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                  style={{ width: `${percent}%`, backgroundColor: risk.color }}
+                                  className="h-2 rounded-full"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* High Risk Certificates */}
+                    <div className="bg-white rounded-lg shadow-sm p-4">
+                      <div className="text-sm font-semibold text-gray-800 mb-3">⚠️ High Risk Certificates</div>
+                      {highRiskCerts.length > 0 ? (
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {highRiskCerts.map((cert, idx) => (
+                            <div key={idx} className="p-2 bg-red-50 border border-red-200 rounded text-sm">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1 truncate">
+                                  <div className="font-medium text-gray-900 truncate">{cert.certificateId}</div>
+                                  <div className="text-xs text-gray-600">{cert.userName}</div>
+                                </div>
+                                <div className="text-right ml-2 flex-shrink-0">
+                                  <div className="font-bold text-red-600">{(cert.fraudScore * 100).toFixed(1)}%</div>
+                                  <div className="text-xs text-gray-500">{new Date(cert.issuedAt).toLocaleDateString()}</div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500 text-center py-4">No high-risk certificates detected</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {fraudResult && (
                 <>

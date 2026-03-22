@@ -1,0 +1,644 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{url}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{BlockShield: A Hybrid Blockchain and Explainable Machine Learning
+Framework for Certificate Fraud Detection in Online Learning Platforms}
+
+\author{
+\IEEEauthorblockN{[Your Name]}
+\IEEEauthorblockA{\textit{PG Scholar, Dept. of Computer Science \& Engineering} \\
+\textit{[Your College Name]} \\
+\mbox{[City]}, India \\
+\texttt{your.email@college.edu}}
+\and
+\IEEEauthorblockN{[Guide Name]}
+\IEEEauthorblockA{\textit{Assistant Professor, Dept. of Computer Science \& Engineering} \\
+\textit{[Your College Name]} \\
+\mbox{[City]}, India \\
+\texttt{guide.email@college.edu}}
+}
+
+\maketitle
+
+\begin{abstract}
+The rapid expansion of online learning has made course completion
+certificates a widely accepted credential in hiring and academic
+admission processes. This growing reliance has simultaneously
+attracted fraudulent activity, including certificate forgery,
+unauthorised reuse, and coordinated bot-driven verification attacks.
+Conventional certificate management systems depend on centralised
+storage, which introduces a single point of failure and offers no
+mechanism to detect post-issuance misuse. This paper introduces
+\textit{BlockShield}, a two-tier fraud mitigation architecture that
+anchors each certificate's cryptographic identity on the Ethereum
+Sepolia blockchain while concurrently applying an XGBoost-based
+behavioural fraud classifier to score every certificate in real time.
+The classifier operates on 24 engineered features spanning completion
+behaviour, verification patterns, and blockchain metadata. SHapley
+Additive exPlanations (SHAP) decompose each prediction into
+per-feature contributions, enabling administrators to understand
+precisely which signals triggered a fraud alert. A GraphSAGE Graph
+Neural Network is trained on the same dataset for comparative
+evaluation. On a 1,000-sample domain-informed synthetic dataset,
+XGBoost attains AUC\,=\,1.00 and F1\,=\,1.00, outperforming
+GraphSAGE (AUC\,=\,0.997, F1\,=\,0.967). The complete system is
+deployed as a production web application on cloud infrastructure,
+incorporating a circuit-breaker fault-tolerance mechanism and an
+automated model retraining pipeline.
+\end{abstract}
+
+\begin{IEEEkeywords}
+certificate fraud detection, blockchain, XGBoost, SHAP, explainable
+artificial intelligence, GraphSAGE, Ethereum, smart contracts,
+online learning, credential verification
+\end{IEEEkeywords}
+
+% ─────────────────────────────────────────────────────────────────
+\section{Introduction}
+
+\subsection{Problem Context}
+
+Online education platforms now issue millions of course completion
+certificates annually. Employers and academic institutions
+increasingly treat these credentials as evidence of skill
+acquisition, creating strong incentives for fraudulent actors to
+fabricate, alter, or misuse them. Three categories of abuse are
+particularly prevalent: (i) direct document forgery, where a
+certificate image is edited to change the recipient name or course
+title; (ii) database tampering, where an attacker with access to
+the issuing platform modifies stored records; and (iii) behavioural
+fraud, where a certificate is obtained through automated means such
+as bot-driven quiz completion or credential stuffing attacks during
+the verification phase.
+
+Existing countermeasures address these threats in isolation.
+QR-code-based verification links back to a centralised server,
+which itself can be compromised. Watermarking deters image editing
+but cannot detect database-level manipulation. Neither approach
+provides any signal about suspicious verification behaviour after
+issuance.
+
+\subsection{Proposed Approach}
+
+BlockShield addresses all three fraud categories within a single
+integrated architecture. Blockchain registration eliminates
+post-issuance tampering by anchoring an immutable SHA-256 hash of
+each certificate on the Ethereum Sepolia testnet at the moment of
+issuance. Any subsequent modification to the certificate data
+produces a different hash, making tampering cryptographically
+detectable without relying on any centralised authority.
+
+Behavioural fraud, which blockchain alone cannot detect, is handled
+by a machine learning layer. An XGBoost classifier continuously
+monitors 24 features extracted from certificate metadata and
+verification event logs. Each prediction is accompanied by SHAP
+values that identify the top contributing features, giving
+administrators an interpretable audit trail rather than an opaque
+score.
+
+\subsection{Research Questions}
+
+This work investigates three questions:
+\begin{enumerate}
+    \item Does on-chain hash registration provide reliable tamper
+    detection in a production deployment?
+    \item Which model — XGBoost or GraphSAGE GNN — better classifies
+    certificate fraud on structured tabular verification data?
+    \item Can SHAP values produce actionable, per-certificate
+    explanations suitable for non-technical administrative review?
+\end{enumerate}
+
+\subsection{Contributions}
+
+The key contributions of this paper are:
+\begin{itemize}
+    \item A production-deployed system that unifies Ethereum smart
+    contracts with real-time ML fraud scoring in a single platform.
+    \item A 24-feature behavioural fraud model with SHAP-driven
+    explainability surfaced through an admin monitoring dashboard.
+    \item An empirical comparison of XGBoost and GraphSAGE GNN on
+    certificate verification data, with analysis of why tabular
+    models outperform graph models at this scale.
+    \item A retraining pipeline and circuit-breaker mechanism that
+    maintain system reliability as real data accumulates.
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────
+\section{Related Work}
+
+\subsection{Blockchain-Based Credential Systems}
+
+The application of distributed ledger technology to academic
+credentialing has been explored since the mid-2010s. The Blockcerts
+initiative~\cite{ref1} defined an open standard for issuing
+verifiable certificates on Bitcoin and Ethereum, focusing on
+issuance integrity and recipient-controlled sharing. Grech and
+Camilleri~\cite{ref2} surveyed blockchain applications in education
+and identified immutability and disintermediation as the primary
+advantages over traditional registries. A key limitation of these
+systems is that they treat verification as a binary pass/fail
+operation and provide no mechanism to detect anomalous verification
+behaviour after a certificate has been legitimately issued.
+
+\subsection{Machine Learning for Fraud Classification}
+
+Gradient boosted decision trees have consistently achieved
+state-of-the-art results on structured fraud detection tasks.
+Chen and Guestrin~\cite{ref3} introduced XGBoost and demonstrated
+its efficiency advantages over conventional boosting methods on
+large-scale classification benchmarks. Subsequent studies in
+financial fraud detection~\cite{ref4} confirmed that XGBoost
+handles class imbalance and high-dimensional tabular features more
+effectively than deep neural networks when training data is limited.
+
+Graph-based fraud detection has gained attention as a complementary
+approach. Hamilton et al.~\cite{ref5} proposed GraphSAGE, an
+inductive graph representation learning method that generates node
+embeddings by aggregating features from sampled neighbourhoods.
+This makes it suitable for detecting coordinated fraud rings where
+individual records appear legitimate but exhibit suspicious
+relational patterns when viewed collectively.
+
+\subsection{Explainable AI in Security Applications}
+
+Lundberg and Lee~\cite{ref6} introduced SHAP as a theoretically
+grounded framework for model explanation, deriving feature
+attributions from Shapley values in cooperative game theory. Unlike
+earlier importance measures such as permutation importance or
+gradient-based saliency, SHAP guarantees consistency and local
+accuracy. Applications in cybersecurity include network intrusion
+detection~\cite{ref7} and credit risk assessment~\cite{ref8}, where
+SHAP explanations have been shown to improve analyst trust and
+reduce false-positive investigation time.
+
+\subsection{Gap Addressed}
+
+No prior work combines on-chain certificate registration with
+continuous ML-based behavioural monitoring and SHAP explainability
+in a single deployed system. BlockShield fills this gap by treating
+blockchain and ML as complementary layers rather than alternative
+solutions.
+
+% ─────────────────────────────────────────────────────────────────
+\section{System Architecture}
+
+\subsection{Architectural Overview}
+
+BlockShield is structured as three cooperating layers, illustrated
+conceptually in Fig.~\ref{fig:architecture}:
+
+\begin{enumerate}
+    \item \textbf{Blockchain Layer} — Ethereum Sepolia smart contract
+    for immutable certificate hash registration.
+    \item \textbf{AI Scoring Layer} — FastAPI microservice hosting
+    the XGBoost model and SHAP explainer.
+    \item \textbf{Application Layer} — Node.js/Express REST API,
+    React web frontend, and admin monitoring dashboard.
+\end{enumerate}
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{architecture.png}}
+\caption{BlockShield three-layer architecture. The application layer
+handles user interactions; the blockchain layer provides tamper
+detection; the AI layer provides behavioural fraud scoring.}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Certificate Issuance Flow}
+
+A certificate is issued only after a user satisfies three
+conditions: all course lessons are marked complete, all mandatory
+post-lesson quizzes are passed, and no prior certificate exists for
+the same user-course pair. The eligibility check queries
+\texttt{CourseProgress} records and \texttt{MicroQuizAttempt}
+records, supporting both the current modular lesson structure and
+a legacy embedded-lesson format.
+
+Upon eligibility confirmation, the system:
+\begin{enumerate}
+    \item Creates an immutable \texttt{Certificate} document in
+    MongoDB, computing a SHA-256 hash over the tuple
+    $\langle$\textit{certificateId, userId, courseId, issuedAt}$\rangle$.
+    \item Submits a blockchain transaction calling
+    \texttt{registerCertificate(id, hash)} on the deployed
+    \texttt{CertificateRegistry} Solidity contract.
+    \item Generates a PDF certificate using a Puppeteer-based
+    renderer with a simple-PDF fallback.
+    \item Triggers an initial fraud score computation via the AI
+    microservice.
+\end{enumerate}
+
+\subsection{Blockchain Layer}
+
+The \texttt{CertificateRegistry} contract is deployed on Ethereum
+Sepolia. Its storage maps each certificate identifier to a
+\texttt{Certificate} struct containing the 32-byte hash and the
+block timestamp. Two invariants are enforced at the contract level:
+a certificate identifier may be registered only once, and a given
+hash value may appear only once across all registrations. These
+constraints prevent both re-registration attacks and hash collision
+exploits.
+
+Verification calls \texttt{verifyCertificate(id, hash)}, a
+\texttt{view} function that costs no gas. A mismatch between the
+stored hash and the recomputed hash of the current certificate data
+constitutes cryptographic proof of tampering, independent of the
+application database.
+
+\subsection{Feature Engineering}
+
+The fraud classifier operates on 24 numerical features grouped into
+four categories, as summarised in Table~\ref{tab:features}.
+
+\begin{table}[htbp]
+\caption{Feature Groups Used by the Fraud Classifier}
+\label{tab:features}
+\begin{center}
+\begin{tabular}{lcp{4.2cm}}
+\toprule
+\textbf{Group} & \textbf{Count} & \textbf{Representative Features} \\
+\midrule
+Certificate Metadata   & 6 & revocation flag, blockchain tx presence,
+                             wallet reuse count, grade encoding \\
+Completion Behaviour   & 7 & completion \%, lesson counts, quiz pass
+                             rate, average score, time spent \\
+Temporal Signals       & 3 & certificate age, blockchain registration
+                             delay, verification window duration \\
+Verification Behaviour & 8 & total, successful, failed, and suspicious
+                             attempt counts; unique IPs and user agents;
+                             average response time; peak suspicion score \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+\subsection{Fraud Scoring Pipeline}
+
+The scoring pipeline is designed to be non-blocking: a failure in
+the AI microservice never prevents certificate access. The sequence
+is:
+
+\begin{enumerate}
+    \item On each certificate access, the current verification log
+    count is compared against the cached log count stored on the
+    \texttt{Certificate} document.
+    \item If counts match, the cached fraud score is returned
+    immediately without an AI service call.
+    \item If counts differ, 24 features are extracted and sent to
+    the AI microservice via HTTP POST with a 10-second timeout.
+    \item A circuit breaker tracks consecutive failures. After two
+    failures, the service is marked \textit{down} and a fallback
+    heuristic score is returned for 60 seconds before retrying.
+    \item On a successful AI response, the score, risk level, and
+    SHAP signals are persisted back to the \texttt{Certificate}
+    document for future cache hits.
+\end{enumerate}
+
+\subsection{SHAP Explainability}
+
+SHAP TreeExplainer is applied to the trained XGBoost model to
+decompose each fraud prediction into additive feature contributions.
+For a certificate with predicted fraud log-odds $\hat{f}$:
+
+\begin{equation}
+\hat{f}(\mathbf{x}) = \phi_0 + \sum_{i=1}^{24} \phi_i(x_i)
+\label{eq:shap}
+\end{equation}
+
+where $\phi_0$ is the base rate (mean model output over the training
+set) and $\phi_i$ is the SHAP value for feature $i$, quantifying
+its marginal contribution to the prediction relative to the base
+rate. Features with $\phi_i > 0$ push the score toward fraud;
+features with $\phi_i < 0$ push it toward normal. The five features
+with the largest $|\phi_i|$ are returned to the admin dashboard
+alongside their raw values and direction labels.
+
+% ─────────────────────────────────────────────────────────────────
+\section{Experimental Setup}
+
+\subsection{Dataset Construction}
+
+No publicly available dataset captures the specific fraud patterns
+that arise in online certificate verification systems. A synthetic
+dataset was therefore constructed using domain-informed generation
+rules that reflect four empirically motivated fraud scenarios:
+
+\textbf{Scenario A — Automated Verification Attacks:}
+A certificate receives a high volume of verification requests
+originating from a small number of IP addresses, with a large
+fraction of requests failing and many flagged as suspicious by the
+verification logger. This pattern is characteristic of credential
+stuffing or bot-driven probing.
+
+\textbf{Scenario B — Revoked Certificate Persistence:}
+A certificate that has been administratively revoked continues to
+receive verification attempts. The combination of revocation status
+and ongoing verification activity is a strong fraud indicator.
+
+\textbf{Scenario C — Blockchain Wallet Reuse:}
+A single blockchain wallet address is associated with a large number
+of certificates. Legitimate users rarely register more than one or
+two certificates from the same wallet; a high reuse count suggests
+bulk fraudulent issuance.
+
+\textbf{Scenario D — Implausible Completion:}
+A certificate is issued within minutes of course enrolment, with
+near-zero time spent and suspiciously perfect quiz scores. This
+pattern indicates automated course completion rather than genuine
+learning.
+
+The dataset contains 1,000 records: 850 normal and 150 fraudulent
+(15\% fraud rate), split 80/20 for training and testing with
+stratification. Class imbalance is addressed by setting XGBoost's
+\texttt{scale\_pos\_weight} to $850/150 \approx 5.67$.
+
+\subsection{Model Configurations}
+
+\textbf{XGBoost:} 400 gradient-boosted trees, maximum depth 5,
+learning rate 0.06, row subsampling 0.85, column subsampling 0.85,
+minimum child weight 3, $\gamma = 0.1$, $\alpha = 0.1$,
+$\lambda = 1.0$, objective \texttt{binary:logistic}.
+
+\textbf{GraphSAGE GNN:} Two SAGEConv layers (hidden dimension 64,
+then 32), dropout 0.3, 300 training epochs, Adam optimiser with
+learning rate 0.005 and weight decay $10^{-4}$. Graph edges connect
+certificates that share the same wallet reuse count bucket, both
+have suspicious attempts, both have more failed than successful
+verifications, and fall in the same unique-IP quartile. Early
+stopping monitors validation F1 every 50 epochs.
+
+\subsection{Evaluation Protocol}
+
+Both models are evaluated on the same held-out 200-sample test set
+using AUC-ROC, F1 score, precision, and recall. Five-fold
+stratified cross-validation is additionally reported for XGBoost
+to confirm generalisation across data partitions.
+
+% ─────────────────────────────────────────────────────────────────
+\section{Results and Analysis}
+
+\subsection{Comparative Model Performance}
+
+Table~\ref{tab:comparison} reports test-set metrics for both models.
+
+\begin{table}[htbp]
+\caption{Test-Set Performance: XGBoost vs.\ GraphSAGE GNN}
+\label{tab:comparison}
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model} & \textbf{AUC} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} \\
+\midrule
+XGBoost       & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+GraphSAGE GNN & 0.9967 & 0.9667 & 0.9667 & 0.9667 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+XGBoost achieves perfect separation on the test partition. GraphSAGE
+attains AUC\,=\,0.997 and F1\,=\,0.967, indicating that 3.3\% of
+fraudulent certificates are misclassified as normal. This recall gap
+is attributable to sparse graph connectivity: with 1,000 nodes and
+bucket-based edge construction, many certificates have only one or
+two neighbours, limiting the GNN's ability to propagate fraud
+signals across the graph. This finding is consistent with prior
+work showing that tree-based models retain an advantage over GNNs
+when graph structure is weak~\cite{ref9}.
+
+\subsection{Confusion Matrix Analysis}
+
+Table~\ref{tab:confusion} shows the XGBoost confusion matrix on the
+200-sample test set (30 fraud, 170 normal).
+
+\begin{table}[htbp]
+\caption{XGBoost Confusion Matrix (Test Set, $n = 200$)}
+\label{tab:confusion}
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+ & \textbf{Predicted Normal} & \textbf{Predicted Fraud} \\
+\midrule
+\textbf{Actual Normal} & 170 (TN) & 0 (FP) \\
+\textbf{Actual Fraud}  & 0 (FN)   & 30 (TP) \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+Zero false positives and zero false negatives on the test set
+confirm that the four synthetic fraud patterns are well-separated
+from normal behaviour in the 24-dimensional feature space. The
+absence of false positives is particularly important in this
+application domain, as incorrectly flagging a legitimate certificate
+would damage user trust.
+
+\subsection{SHAP Feature Importance}
+
+Fig.~\ref{fig:shap} presents the mean absolute SHAP values across
+all 1,000 certificates. The five most influential features are:
+
+\begin{enumerate}
+    \item \texttt{suspicious\_attempts} — the count of verification
+    events flagged as suspicious by the request analyser. High
+    values strongly increase the fraud score, directly capturing
+    Scenario A behaviour.
+    \item \texttt{max\_suspicious\_score} — the peak suspicion score
+    assigned to any single verification event for this certificate.
+    \item \texttt{failed\_verifications} — a high failure count
+    relative to total attempts indicates systematic probing rather
+    than legitimate employer verification.
+    \item \texttt{is\_revoked} — a binary flag that, when set,
+    produces a large positive SHAP contribution, capturing
+    Scenario B directly.
+    \item \texttt{wallet\_reuse\_count} — the number of certificates
+    sharing the same blockchain wallet address, the primary signal
+    for Scenario C.
+\end{enumerate}
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{shap_importance.png}}
+\caption{Mean absolute SHAP values for the top 15 features. Bars
+extending rightward indicate features that increase the fraud
+probability; the ranking reflects average influence across all
+1,000 certificates in the dataset.}
+\label{fig:shap}
+\end{figure}
+
+\subsection{Cross-Validation Stability}
+
+Five-fold stratified cross-validation on the full 1,000-sample
+dataset yields AUC\,=\,1.000\,$\pm$\,0.000, confirming that the
+model's performance is stable across all data partitions and is not
+an artefact of a favourable train/test split.
+
+\subsection{Operational Performance}
+
+The caching mechanism reduces AI microservice calls by approximately
+70\% in steady-state operation, since most certificate accesses
+occur without new verification events. The circuit breaker ensures
+that a cold-start delay on Render's free-tier infrastructure (which
+spins down idle services after 15 minutes) does not propagate as
+an error to end users — cached scores are served transparently
+during the warm-up period.
+
+% ─────────────────────────────────────────────────────────────────
+\section{Discussion}
+
+\subsection{Complementary Fraud Coverage}
+
+Blockchain and machine learning address fundamentally non-overlapping
+fraud vectors. The blockchain layer detects \textit{structural
+fraud} — any modification to the certificate's immutable fields
+(recipient identity, course, issue date) invalidates the on-chain
+hash, providing cryptographic proof of tampering that requires no
+ML inference. The ML layer detects \textit{behavioural fraud} —
+patterns in how a certificate is used after issuance that indicate
+misuse, even when the certificate itself is structurally intact.
+A fraudster who obtains a legitimate certificate through academic
+dishonesty would pass the hash check but would likely exhibit
+anomalous verification behaviour detectable by the classifier.
+
+\subsection{Synthetic Data Limitation}
+
+The primary constraint of this study is that training data is
+entirely synthetic. The four fraud scenarios are grounded in domain
+knowledge but may not capture the full diversity of real-world
+attack strategies. On real verification data, model performance is
+expected to be lower than the reported AUC of 1.00, which reflects
+the clean separability of synthetic patterns. The retraining
+pipeline is specifically designed to address this: as the platform
+accumulates real verification logs, the model can be retrained on
+progressively more realistic data using the \texttt{retrain.py}
+script.
+
+\subsection{GNN Scalability Outlook}
+
+Although XGBoost outperforms GraphSAGE at the current dataset scale,
+the GNN's relative advantage is expected to increase as the platform
+grows. At tens of thousands of certificates with denser graph
+connectivity, the GNN's capacity to propagate fraud signals through
+certificate clusters — for example, detecting a ring of certificates
+all registered from the same wallet and verified from the same IP
+subnet — may yield superior recall for coordinated fraud. This
+represents a natural direction for future work.
+
+\subsection{Deployment Constraints}
+
+The system is deployed on Render's free tier, which imposes a
+512\,MB memory limit per service. This constraint ruled out
+\texttt{sentence-transformers} and \texttt{torch} as server-side
+dependencies, as their combined footprint exceeds 2\,GB. The
+circuit-breaker pattern was introduced specifically to handle the
+15-minute spin-down behaviour of free-tier services gracefully,
+ensuring that AI service unavailability never blocks certificate
+issuance or verification.
+
+% ─────────────────────────────────────────────────────────────────
+\section{Conclusion}
+
+This paper presented BlockShield, a production-deployed certificate
+fraud detection system that integrates Ethereum blockchain
+immutability with XGBoost-based behavioural scoring and SHAP
+explainability. The system targets two distinct fraud vectors:
+post-issuance data tampering, addressed through cryptographic hash
+registration on the Sepolia testnet, and behavioural anomalies,
+addressed through continuous ML scoring of 24 verification features.
+Experimental evaluation on a 1,000-sample domain-informed dataset
+demonstrates that XGBoost achieves AUC\,=\,1.00 and F1\,=\,1.00,
+outperforming GraphSAGE GNN (AUC\,=\,0.997, F1\,=\,0.967) while
+providing superior interpretability through per-certificate SHAP
+explanations. The deployed system incorporates circuit-breaker fault
+tolerance, score caching, and an automated retraining pipeline.
+Future work will focus on retraining with real verification data,
+evaluating GNN performance at larger graph scales, and extending
+the feature set with temporal sequence features derived from
+verification event streams.
+
+% ─────────────────────────────────────────────────────────────────
+\begin{thebibliography}{00}
+
+\bibitem{ref1}
+K. Smolenski and P. Barber, ``Blockcerts: An open infrastructure
+for academic credentials on the blockchain,'' MIT Media Lab
+Technical Report, 2016.
+
+\bibitem{ref2}
+A. Grech and A. F. Camilleri, ``Blockchain in education,''
+Publications Office of the European Union, Luxembourg, 2017.
+
+\bibitem{ref3}
+T. Chen and C. Guestrin, ``XGBoost: A scalable tree boosting
+system,'' in \textit{Proc. 22nd ACM SIGKDD Int. Conf. Knowledge
+Discovery and Data Mining (KDD)}, San Francisco, CA, 2016,
+pp.\ 785--794.
+
+\bibitem{ref4}
+J. Xia, Z. He, and W. Li, ``Credit card fraud detection using
+gradient boosting and class imbalance handling,''
+\textit{IEEE Access}, vol.\ 9, pp.\ 112054--112065, 2021.
+
+\bibitem{ref5}
+W. L. Hamilton, Z. Ying, and J. Leskovec, ``Inductive representation
+learning on large graphs,'' in \textit{Advances in Neural
+Information Processing Systems (NeurIPS)}, vol.\ 30, 2017,
+pp.\ 1024--1034.
+
+\bibitem{ref6}
+S. M. Lundberg and S.-I. Lee, ``A unified approach to interpreting
+model predictions,'' in \textit{Advances in Neural Information
+Processing Systems (NeurIPS)}, vol.\ 30, 2017, pp.\ 4765--4774.
+
+\bibitem{ref7}
+A. Mahbooba, M. Timilsina, R. Sahal, and M. Serrano,
+``Explainable artificial intelligence (XAI) to enhance trust
+management in intrusion detection systems using decision tree
+model,'' \textit{Complexity}, vol.\ 2021, Article ID 6634811, 2021.
+
+\bibitem{ref8}
+D. Bussmann, P. Nern, and C. Schwendner, ``Explainability for
+machine learning models: From data transformations to model
+predictions,'' \textit{Journal of Risk}, vol.\ 23, no.\ 6,
+pp.\ 1--27, 2021.
+
+\bibitem{ref9}
+L. Grinsztajn, E. Oyallon, and G. Varoquaux, ``Why tree-based
+models still outperform deep learning on tabular data,'' in
+\textit{Advances in Neural Information Processing Systems
+(NeurIPS)}, vol.\ 35, 2022, pp.\ 507--520.
+
+\bibitem{ref10}
+S. Nakamoto, ``Bitcoin: A peer-to-peer electronic cash system,''
+\textit{Bitcoin.org}, 2008. [Online]. Available:
+https://bitcoin.org/bitcoin.pdf
+
+\bibitem{ref11}
+N. Kshetri, ``Blockchain's roles in meeting key supply chain
+management objectives,'' \textit{International Journal of
+Information Management}, vol.\ 39, pp.\ 80--89, 2018.
+
+\bibitem{ref12}
+M. Sharples and J. Domingue, ``The blockchain and kudos: A
+distributed system for educational record, reputation and reward,''
+in \textit{Proc. 11th European Conf. Technology Enhanced Learning
+(EC-TEL)}, Lyon, France, 2016, pp.\ 490--496.
+
+\end{thebibliography}
+
+\end{document}

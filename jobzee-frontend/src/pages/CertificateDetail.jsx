@@ -299,13 +299,100 @@ const CertificateDetail = () => {
               {verificationInfo.fraudAnalysis && (
                 <div style={{ marginBottom: '14px', padding: '12px', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <strong>🧠 AI Fraud Risk</strong>
-                    <span className="network-badge" style={{ textTransform: 'uppercase' }}>
+                    <strong>🧠 AI Fraud Risk Analysis</strong>
+                    <span className="network-badge" style={{ 
+                      textTransform: 'uppercase',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      backgroundColor: verificationInfo.fraudAnalysis.riskLevel === 'high' ? '#fee2e2' : 
+                                       verificationInfo.fraudAnalysis.riskLevel === 'medium' ? '#fef3c7' : '#dcfce7',
+                      color: verificationInfo.fraudAnalysis.riskLevel === 'high' ? '#991b1b' : 
+                             verificationInfo.fraudAnalysis.riskLevel === 'medium' ? '#92400e' : '#166534'
+                    }}>
                       {verificationInfo.fraudAnalysis.riskLevel}
                     </span>
                   </div>
-                  <div style={{ fontSize: '14px', color: '#334155' }}>
-                    Score: {(verificationInfo.fraudAnalysis.fraudScore * 100).toFixed(2)}%
+                  
+                  {/* Fraud Score */}
+                  <div style={{ fontSize: '13px', color: '#334155', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>Score: <strong>{(verificationInfo.fraudAnalysis.fraudScore * 100).toFixed(2)}%</strong></span>
+                    <div style={{
+                      width: '120px',
+                      height: '6px',
+                      background: '#e5e7eb',
+                      borderRadius: '3px',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        width: `${verificationInfo.fraudAnalysis.fraudScore * 100}%`,
+                        height: '100%',
+                        backgroundColor: verificationInfo.fraudAnalysis.fraudScore >= 0.75 ? '#dc2626' :
+                                        verificationInfo.fraudAnalysis.fraudScore >= 0.45 ? '#f59e0b' : '#10b981',
+                        transition: 'all 0.3s ease'
+                      }}></div>
+                    </div>
+                  </div>
+
+                  {/* Fallback Warning */}
+                  {verificationInfo.fraudAnalysis.usedFallback && (
+                    <div style={{ fontSize: '11px', color: '#ea580c', marginBottom: '8px', padding: '4px 6px', backgroundColor: '#fed7aa', borderRadius: '3px' }}>
+                      ⚠️ Using fallback scoring system
+                    </div>
+                  )}
+
+                  {/* Top Signals */}
+                  {verificationInfo.fraudAnalysis.topSignals && verificationInfo.fraudAnalysis.topSignals.length > 0 && (
+                    <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #e5e7eb' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#4b5563', marginBottom: '6px' }}>
+                        🔍 Top Contributing Factors:
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px' }}>
+                        {verificationInfo.fraudAnalysis.topSignals.slice(0, 5).map((signal, idx) => (
+                          <div key={idx} style={{
+                            padding: '8px',
+                            backgroundColor: '#ffffff',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '4px',
+                            fontSize: '12px'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                              <div style={{ flex: 1 }}>
+                                <span style={{ fontWeight: '600', color: '#1f2937', textTransform: 'capitalize' }}>
+                                  {signal.feature?.replace(/_/g, ' ') || 'unknown'}
+                                </span>
+                                <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+                                  Value: {typeof signal.raw_value === 'number' ? signal.raw_value.toFixed(2) : signal.raw_value}
+                                </div>
+                              </div>
+                              <div style={{
+                                textAlign: 'right',
+                                padding: '4px 8px',
+                                backgroundColor: signal.direction === 'increases_fraud' ? '#fee2e2' : '#dcfce7',
+                                color: signal.direction === 'increases_fraud' ? '#991b1b' : '#166534',
+                                borderRadius: '3px',
+                                fontSize: '10px',
+                                fontWeight: 'bold',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {signal.direction === 'increases_fraud' ? '⬆️ Fraud' : '⬇️ Legit'}
+                              </div>
+                            </div>
+                            {signal.shap_value !== undefined && (
+                              <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '3px' }}>
+                                Impact: {(signal.shap_value * 100).toFixed(1)}%
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Model Info */}
+                  <div style={{ fontSize: '10px', color: '#9ca3af', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e5e7eb' }}>
+                    Model: {verificationInfo.fraudAnalysis.modelLoaded ? '✅ Loaded' : '⚠️ Using fallback'} • Updated: {verificationInfo.fraudAnalysis.timestamp ? new Date(verificationInfo.fraudAnalysis.timestamp).toLocaleTimeString() : 'N/A'}
                   </div>
                 </div>
               )}
